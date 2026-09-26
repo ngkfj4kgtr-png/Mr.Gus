@@ -53,15 +53,15 @@ res.setHeader('Set-Cookie',`mfz_session=${encodeURIComponent(token)}; ${cookieOp
 if(req.method==='POST'&&url.pathname==='/api/auth/logout'){const c=parseCookies(req.headers.cookie);if(!demoMode)await deleteSession(c.mfz_session);else demoPlayers.delete('demo-user');res.setHeader('Set-Cookie',[`mfz_session=; ${cookieOptions()}; Max-Age=0`,`mfz_demo=; ${cookieOptions()}; Max-Age=0`]);return sendJson(res,200,{ok:true})}
 if(url.pathname.startsWith('/api/')){
 const a=await auth(req,res);if(!a)return;
-if(a.demo){const player=a.player;if(req.method==='GET'&&url.pathname==='/api/state'){collectOfflineIncome(player,Date.now());return sendJson(res,200,serialize(player,a.user))}
+if(a.demo){const player=a.player;if(req.method==='GET'&&url.pathname==='/api/state'){{const now=Date.now();collectOfflineIncome(player,now,currentEvent(now).incomeMultiplier);return sendJson(res,200,serialize(player,a.user))}}
 if(req.method==='POST'){const body=await readJson(req),operationId=String(body.operationId||'');validateOperationId(operationId);if(demoOperations.has(`demo-user:${operationId}`))throw new Error('Operation already processed');let action;
-if(url.pathname==='/api/task/claim')action=claimTask(player,String(body.taskId||''));else if(url.pathname==='/api/business/buy')action=buyBusiness(player,String(body.businessId||''),Date.now());else if(url.pathname==='/api/business/upgrade')action=upgradeBusiness(player,String(body.businessId||''),Date.now());else if(url.pathname==='/api/income/collect')action=collectOfflineIncome(player,Date.now());
+if(url.pathname==='/api/task/claim')action=claimTask(player,String(body.taskId||''));else if(url.pathname==='/api/business/buy')action=buyBusiness(player,String(body.businessId||''),Date.now());else if(url.pathname==='/api/business/upgrade')action=upgradeBusiness(player,String(body.businessId||''),Date.now());else if(url.pathname==='/api/income/collect'){const now=Date.now();action=collectOfflineIncome(player,now,currentEvent(now).incomeMultiplier);}
 else if(url.pathname==='/api/achievement/claim')action=claimAchievement(player,String(body.achievementId||''));
 else if(url.pathname==='/api/goal/claim')action=claimGoal(player,String(body.goalId||''));
 else if(url.pathname==='/api/event/claim')action=claimEvent(player,Date.now());
 else return sendJson(res,404,{error:'Endpoint not found'});
 demoOperations.add(`demo-user:${operationId}`);demoPlayers.set('demo-user',player);return sendJson(res,200,{...serialize(player,a.user),action})}return sendJson(res,405,{error:'Method not allowed'})}
-if(req.method==='GET'&&url.pathname==='/api/state'){const tx=await withPlayerTransaction(a.user.id,async(player,client)=>{const from=player.lastIncomeAt,now=Date.now(),out=collectOfflineIncome(player,now);if(out.seconds>0&&from!==null){const operationId=`income_auto_${from}_${player.lastIncomeAt}`;await recordOperation(client,{operationId,type:OPERATION_TYPES.INCOME_COLLECTION,userId:a.user.id,reward:out.income,at:now})}return out});return sendJson(res,200,{...serialize(tx.player,a.user),action:tx.result})}
+if(req.method==='GET'&&url.pathname==='/api/state'){const tx=await withPlayerTransaction(a.user.id,async(player,client)=>{const from=player.lastIncomeAt,now=Date.now(),out=collectOfflineIncome(player,now,currentEvent(now).incomeMultiplier);if(out.seconds>0&&from!==null){const operationId=`income_auto_${from}_${player.lastIncomeAt}`;await recordOperation(client,{operationId,type:OPERATION_TYPES.INCOME_COLLECTION,userId:a.user.id,reward:out.income,at:now})}return out});return sendJson(res,200,{...serialize(tx.player,a.user),action:tx.result})}
 if(req.method==='POST'){
 const allowedPostEndpoints=new Set(['/api/task/claim','/api/business/buy','/api/business/upgrade','/api/income/collect','/api/achievement/claim','/api/goal/claim','/api/event/claim']);
 if(!allowedPostEndpoints.has(url.pathname))return sendJson(res,404,{error:'Endpoint not found'});
@@ -70,7 +70,7 @@ const now=Date.now();
 await assertOperationNotProcessed(client,{operationId,userId:a.user.id});
 if(url.pathname==='/api/task/claim')out=claimTask(player,String(body.taskId||''));
 else if(url.pathname==='/api/business/buy'){
-  const before=player.lastIncomeAt; const income=collectOfflineIncome(player,now);
+  const before=player.lastIncomeAt; const income=collectOfflineIncome(player,now,currentEvent(now).incomeMultiplier);
   if(income.income>0&&before!==null) await recordOperation(client,{operationId:`income_auto_${before}_${player.lastIncomeAt}`,type:OPERATION_TYPES.INCOME_COLLECTION,userId:a.user.id,reward:income.income,at:now});
   out=buyBusiness(player,String(body.businessId||''),now);
 }
@@ -79,7 +79,7 @@ else if(url.pathname==='/api/business/upgrade'){
   if(income.income>0&&before!==null) await recordOperation(client,{operationId:`income_auto_${before}_${player.lastIncomeAt}`,type:OPERATION_TYPES.INCOME_COLLECTION,userId:a.user.id,reward:income.income,at:now});
   out=upgradeBusiness(player,String(body.businessId||''),now);
 }
-else if(url.pathname==='/api/income/collect')out=collectOfflineIncome(player,now);
+else if(url.pathname==='/api/income/collect')out=collectOfflineIncome(player,now,currentEvent(now).incomeMultiplier);
 else if(url.pathname==='/api/achievement/claim')out=claimAchievement(player,String(body.achievementId||''));
 else if(url.pathname==='/api/goal/claim')out=claimGoal(player,String(body.goalId||''));
 else if(url.pathname==='/api/event/claim')out=claimEvent(player,now);
