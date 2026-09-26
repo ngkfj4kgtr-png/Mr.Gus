@@ -9,10 +9,16 @@ function clientAddress(req){
   return forwarded||req.socket.remoteAddress||'unknown';
 }
 
-function bucketKey(req,kind){
-  const session=req.headers.cookie?.match(/(?:^|;\\s*)mfz_session=([^;]+)/)?.[1];
-  const ip=clientAddress(req);
-  return session?`${kind}:ip:${ip}:session:${session}`:`${kind}:ip:${ip}`;
+function sessionToken(req){
+  return req.headers.cookie?.match(/(?:^|;\\s*)mfz_session=([^;]+)/)?.[1]||null;
+}
+
+function bucketKey(req,kind,scope='ip'){
+  if(scope==='session'){
+    const session=sessionToken(req);
+    if(session)return `${kind}:session:${session}`;
+  }
+  return `${kind}:ip:${clientAddress(req)}`;
 }
 
 function consume(key,limit,now=Date.now()){
@@ -30,10 +36,18 @@ function consume(key,limit,now=Date.now()){
 }
 
 export function checkRateLimit(req,{mutation=false,now=Date.now()}={}){
-  const request=consume(bucketKey(req,'request'),MAX_REQUESTS,now);
+  const request=consume(bucketKey(req,'request','ip'),MAX_REQUESTS,now);
   if(!request.allowed)return request;
-  if(mutation)return consume(bucketKey(req,'mutation'),MAX_MUTATIONS,now);
-  return request;
+  const session=sessionToken(req);
+  if(session){
+    const sessionRequest=consume(bucketKey(req,'request','session'),MAX_REQUESTS,now);
+    if(!sessionRequest.allowed)return sessionRequest;
+  }
+  if(!mutation)return request;
+  const mutationLimit=consume(bucketKey(req,'mutation','ip'),MAX_MUTATIONS,now);
+  if(!mutationLimit.allowed)return mutationLimit;
+  if(session)return consume(bucketKey(req,'mutation','session'),MAX_MUTATIONS,now);
+  return mutationLimit;
 }
 
 export function validateSameOrigin(req){
