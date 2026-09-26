@@ -260,3 +260,56 @@ test('scenario: persisted progression IDs and event claims must be valid', () =>
   clean.eventClaims['not-a-date'] = true;
   assert.throws(() => availableGoals(clean), /Invalid event claim/);
 });
+
+
+import { migrate, upsertTelegramUser, withPlayerTransaction, recordOperation, assertOperationNotProcessed, getPool } from '../src/db.js';
+
+const integrationEnabled = Boolean(process.env.DATABASE_URL);
+const testTelegramId = () => (BigInt(Date.now()) * 100000n + BigInt(process.pid)).toString();
+
+test('integration: concurrent identical operation is applied exactly once', { skip: !integrationEnabled }, async () => {
+  await migrate();
+  const telegramId = testTelegramId();
+  const user = await upsertTelegramUser({ id: telegramId, first_name: 'Concurrency', last_name: 'Test' });
+  const operationId = 'concurrent_same_' + telegramId;
+
+  const run = () => withPlayerTransaction(user.id, async (player, client) => {
+    await assertOperationNotProcessed(client, { operationId, userId: user.id });
+    player.balance += 100;
+    await recordOperation(client, { operationId, type: 'TEST_REWARD', userId: user.id, reward: 100 });
+    return player.balance;
+  });
+
+  const results = await Promise.allSettled([run(), run()]);
+  assert.equal(results.filter(r => r.status === 'fulfilled').length, 1);
+  assert.equal(results.filter(r => r.status === 'rejected' && r.reason?.code === 'OPERATION_ALREADY_PROCESSED').length, 1);
+
+  const row = await (await getPool()).query('SELECT balance FROM users WHERE id=$1', [user.id]);
+  assert.equal(Number(row.rows[0].balance), 100);
+});
+
+test('integration: concurrent different operations both commit without double income', { skip: !integrationEnabled }, async () => {
+  await migrate();
+  const telegramId = testTelegramId();
+  const user = await upsertTelegramUser({ id: telegramId, first_name: 'Income', last_name: 'Test' });
+  const fixedStart = 1_000_000;
+  const fixedEnd = fixedStart + 3_600_000;
+
+  await withPlayerTransaction(user.id, async (player) => {
+    player.businesses = { kiosk: { id: 'kiosk', level: 1, purchasedAt: fixedStart - 1 } };
+    player.lastIncomeAt = fixedStart;
+  });
+
+  const collect = () => withPlayerTransaction(user.id, async (player) => {
+    const before = player.lastIncomeAt;
+    const income = collectOfflineIncome(player, fixedEnd, 1);
+    return { before, income: income.income, after: player.lastIncomeAt };
+  });
+  const results = await Promise.all([collect(), collect()]);
+  assert.deepEqual(results.map(r => r.result.income).sort((a, b) => a - b), [0, 500]);
+
+  const row = await (await getPool()).query('SELECT balance, last_income_at, stats FROM users WHERE id=$1', [user.id]);
+  assert.equal(Number(row.rows[0].balance), 500);
+  assert.equal(Number(row.rows[0].last_income_at), fixedEnd);
+  assert.equal(Number(row.rows[0].stats.totalIncome), 500);
+});
