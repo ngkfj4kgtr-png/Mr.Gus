@@ -3,7 +3,7 @@ import { readFile } from 'node:fs/promises';
 import { extname, join, normalize } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { validateTelegramInitData } from './src/telegram-auth.js';
-import { initDb,migrate,upsertTelegramUser,createSession,getUserBySession,deleteSession,cleanupExpiredSessions,withPlayerTransaction,recordOperation,assertOperationNotProcessed } from './src/db.js';
+import { initDb,migrate,upsertTelegramUser,createSession,getUserBySession,deleteSession,cleanupExpiredSessions,withPlayerTransaction,recordOperation,assertOperationNotProcessed,getPool } from './src/db.js';
 import { validateOperationId, OPERATION_TYPES } from './src/operations.js';
 import { createPlayer,claimTask,buyBusiness,upgradeBusiness,collectOfflineIncome,hourlyProfit,availableTasks,availableAchievements,availableGoals,claimAchievement,claimGoal,currentEvent,claimEvent,BUSINESS,canBuyBusiness,businessUnlockLevel } from './src/economy.js';
 import { checkRateLimit,validateSameOrigin,validateFetchMetadata,securityHeaders,clearRateLimitBuckets } from './src/http-security.js';
@@ -44,7 +44,7 @@ if(url.pathname.startsWith('/api/') && (req.method==='POST'||req.method==='PUT'|
   const limit=checkRateLimit(req,{mutation:true});
   if(!limit.allowed)return sendJson(res,429,{error:'Too many requests'},{'Retry-After':String(limit.retryAfter)});
 }
-if(req.method==='GET'&&url.pathname==='/health'){return sendJson(res,200,{ok:true,service:'Mr.Gus',status:'healthy'})}
+if(req.method==='GET'&&url.pathname==='/health'){if(!demoMode)await (await getPool()).query('SELECT 1');return sendJson(res,200,{ok:true,service:'Mr.Gus',status:'healthy',database:demoMode?'demo':'ok'})}
 if(req.method==='POST'&&url.pathname==='/api/auth/telegram'){
 if(demoMode&&!req.headers['x-telegram-init-data']){res.setHeader('Set-Cookie',`mfz_demo=1; ${cookieOptions()}; Max-Age=604800`);return sendJson(res,200,{ok:true,demo:true,user:{first_name:'Демо',last_name:'Игрок',username:'demo'}})}
 const verified=validateTelegramInitData(String(req.headers['x-telegram-init-data']||''),botToken),user=await upsertTelegramUser(verified.user),token=await createSession(user.id);
@@ -75,7 +75,7 @@ else if(url.pathname==='/api/business/buy'){
   out=buyBusiness(player,String(body.businessId||''),now);
 }
 else if(url.pathname==='/api/business/upgrade'){
-  const before=player.lastIncomeAt; const income=collectOfflineIncome(player,now);
+  const before=player.lastIncomeAt; const income=collectOfflineIncome(player,now,currentEvent(now).incomeMultiplier);
   if(income.income>0&&before!==null) await recordOperation(client,{operationId:`income_auto_${before}_${player.lastIncomeAt}`,type:OPERATION_TYPES.INCOME_COLLECTION,userId:a.user.id,reward:income.income,at:now});
   out=upgradeBusiness(player,String(body.businessId||''),now);
 }
