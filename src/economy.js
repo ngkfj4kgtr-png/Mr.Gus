@@ -2,15 +2,15 @@ export const CONFIG = Object.freeze({
   startingBalance: 0,
   maxOfflineSeconds: 8 * 60 * 60,
   firstBusinessCost: 1_000,
-  firstBusinessGrossPerHour: 180,
-  firstBusinessExpensesPerHour: 80,
+  firstBusinessGrossPerHour: 750,
+  firstBusinessExpensesPerHour: 250,
   maxMoney: Number.MAX_SAFE_INTEGER
 });
 
 export const BUSINESS = Object.freeze({
   kiosk: Object.freeze({
     id:'kiosk', name:'Небольшая торговая точка', baseCost:1_000,
-    grossPerHour:180, expensesPerHour:80, upgradeMultiplier:1.35, maxLevel:100
+    upgradeBaseCost:500, grossPerHour:750, expensesPerHour:250, upgradeMultiplier:1.35, maxLevel:100
   })
 });
 
@@ -28,10 +28,7 @@ export const TASKS = Object.freeze({
 export function xpForLevel(level) {
   if(!Number.isSafeInteger(level)||level<1) throw new Error('Invalid level');
   if(level<=LEVEL_XP.length) return LEVEL_XP[level-1];
-  const last=LEVEL_XP[LEVEL_XP.length-1];
-  const previous=LEVEL_XP[LEVEL_XP.length-2];
-  const increment=last-previous;
-  const extraLevel=level-LEVEL_XP.length;
+  const last=LEVEL_XP[LEVEL_XP.length-1],previous=LEVEL_XP[LEVEL_XP.length-2],increment=last-previous,extraLevel=level-LEVEL_XP.length;
   return last + extraLevel*(increment + 200*(extraLevel+1)/2);
 }
 export function levelFromXp(xp) {
@@ -60,8 +57,7 @@ function addBalance(player,amount){
   assertMoneyAmount(amount,'Reward');
   const next=player.balance+amount;
   if(!Number.isSafeInteger(next)||next>CONFIG.maxMoney) throw new Error('Balance overflow');
-  player.balance=next;
-  assertBalanceInvariant(player);
+  player.balance=next; assertBalanceInvariant(player);
 }
 export function availableTasks(player){
   assertPlayer(player); const claimedCount=player.claimedTasks.size;
@@ -108,7 +104,7 @@ export function upgradeBusiness(player,businessId,now=Date.now()){
   if(!definition||!owned) throw new Error('Business not owned');
   if(owned.level>=definition.maxLevel) throw new Error('Maximum business level reached');
   if(!Number.isSafeInteger(now)||now<0) throw new Error('Invalid timestamp');
-  const cost=Math.max(definition.baseCost,Math.round(definition.baseCost*definition.upgradeMultiplier**owned.level));
+  const cost=Math.max(definition.upgradeBaseCost,Math.round(definition.upgradeBaseCost*definition.upgradeMultiplier**(owned.level-1)));
   if(player.balance<cost) throw new Error('Insufficient balance');
   player.balance-=cost; assertBalanceInvariant(player); owned.level+=1;
   player.xp=assertMoneyAmount(player.xp+XP_REWARDS.businessUpgrade,'XP'); player.level=levelFromXp(player.xp);
