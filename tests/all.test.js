@@ -1,12 +1,56 @@
 import test from 'node:test';
 import {createHmac} from 'node:crypto';
 import assert from 'node:assert/strict';
-import {createPlayer,claimTask,buyBusiness,collectOfflineIncome,hourlyProfit,upgradeBusiness,availableTasks,CONFIG,assertMoneyAmount} from '../src/economy.js';
+import {createPlayer,claimTask,buyBusiness,collectOfflineIncome,hourlyProfit,upgradeBusiness,availableTasks,CONFIG,assertMoneyAmount,xpForLevel,levelFromXp} from '../src/economy.js';
 import {createOperationId,validateOperationId} from '../src/operations.js';
 import {assertOperationNotProcessed} from '../src/db.js';
 import {validateTelegramInitData} from '../src/telegram-auth.js';
 
 test('new player starts safely',()=>{const p=createPlayer('u');assert.equal(p.balance,0);assert.equal(p.level,1);});
+test('XP level thresholds match the economy design',()=>{
+  assert.equal(xpForLevel(1),0);
+  assert.equal(xpForLevel(2),500);
+  assert.equal(xpForLevel(3),1200);
+  assert.equal(xpForLevel(4),2100);
+  assert.equal(xpForLevel(5),3300);
+  assert.equal(levelFromXp(499),1);
+  assert.equal(levelFromXp(500),2);
+  assert.equal(levelFromXp(1199),2);
+  assert.equal(levelFromXp(1200),3);
+  assert.equal(levelFromXp(2099),3);
+  assert.equal(levelFromXp(2100),4);
+  assert.equal(levelFromXp(3299),4);
+  assert.equal(levelFromXp(3300),5);
+});
+
+test('money and XP remain separate',()=>{
+  const p=createPlayer('u');
+  claimTask(p,'first_order');
+  assert.equal(p.balance,250);
+  assert.equal(p.xp,50);
+  assert.equal(p.level,1);
+});
+
+test('business development awards XP without adding money',()=>{
+  const p=createPlayer('u');
+  p.balance=1000;
+  buyBusiness(p,'kiosk',1000);
+  assert.equal(p.balance,0);
+  assert.equal(p.xp,100);
+  assert.equal(p.level,1);
+});
+
+test('business upgrade awards XP without adding money',()=>{
+  const p=createPlayer('u');
+  p.balance=10000;
+  buyBusiness(p,'kiosk',1000);
+  const before=p.balance;
+  upgradeBusiness(p,'kiosk',2000);
+  assert.equal(p.balance,before-1350);
+  assert.equal(p.xp,150);
+  assert.equal(p.level,1);
+});
+
 test('task chain cannot be skipped',()=>{const p=createPlayer('u');assert.equal(availableTasks(p)[1].locked,true);claimTask(p,'first_order');assert.equal(p.balance,250);assert.throws(()=>claimTask(p,'third_order'),/locked/);});
 test('task reward cannot be claimed twice',()=>{const p=createPlayer('u');claimTask(p,'first_order');assert.throws(()=>claimTask(p,'first_order'),/already claimed/);assert.equal(p.balance,250);});
 test('business profit is server-side',()=>{const p=createPlayer('u');p.balance=1000;buyBusiness(p,'kiosk',1000);assert.equal(hourlyProfit(p,'kiosk'),100);});
