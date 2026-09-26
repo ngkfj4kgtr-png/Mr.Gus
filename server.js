@@ -19,7 +19,7 @@ function sendJson(res,status,payload,extra={}){res.writeHead(status,{'Content-Ty
 async function readJson(req){let body='';for await(const chunk of req){body+=chunk;if(body.length>20000)throw new Error('Payload too large')}if(!body)return{};const value=JSON.parse(body);if(!value||typeof value!=='object'||Array.isArray(value))throw new Error('Invalid JSON body');return value}
 function serialize(player,user){return{id:String(user?.telegram_id??player.id),name:[user?.first_name,user?.last_name].filter(Boolean).join(' ')||'Игрок',username:user?.username??null,photoUrl:user?.photo_url??null,balance:player.balance,xp:player.xp,level:player.level,businesses:Object.values(player.businesses).map(b=>({...b,profitPerHour:hourlyProfit(player,b.id)})),claimedTasks:[...player.claimedTasks],tasks:availableTasks(player)}}
 async function auth(req,res){const cookies=parseCookies(req.headers.cookie);if(demoMode&&cookies.mfz_demo==='1'){const player=demoPlayers.get('demo-user')||createPlayer('demo-user');demoPlayers.set('demo-user',player);return{user:{id:'demo-user',telegram_id:'demo-user',first_name:'Демо',last_name:'Игрок',username:'demo'},player,demo:true}}const user=await getUserBySession(cookies.mfz_session);if(!user){sendJson(res,401,{error:'Authentication required'});return null}return{user,sessionToken:cookies.mfz_session}}
-function errorStatus(message){if(message==='Operation already processed')return 409;if(/authentication|required|invalid|expired|already|insufficient|maximum|clock|task|business|locked|overflow|payload/i.test(message))return 400;return 500}
+function errorStatus(message){if(message==='Operation already processed')return 409;if(/authentication|required|invalid|expired|already|insufficient|maximum|clock|task|business|locked|overflow|payload|json/i.test(message))return 400;if(message==='Endpoint not found')return 404;return 500}
 
 const server=http.createServer(async(req,res)=>{try{
 const url=new URL(req.url,`http://${req.headers.host||'localhost'}`);
@@ -36,7 +36,10 @@ if(req.method==='POST'){const body=await readJson(req),operationId=String(body.o
 if(url.pathname==='/api/task/claim')action=claimTask(player,String(body.taskId||''));else if(url.pathname==='/api/business/buy')action=buyBusiness(player,String(body.businessId||''),Date.now());else if(url.pathname==='/api/business/upgrade')action=upgradeBusiness(player,String(body.businessId||''),Date.now());else if(url.pathname==='/api/income/collect')action=collectOfflineIncome(player,Date.now());else return sendJson(res,404,{error:'Endpoint not found'});
 demoOperations.add(`demo-user:${operationId}`);demoPlayers.set('demo-user',player);return sendJson(res,200,{...serialize(player,a.user),action})}return sendJson(res,405,{error:'Method not allowed'})}
 if(req.method==='GET'&&url.pathname==='/api/state'){const tx=await withPlayerTransaction(a.user.id,async(player,client)=>{const from=player.lastIncomeAt,now=Date.now(),out=collectOfflineIncome(player,now);if(out.seconds>0&&from!==null){const operationId=`income_auto_${from}_${player.lastIncomeAt}`;await recordOperation(client,{operationId,type:OPERATION_TYPES.INCOME_COLLECTION,userId:a.user.id,reward:out.income,at:now})}return out});return sendJson(res,200,{...serialize(tx.player,a.user),action:tx.result})}
-if(req.method==='POST'){const body=await readJson(req),operationId=String(body.operationId||'');validateOperationId(operationId);let out;const tx=await withPlayerTransaction(a.user.id,async(player,client)=>{
+if(req.method==='POST'){
+const allowedPostEndpoints=new Set(['/api/task/claim','/api/business/buy','/api/business/upgrade','/api/income/collect']);
+if(!allowedPostEndpoints.has(url.pathname))return sendJson(res,404,{error:'Endpoint not found'});
+const body=await readJson(req),operationId=String(body.operationId||'');validateOperationId(operationId);let out;const tx=await withPlayerTransaction(a.user.id,async(player,client)=>{
 const now=Date.now();
 await assertOperationNotProcessed(client,{operationId,userId:a.user.id});
 if(url.pathname==='/api/task/claim')out=claimTask(player,String(body.taskId||''));
