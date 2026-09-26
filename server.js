@@ -25,13 +25,9 @@ function errorStatus(message){if(message==='Operation already processed')return 
 const server=http.createServer(async(req,res)=>{try{
 clearRateLimitBuckets();
 const url=new URL(req.url,`http://${req.headers.host||'localhost'}`);
-if(url.pathname.startsWith('/api/') && (req.method==='POST'||req.method==='PUT'||req.method==='PATCH'||req.method==='DELETE')){
-  validateSameOrigin(req);
+if(url.pathname.startsWith('/api/') && (req.method==='POST'||req.method==='PUT'||req.method==='PATCH'||req.method==='DELETE'||url.pathname==='/api/state')){
+  if(url.pathname!=='/api/auth/telegram')validateSameOrigin(req);
   const limit=checkRateLimit(req,{mutation:true});
-  if(!limit.allowed)return sendJson(res,429,{error:'Too many requests'},{'Retry-After':String(limit.retryAfter)});
-}
-if(url.pathname.startsWith('/api/') && req.method==='GET'){
-  const limit=checkRateLimit(req);
   if(!limit.allowed)return sendJson(res,429,{error:'Too many requests'},{'Retry-After':String(limit.retryAfter)});
 }
 if(req.method==='POST'&&url.pathname==='/api/auth/telegram'){
@@ -70,6 +66,6 @@ const type=url.pathname==='/api/task/claim'?OPERATION_TYPES.TASK_REWARD:url.path
 const reward=Number(out?.reward??out?.income??0);await recordOperation(client,{operationId,type,userId:a.user.id,reward});return out});
 return sendJson(res,200,{...serialize(tx.player,a.user),action:out})}
 return sendJson(res,405,{error:'Method not allowed'})}
-const requested=url.pathname==='/'?'/index.html':url.pathname,safe=normalize(requested).replace(/^\.\.(\/|\\)+/,'');const file=join(root,safe),data=await readFile(file);res.writeHead(200,{'Content-Type':({'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8'})[extname(file)]||'application/octet-stream','Cache-Control':'no-store'});res.end(data);
+const requested=url.pathname==='/'?'/index.html':url.pathname,safe=normalize(requested).replace(/^\.\.(\/|\\)+/,'');const file=join(root,safe),data=await readFile(file);res.writeHead(200,{...securityHeaders(),'Content-Type':({'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8'})[extname(file)]||'application/octet-stream','Cache-Control':'no-store'});res.end(data);
 }catch(e){const msg=e?.message||'Server error';if(req.url?.startsWith('/api/'))return sendJson(res,errorStatus(msg),{error:msg});res.writeHead(500,{'Content-Type':'text/plain; charset=utf-8'});res.end('Server error')}});
 server.listen(port,'0.0.0.0',()=>console.log(`Mr.Gus — stages 1–8: http://localhost:${port}`));
