@@ -36,7 +36,7 @@ test('same origin is accepted',()=>{
   assert.doesNotThrow(()=>validateSameOrigin(req('198.51.100.6',{
     origin:'https://game.example',
     host:'game.example'
-  }));
+  })));
 });
 
 test('security headers are defined',()=>{
