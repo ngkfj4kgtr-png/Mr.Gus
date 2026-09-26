@@ -59,6 +59,13 @@ export function validateFetchMetadata(req,{stateChanging=false}={}){
 export function validateSameOrigin(req){
   const origin=req.headers.origin;
   if(!origin)return;
+  const configured=process.env.APP_ORIGIN?.replace(/\\/$/,'');
+  if(configured){
+    let parsed;
+    try{parsed=new URL(origin)}catch{throw new Error('Invalid request origin')}
+    if(parsed.origin!==configured)throw new Error('Cross-site request blocked');
+    return;
+  }
   const host=req.headers.host;
   if(!host)throw new Error('Invalid request origin');
   let parsed;
