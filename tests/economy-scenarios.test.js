@@ -13,7 +13,8 @@ import {
   claimAchievement,
   claimGoal,
   currentEvent,
-  claimEvent
+  claimEvent,
+  availableTasks
 } from '../src/economy.js';
 
 test('scenario: new player reaches first business without free money', () => {
@@ -217,4 +218,19 @@ test('scenario: business upgrade income collection respects the daily event mult
   const income = collectOfflineIncome(player, twoHoursLater, 1.20);
   assert.equal(income.income, 1_200);
   assert.equal(player.balance, before + 1_200);
+});
+
+
+test('scenario: stats validation rejects corrupted progression counters', () => {
+  const player = createPlayer('stats-validation-player');
+  player.stats.totalEarned = -1;
+  assert.throws(() => availableGoals(player), /Invalid stat: totalEarned/);
+});
+
+test('scenario: all four tasks unlock the final task with consistent wording', () => {
+  const player = createPlayer('four-tasks-player');
+  for (const taskId of ['first_order','second_order','third_order']) claimTask(player, taskId);
+  const task = availableTasks(player).find(x => x.id === 'busy_day');
+  assert.equal(task.locked, false);
+  assert.equal(task.title, 'Выполнить 4 задания');
 });
