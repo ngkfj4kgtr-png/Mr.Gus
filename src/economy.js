@@ -35,7 +35,7 @@ export const ACHIEVEMENTS=Object.freeze({
 export const GOALS=Object.freeze({
   start_business:Object.freeze({id:'start_business',title:'Старт бизнеса',description:'Открой первый бизнес.',reward:500,xp:150}),
   upgrade_three:Object.freeze({id:'upgrade_three',title:'Развитие',description:'Сделай 3 улучшения бизнеса.',reward:2_000,xp:300}),
-  earn_10k:Object.freeze({id:'earn_10k',title:'Первые 10 тысяч',description:'Получи 10 000 ₽ суммарного дохода.',reward:1_500,xp:250}),
+  earn_10k:Object.freeze({id:'earn_10k',title:'Первые 10 тысяч',description:'Получи 10 000 ₽ дохода от бизнеса.',reward:1_500,xp:250}),
   reach_level_5:Object.freeze({id:'reach_level_5',title:'Новая высота',description:'Достигни 5 уровня.',reward:3_000,xp:400})
 });
 
@@ -126,7 +126,7 @@ function progressionUnlocked(player,kind,id){
   if(kind==='goal'){
     if(id==='start_business')return Object.keys(player.businesses).length>=1;
     if(id==='upgrade_three')return a.businessUpgrades>=3;
-    if(id==='earn_10k')return a.totalEarned>=10_000;
+    if(id==='earn_10k')return a.totalIncome>=10_000;
     if(id==='reach_level_5')return player.level>=5;
   }
   return false;
