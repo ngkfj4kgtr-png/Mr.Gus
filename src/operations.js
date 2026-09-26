@@ -4,7 +4,10 @@ export const OPERATION_TYPES = Object.freeze({
   TASK_REWARD: 'task_reward',
   BUSINESS_PURCHASE: 'business_purchase',
   BUSINESS_UPGRADE: 'business_upgrade',
-  INCOME_COLLECTION: 'income_collection'
+  INCOME_COLLECTION: 'income_collection',
+  ACHIEVEMENT_REWARD: 'achievement_reward',
+  GOAL_REWARD: 'goal_reward',
+  EVENT_REWARD: 'event_reward'
 });
 
 export function createOperationId(prefix='op') {
