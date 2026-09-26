@@ -59,7 +59,7 @@ export function validateFetchMetadata(req,{stateChanging=false}={}){
 export function validateSameOrigin(req){
   const origin=req.headers.origin;
   if(!origin)return;
-  const configured=process.env.APP_ORIGIN?.replace(/\\/$/,'');
+  const configured=process.env.APP_ORIGIN?.replace(/\/$/,'');
   if(configured){
     let parsed;
     try{parsed=new URL(origin)}catch{throw new Error('Invalid request origin')}
