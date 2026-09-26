@@ -17,10 +17,21 @@ const demoPlayers=new Map(),demoOperations=new Set();
 const cookieOptions=()=>`Path=/; HttpOnly; SameSite=Lax${process.env.NODE_ENV==='production'?'; Secure':''}`;
 function parseCookies(header=''){const out={};for(const part of header.split(';')){const i=part.indexOf('=');if(i<0)continue;const k=part.slice(0,i).trim(),v=part.slice(i+1).trim();try{out[k]=decodeURIComponent(v)}catch{}}return out}
 function sendJson(res,status,payload,extra={}){res.writeHead(status,{...securityHeaders(),'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store',...extra});res.end(JSON.stringify(payload))}
-async function readJson(req){let body='';for await(const chunk of req){body+=chunk;if(body.length>20000)throw new Error('Payload too large')}if(!body)return{};const value=JSON.parse(body);if(!value||typeof value!=='object'||Array.isArray(value))throw new Error('Invalid JSON body');return value}
+async function readJson(req){
+  const contentType=String(req.headers['content-type']||'').split(';',1)[0].trim().toLowerCase();
+  if(contentType!=='application/json')throw new Error('Content-Type must be application/json');
+  let body='';
+  for await(const chunk of req){body+=chunk;if(body.length>20000)throw new Error('Payload too large')}
+  if(!body)throw new Error('Invalid JSON body');
+  let value;
+  try{value=JSON.parse(body)}catch{throw new Error('Invalid JSON body')}
+  if(!value||typeof value!=='object'||Array.isArray(value))throw new Error('Invalid JSON body');
+  return value;
+}
 function serialize(player,user){return{id:String(user?.telegram_id??player.id),name:[user?.first_name,user?.last_name].filter(Boolean).join(' ')||'Игрок',username:user?.username??null,photoUrl:user?.photo_url??null,balance:player.balance,xp:player.xp,level:player.level,businesses:Object.values(player.businesses).map(b=>({...b,profitPerHour:hourlyProfit(player,b.id)})),claimedTasks:[...player.claimedTasks],tasks:availableTasks(player)}}
 async function auth(req,res){const cookies=parseCookies(req.headers.cookie);if(demoMode&&cookies.mfz_demo==='1'){const player=demoPlayers.get('demo-user')||createPlayer('demo-user');demoPlayers.set('demo-user',player);return{user:{id:'demo-user',telegram_id:'demo-user',first_name:'Демо',last_name:'Игрок',username:'demo'},player,demo:true}}const user=await getUserBySession(cookies.mfz_session);if(!user){sendJson(res,401,{error:'Authentication required'});return null}return{user,sessionToken:cookies.mfz_session}}
-function errorStatus(message){if(message==='Operation already processed')return 409;if(/authentication|required|invalid|expired|already|insufficient|maximum|clock|task|business|locked|overflow|payload|json|origin|site|too many/i.test(message))return 400;if(message==='Endpoint not found')return 404;return 500}
+function errorStatus(message){if(message==='Operation already processed')return 409;if(message==='Endpoint not found')return 404;if(message==='Content-Type must be application/json')return 415;if(/authentication|required|invalid|expired|already|insufficient|maximum|clock|task|business|locked|overflow|payload|json|origin|site|too many/i.test(message))return 400;return 500}
+function publicError(message){return errorStatus(message)===500?'Internal server error':message}
 
 const server=http.createServer(async(req,res)=>{try{
 clearRateLimitBuckets();
@@ -70,5 +81,5 @@ const reward=Number(out?.reward??out?.income??0);await recordOperation(client,{o
 return sendJson(res,200,{...serialize(tx.player,a.user),action:out})}
 return sendJson(res,405,{error:'Method not allowed'})}
 const requested=url.pathname==='/'?'/index.html':url.pathname,safe=normalize(requested).replace(/^\.\.(\/|\\)+/,'');const file=join(root,safe),data=await readFile(file);res.writeHead(200,{...securityHeaders(),'Content-Type':({'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8'})[extname(file)]||'application/octet-stream','Cache-Control':'no-store'});res.end(data);
-}catch(e){const msg=e?.message||'Server error';if(req.url?.startsWith('/api/'))return sendJson(res,errorStatus(msg),{error:msg});res.writeHead(500,{'Content-Type':'text/plain; charset=utf-8'});res.end('Server error')}});
+}catch(e){const msg=e?.message||'Server error';if(req.url?.startsWith('/api/'))return sendJson(res,errorStatus(msg),{error:publicError(msg)});res.writeHead(500,{'Content-Type':'text/plain; charset=utf-8'});res.end('Server error')}});
 server.listen(port,'0.0.0.0',()=>console.log(`Mr.Gus — stages 1–8: http://localhost:${port}`));
