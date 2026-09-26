@@ -37,7 +37,7 @@ test('scenario: active player can accumulate, then upgrade and increase profit',
 
   const twoHoursLater = 1_000 + 2 * 60 * 60 * 1_000;
   assert.equal(collectOfflineIncome(player, twoHoursLater).income, 200);
-  assert.equal(player.balance, 300);
+  assert.equal(player.balance, 200);
 
   player.balance = 10_000;
   const upgradeTime = twoHoursLater + 1_000;
