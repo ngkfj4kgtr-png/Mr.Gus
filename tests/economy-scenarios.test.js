@@ -236,6 +236,12 @@ test('scenario: all four tasks unlock the final task with consistent wording', (
 });
 
 
+test('scenario: malformed calendar event dates are rejected', () => {
+  const player = createPlayer('invalid-calendar-event-player');
+  player.eventClaims['2026-02-30'] = true;
+  assert.throws(() => availableGoals(player), /Invalid event claim/);
+});
+
 test('scenario: persisted progression IDs and event claims must be valid', () => {
   const player = createPlayer('corrupt-progression-player');
   player.claimedTasks.add('unknown_task');
