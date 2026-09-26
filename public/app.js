@@ -3,6 +3,7 @@ if(tg){tg.ready();tg.expand();try{tg.enableClosingConfirmation?.()}catch{}}
 
 const op=t=>t+"_"+crypto.randomUUID();
 const money=n=>new Intl.NumberFormat("ru-RU").format(Math.max(0,Math.floor(n)))+" ₽";
+const LEVEL_XP=[0,500,1200,2100,3300];
 
 function setStatus(message,error=false){
   const el=document.querySelector("#status");
@@ -38,7 +39,6 @@ async function auth(){
     setStatus("Авторизация через Telegram…");
     await api("/api/auth/telegram",{method:"POST"});
     await refresh(true);
-    setStatus("Вы вошли через Telegram");
   }catch(e){setStatus(friendlyError(e),true);alert(friendlyError(e))}
 }
 
@@ -64,22 +64,32 @@ function render(s){
   document.querySelector("#level").textContent=s.level;
   const b=s.businesses?.[0];
   document.querySelector("#income").textContent=money(b?.profitPerHour||0)+"/ч";
+
+  const current=LEVEL_XP[Math.min(Math.max(s.level-1,0),LEVEL_XP.length-1)]||0;
+  const next=LEVEL_XP[s.level]??null;
+  const xp=Math.max(0,Number(s.xp)||0);
+  document.querySelector("#xpText").textContent=xp+" XP";
+  if(next===null){
+    document.querySelector("#xpBar").style.width="100%";
+    document.querySelector("#xpHint").textContent="Максимальный отображаемый уровень достигнут.";
+  }else{
+    const percent=Math.max(0,Math.min(100,((xp-current)/(next-current))*100));
+    document.querySelector("#xpBar").style.width=percent+"%";
+    document.querySelector("#xpHint").textContent="До уровня "+(s.level+1)+": "+Math.max(0,next-xp)+" XP";
+  }
+
   const upgradeCost=b?nextUpgradeCost(b.level):0;
   document.querySelector("#business").innerHTML=b
-    ? "<b>Торговая точка — уровень "+b.level+"</b><p>+"+money(b.profitPerHour)+"/час</p><p class='muted'>Следующее улучшение: "+money(upgradeCost)+"</p><button class='btn' data-action='collect'>Забрать доход</button><button class='btn' data-action='upgrade'>Улучшить за "+money(upgradeCost)+"</button>"
+    ? "<b>Торговая точка — уровень "+b.level+"</b><p>+ "+money(b.profitPerHour)+"/час</p><p class='muted'>Следующее улучшение: "+money(upgradeCost)+"</p><button class='btn' data-action='collect'>Забрать доход</button><button class='btn' data-action='upgrade'>Улучшить за "+money(upgradeCost)+"</button>"
     : "<p>Первая торговая точка — 1 000 ₽</p><button class='btn' data-action='buy'>Открыть</button>";
+
   document.querySelector("#tasks").innerHTML=(s.tasks||[]).map(t=>"<div class='card'><b>"+t.title+"</b><p class='muted'>"+(t.description||"")+"</p><button class='btn' "+(t.claimed||t.locked?"disabled":"")+" data-action='claim' data-task-id='"+String(t.id).replaceAll("'","&#39;")+"'>"+(t.claimed?"Готово":t.locked?"🔒":"Забрать")+"</button></div>").join("");
 }
 
 async function action(button,fn){
   if(!button||button.disabled)return;
   button.disabled=true;
-  try{
-    const state=await fn();
-    render(state);
-    setStatus("Готово");
-  }catch(e){setStatus(friendlyError(e),true)}
-  finally{button.disabled=false}
+  try{const state=await fn();render(state);setStatus("Готово")}catch(e){setStatus(friendlyError(e),true)}finally{button.disabled=false}
 }
 async function buy(button){await action(button,()=>api("/api/business/buy",{method:"POST",body:JSON.stringify({businessId:"kiosk",operationId:op("buy")})}))}
 async function upgrade(button){await action(button,()=>api("/api/business/upgrade",{method:"POST",body:JSON.stringify({businessId:"kiosk",operationId:op("upgrade")})}))}
