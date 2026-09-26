@@ -39,6 +39,17 @@ test('PostgreSQL transaction rollback preserves progress',{skip:!enabled},async(
 
 test.after(async()=>{if(enabled){const pool=await getPool();await pool.end();}});
 
+test('PostgreSQL sessions: concurrent rotation leaves exactly one active session',{skip:!enabled},async()=>{
+ const user=await freshUser(); try{
+  const tokens=await Promise.all([createSession(user.id),createSession(user.id),createSession(user.id),createSession(user.id)]);
+  const pool=await getPool();
+  const row=(await pool.query('SELECT count(*) AS count FROM sessions WHERE user_id=$1',[user.id])).rows[0];
+  assert.equal(Number(row.count),1);
+  const valid=await Promise.all(tokens.map(async token=>Boolean(await getUserBySession(token))));
+  assert.equal(valid.filter(Boolean).length,1);
+ }finally{await cleanup(user.id);}
+});
+
 test('PostgreSQL sessions: rotation invalidates the previous token',{skip:!enabled},async()=>{
  const user=await freshUser(); try{
   const first=await createSession(user.id);
