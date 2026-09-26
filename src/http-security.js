@@ -4,11 +4,15 @@ const MAX_REQUESTS=120;
 const MAX_MUTATIONS=30;
 const MAX_BUCKETS=10_000;
 
+function clientAddress(req){
+  const forwarded=process.env.TRUST_PROXY==='true'?req.headers['x-forwarded-for']?.split(',')[0]?.trim():null;
+  return forwarded||req.socket.remoteAddress||'unknown';
+}
+
 function bucketKey(req,kind){
   const session=req.headers.cookie?.match(/(?:^|;\\s*)mfz_session=([^;]+)/)?.[1];
-  if(session)return `${kind}:session:${session}`;
-  const forwarded=process.env.TRUST_PROXY==='true'?req.headers['x-forwarded-for']?.split(',')[0]?.trim():null;
-  return `${kind}:ip:${forwarded||req.socket.remoteAddress||'unknown'}`;
+  const ip=clientAddress(req);
+  return session?`${kind}:ip:${ip}:session:${session}`:`${kind}:ip:${ip}`;
 }
 
 function consume(key,limit,now=Date.now()){
