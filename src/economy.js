@@ -14,6 +14,10 @@ export const BUSINESS = Object.freeze({
   })
 });
 
+export const XP_REWARDS = Object.freeze({ businessPurchase: 100, businessUpgrade: 50 });
+
+const LEVEL_XP = Object.freeze([0, 500, 1_200, 2_100, 3_300]);
+
 export const TASKS = Object.freeze({
   first_order:Object.freeze({id:'first_order',title:'Выполнить первый заказ',description:'Сделай первый заказ и получи стартовый капитал.',reward:250,xp:50,unlockAfter:0}),
   second_order:Object.freeze({id:'second_order',title:'Выполнить второй заказ',description:'Продолжай выполнять заказы и увеличивай капитал.',reward:350,xp:75,unlockAfter:1}),
@@ -23,8 +27,12 @@ export const TASKS = Object.freeze({
 
 export function xpForLevel(level) {
   if(!Number.isSafeInteger(level)||level<1) throw new Error('Invalid level');
-  if(level===1) return 0;
-  return Math.round(500*((level-1)**1.55));
+  if(level<=LEVEL_XP.length) return LEVEL_XP[level-1];
+  const last=LEVEL_XP[LEVEL_XP.length-1];
+  const previous=LEVEL_XP[LEVEL_XP.length-2];
+  const increment=last-previous;
+  const extraLevel=level-LEVEL_XP.length;
+  return last + extraLevel*(increment + 200*(extraLevel+1)/2);
 }
 export function levelFromXp(xp) {
   if(!Number.isSafeInteger(xp)||xp<0) throw new Error('Invalid XP');
@@ -73,7 +81,8 @@ export function buyBusiness(player,businessId,now=Date.now()){
   if(player.businesses[businessId]) throw new Error('Business already owned');
   if(!Number.isSafeInteger(now)||now<0) throw new Error('Invalid timestamp');
   if(player.balance<definition.baseCost) throw new Error('Insufficient balance');
-  player.balance-=definition.baseCost; assertBalanceInvariant(player); player.businesses[businessId]={id:businessId,level:1,purchasedAt:now}; player.lastIncomeAt=now;
+  player.balance-=definition.baseCost; assertBalanceInvariant(player); player.businesses[businessId]={id:businessId,level:1,purchasedAt:now};
+  player.xp=assertMoneyAmount(player.xp+XP_REWARDS.businessPurchase,'XP'); player.level=levelFromXp(player.xp); player.lastIncomeAt=now;
   return player.businesses[businessId];
 }
 export function hourlyProfit(player,businessId){
@@ -102,5 +111,6 @@ export function upgradeBusiness(player,businessId,now=Date.now()){
   const cost=Math.max(definition.baseCost,Math.round(definition.baseCost*definition.upgradeMultiplier**owned.level));
   if(player.balance<cost) throw new Error('Insufficient balance');
   player.balance-=cost; assertBalanceInvariant(player); owned.level+=1;
+  player.xp=assertMoneyAmount(player.xp+XP_REWARDS.businessUpgrade,'XP'); player.level=levelFromXp(player.xp);
   return {level:owned.level,cost,balance:player.balance,profitPerHour:hourlyProfit(player,businessId)};
 }
