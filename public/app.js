@@ -2,28 +2,30 @@ const tg=window.Telegram?.WebApp;
 if(tg){tg.ready();tg.expand();try{tg.enableClosingConfirmation?.()}catch{}}
 
 const op=t=>t+"_"+crypto.randomUUID();
-const money=n=>new Intl.NumberFormat("ru-RU").format(Math.max(0,Math.floor(n)))+" ₽";
-const LEVEL_XP=[0,500,1200,2100,3300];
+const money=n=>new Intl.NumberFormat("ru-RU").format(Math.max(0,Math.floor(Number(n)||0)))+" ₽";
 
-function setStatus(message,error=false){
-  const el=document.querySelector("#status");
-  if(el){el.textContent=message;el.dataset.error=error?"1":"0"}
-}
-
+function setStatus(message,error=false){const el=document.querySelector("#status");if(el){el.textContent=message;el.dataset.error=error?"1":"0"}}
 function friendlyError(error){
   const message=String(error?.message||"Ошибка");
-  if(message==="Insufficient balance")return "Недостаточно денег для этой покупки.";
-  if(message==="Business already owned")return "Этот бизнес уже куплен.";
-  if(message==="Maximum business level reached")return "Достигнут максимальный уровень бизнеса.";
-  if(message==="Task reward already claimed")return "Это задание уже выполнено.";
-  if(message==="Task is locked")return "Это задание пока заблокировано.";
-  if(message==="Business not owned")return "Сначала купите бизнес.";
-  if(message==="Clock moved backwards")return "Время устройства изменилось. Обновите игру.";
-  if(message==="Authentication required")return "Сессия истекла. Откройте игру через Telegram ещё раз.";
-  if(message==="Too many requests")return "Слишком много запросов. Подождите немного.";
-  return message;
+  const map={
+    "Insufficient balance":"Недостаточно денег.",
+    "Business already owned":"Этот бизнес уже куплен.",
+    "Business is locked":"Этот бизнес пока закрыт. Поднимите уровень.",
+    "Maximum business level reached":"Достигнут максимальный уровень бизнеса.",
+    "Task reward already claimed":"Это задание уже выполнено.",
+    "Task is locked":"Это задание пока заблокировано.",
+    "Business not owned":"Сначала купите бизнес.",
+    "Achievement reward already claimed":"Награда за достижение уже получена.",
+    "Achievement is locked":"Достижение ещё не выполнено.",
+    "Goal reward already claimed":"Награда за цель уже получена.",
+    "Goal is locked":"Цель ещё не выполнена.",
+    "Event reward already claimed":"Сегодняшний бонус уже получен.",
+    "Clock moved backwards":"Время устройства изменилось. Обновите игру.",
+    "Authentication required":"Сессия истекла. Откройте игру через Telegram ещё раз.",
+    "Too many requests":"Слишком много запросов. Подождите немного."
+  };
+  return map[message]||message;
 }
-
 async function api(path,opt={}){
   const h={"Content-Type":"application/json",...(opt.headers||{})};
   if(tg?.initData)h["X-Telegram-Init-Data"]=tg.initData;
@@ -32,83 +34,51 @@ async function api(path,opt={}){
   if(!r.ok)throw Error(d.error||("HTTP "+r.status));
   return d;
 }
-
 async function auth(){
   try{
-    if(!tg?.initData)throw Error("Откройте Mr.Gus через кнопку Telegram «Открыть Mr.Gus».");
+    if(!tg?.initData)throw Error("Откройте Mr.Gus через Telegram.");
     setStatus("Авторизация через Telegram…");
-    await api("/api/auth/telegram",{method:"POST"});
-    await refresh(true);
-  }catch(e){setStatus(friendlyError(e),true);alert(friendlyError(e))}
+    await api("/api/auth/telegram",{method:"POST"});await refresh(true);
+  }catch(e){setStatus(friendlyError(e),true)}
 }
-
 async function refresh(fromAuth=false){
-  try{
-    const s=await api("/api/state");
-    render(s);
-    setStatus(fromAuth?"Вы вошли через Telegram":"Подключено");
-    return s;
-  }catch(e){
-    setStatus(friendlyError(e),true);
-    if(fromAuth)throw e;
-    return null;
-  }
+  try{const s=await api("/api/state");render(s);setStatus(fromAuth?"Вы вошли через Telegram":"Подключено");return s}
+  catch(e){setStatus(friendlyError(e),true);return null}
 }
-
-function nextUpgradeCost(level){
-  return Math.max(500,Math.round(500*Math.pow(1.35,Math.max(0,level-1))));
-}
-
+function button(action,label,extra="",disabled=false){return `<button class="btn" data-action="${action}" ${extra} ${disabled?"disabled":""}>${label}</button>`}
 function render(s){
   document.querySelector("#balance").textContent=money(s.balance);
   document.querySelector("#level").textContent=s.level;
-  const b=s.businesses?.[0];
-  document.querySelector("#income").textContent=money(b?.profitPerHour||0)+"/ч";
-
-  const current=LEVEL_XP[Math.min(Math.max(s.level-1,0),LEVEL_XP.length-1)]||0;
-  const next=LEVEL_XP[s.level]??null;
-  const xp=Math.max(0,Number(s.xp)||0);
-  document.querySelector("#xpText").textContent=xp+" XP";
-  if(next===null){
-    document.querySelector("#xpBar").style.width="100%";
-    document.querySelector("#xpHint").textContent="Максимальный отображаемый уровень достигнут.";
-  }else{
-    const percent=Math.max(0,Math.min(100,((xp-current)/(next-current))*100));
-    document.querySelector("#xpBar").style.width=percent+"%";
-    document.querySelector("#xpHint").textContent="До уровня "+(s.level+1)+": "+Math.max(0,next-xp)+" XP";
-  }
-
-  const upgradeCost=b?nextUpgradeCost(b.level):0;
-  document.querySelector("#business").innerHTML=b
-    ? "<b>Торговая точка — уровень "+b.level+"</b><p>+ "+money(b.profitPerHour)+"/час</p><p class='muted'>Следующее улучшение: "+money(upgradeCost)+"</p><button class='btn' data-action='collect'>Забрать доход</button><button class='btn' data-action='upgrade'>Улучшить за "+money(upgradeCost)+"</button>"
-    : "<p>Первая торговая точка — 1 000 ₽</p><button class='btn' data-action='buy'>Открыть</button>";
-
-  document.querySelector("#tasks").innerHTML=(s.tasks||[]).map(t=>"<div class='card'><b>"+t.title+"</b><p class='muted'>"+(t.description||"")+"</p><button class='btn' "+(t.claimed||t.locked?"disabled":"")+" data-action='claim' data-task-id='"+String(t.id).replaceAll("'","&#39;")+"'>"+(t.claimed?"Готово":t.locked?"🔒":"Забрать")+"</button></div>").join("");
+  const totalIncome=(s.businesses||[]).reduce((sum,b)=>sum+(Number(b.profitPerHour)||0),0);
+  document.querySelector("#income").textContent=money(totalIncome)+"/ч";
+  document.querySelector("#xpText").textContent=Number(s.xp||0)+" XP";
+  const xp=Number(s.xp)||0,level=Number(s.level)||1;
+  const next=s.achievements?.length?null:null;
+  const thresholds=[0,500,1200,2100,3300];
+  const current=level<=thresholds.length?thresholds[level-1]:thresholds.at(-1);
+  const nextXp=level<thresholds.length?thresholds[level]:null;
+  if(nextXp===null){document.querySelector("#xpBar").style.width="100%";document.querySelector("#xpHint").textContent="Прогресс продолжается с повышением уровня."}
+  else{document.querySelector("#xpBar").style.width=Math.max(0,Math.min(100,((xp-current)/(nextXp-current))*100))+"%";document.querySelector("#xpHint").textContent="До уровня "+(level+1)+": "+Math.max(0,nextXp-xp)+" XP"}
+  const ownedIds=new Set((s.businesses||[]).map(b=>b.id));
+  document.querySelector("#businesses").innerHTML=(s.businessCatalog||[]).map(b=>{
+    const owned=s.businesses?.find(x=>x.id===b.id);
+    if(owned)return `<div class="mini-card"><div class="row"><div><b>${b.name} · ур. ${owned.level}</b><p class="muted">${b.description}</p></div><strong>${money(owned.profitPerHour)}/ч</strong></div><div class="row"><span class="muted">Следующий уровень</span>${button("upgrade","Улучшить",`data-business-id="${b.id}"`)}</div></div>`;
+    return `<div class="mini-card"><div class="row"><div><b>${b.name}</b><p class="muted">${b.description}</p></div><strong>${money(b.cost)}</strong></div><p class="muted">Открывается с уровня ${b.unlockLevel}</p>${button("buy","Открыть",`data-business-id="${b.id}"`,!b.unlocked)}</div>`;
+  }).join("");
+  document.querySelector("#incomeAction").innerHTML=button("collect","💰 Забрать накопленный доход");
+  document.querySelector("#tasks").innerHTML=(s.tasks||[]).map(t=>`<div class="mini-card"><b>${t.title}</b><p class="muted">${t.description}</p><span class="reward">+${money(t.reward)} · +${t.xp} XP</span><br>${button("claim","Забрать",`data-task-id="${String(t.id).replaceAll("'","&#39;")}"`,t.claimed||t.locked)}</div>`).join("");
+  document.querySelector("#achievements").innerHTML=(s.achievements||[]).map(a=>`<div class="mini-card"><div class="row"><div><b>${a.title}</b><p class="muted">${a.description}</p></div><span class="reward">+${money(a.reward)}<br>+${a.xp} XP</span></div>${button("achievement",a.claimed?"Получено":a.unlocked?"Забрать":"🔒",`data-id="${a.id}"`,a.claimed||!a.unlocked)}</div>`).join("");
+  document.querySelector("#goals").innerHTML=(s.goals||[]).map(g=>`<div class="mini-card"><div class="row"><div><b>${g.title}</b><p class="muted">${g.description}</p></div><span class="reward">+${money(g.reward)}<br>+${g.xp} XP</span></div>${button("goal",g.claimed?"Получено":g.unlocked?"Забрать":"🔒",`data-id="${g.id}"`,g.claimed||!g.unlocked)}</div>`).join("");
+  const e=s.event||{};document.querySelector("#event").innerHTML=`<div class="event-card"><b>${e.title||"Событие"}</b><p class="muted">${e.description||""}</p><span class="reward">+${money(e.reward||0)} · +${e.xp||0} XP</span><div>${button("event",e.claimed?"Получено":"Забрать бонус")}</div></div>`;if(e.claimed)document.querySelector("#event button").disabled=true;
+  const st=s.stats||{};document.querySelector("#stats").innerHTML=`<div><span>Заданий</span><b>${st.tasksCompleted||0}</b></div><div><span>Бизнесов</span><b>${st.businessesOwned||0}</b></div><div><span>Улучшений</span><b>${st.businessUpgrades||0}</b></div><div><span>Доход получен</span><b>${money(st.totalIncome||0)}</b></div><div><span>Всего заработано</span><b>${money(st.totalEarned||0)}</b></div>`;
 }
-
-async function action(button,fn){
-  if(!button||button.disabled)return;
-  button.disabled=true;
-  try{const state=await fn();render(state);setStatus("Готово")}catch(e){setStatus(friendlyError(e),true)}finally{button.disabled=false}
-}
-async function buy(button){await action(button,()=>api("/api/business/buy",{method:"POST",body:JSON.stringify({businessId:"kiosk",operationId:op("buy")})}))}
-async function upgrade(button){await action(button,()=>api("/api/business/upgrade",{method:"POST",body:JSON.stringify({businessId:"kiosk",operationId:op("upgrade")})}))}
+async function action(button,fn){if(!button||button.disabled)return;button.disabled=true;try{const state=await fn();render(state);setStatus("Готово")}catch(e){setStatus(friendlyError(e),true)}finally{button.disabled=false}}
+async function buy(button,id){await action(button,()=>api("/api/business/buy",{method:"POST",body:JSON.stringify({businessId:id,operationId:op("buy")})}))}
+async function upgrade(button,id){await action(button,()=>api("/api/business/upgrade",{method:"POST",body:JSON.stringify({businessId:id,operationId:op("upgrade")})}))}
 async function collect(button){await action(button,()=>api("/api/income/collect",{method:"POST",body:JSON.stringify({operationId:op("income")})}))}
 async function claim(button,id){await action(button,()=>api("/api/task/claim",{method:"POST",body:JSON.stringify({taskId:id,operationId:op("task")})}))}
-
-document.addEventListener("click",event=>{
-  const button=event.target.closest("[data-action]");
-  if(!button||button.disabled)return;
-  const actionName=button.dataset.action;
-  if(actionName==="auth")auth();
-  else if(actionName==="refresh")refresh();
-  else if(actionName==="buy")buy(button);
-  else if(actionName==="upgrade")upgrade(button);
-  else if(actionName==="collect")collect(button);
-  else if(actionName==="claim")claim(button,button.dataset.taskId);
-});
-
-window.addEventListener("load",async()=>{
-  if(tg?.initData)await auth();
-  else setStatus("Ожидается запуск из Telegram");
-});
+async function claimAchievement(button,id){await action(button,()=>api("/api/achievement/claim",{method:"POST",body:JSON.stringify({achievementId:id,operationId:op("achievement")})}))}
+async function claimGoal(button,id){await action(button,()=>api("/api/goal/claim",{method:"POST",body:JSON.stringify({goalId:id,operationId:op("goal")})}))}
+async function claimEvent(button){await action(button,()=>api("/api/event/claim",{method:"POST",body:JSON.stringify({operationId:op("event")})}))}
+document.addEventListener("click",e=>{const b=e.target.closest("[data-action]");if(!b||b.disabled)return;const a=b.dataset.action;if(a==="auth")auth();else if(a==="refresh")refresh();else if(a==="buy")buy(b,b.dataset.businessId);else if(a==="upgrade")upgrade(b,b.dataset.businessId);else if(a==="collect")collect(b);else if(a==="claim")claim(b,b.dataset.taskId);else if(a==="achievement")claimAchievement(b,b.dataset.id);else if(a==="goal")claimGoal(b,b.dataset.id);else if(a==="event")claimEvent(b)});
+window.addEventListener("load",async()=>{if(tg?.initData)await auth();else setStatus("Ожидается запуск из Telegram")});
