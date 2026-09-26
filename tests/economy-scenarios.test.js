@@ -199,3 +199,22 @@ test('scenario: daily event reward is claimable once per date', () => {
   assert.equal(reward.dateKey, event.dateKey);
   assert.throws(() => claimEvent(player, now), /already claimed/);
 });
+
+
+test('scenario: millionaire achievement uses lifetime earned income, not current balance', () => {
+  const player = createPlayer('lifetime-millionaire-player');
+  player.stats.totalEarned = 1_000_000;
+  player.balance = 1_000;
+  assert.equal(availableAchievements(player).find(x => x.id === 'millionaire').unlocked, true);
+});
+
+test('scenario: business upgrade income collection respects the daily event multiplier', () => {
+  const player = createPlayer('upgrade-event-player');
+  player.balance = 10_000;
+  buyBusiness(player, 'kiosk', 1_000);
+  const twoHoursLater = 1_000 + 2 * 60 * 60 * 1_000;
+  const before = player.balance;
+  const income = collectOfflineIncome(player, twoHoursLater, 1.20);
+  assert.equal(income.income, 1_200);
+  assert.equal(player.balance, before + 1_200);
+});
