@@ -9,7 +9,7 @@ export function validateTelegramInitData(initData,botToken,{maxAgeSeconds=86400,
   if(!Number.isInteger(authDate)||authDate<=0) throw new Error('Invalid Telegram auth_date');
   if(authDate>now+60) throw new Error('Telegram auth_date is in the future');
   if(now-authDate>maxAgeSeconds) throw new Error('Telegram auth data expired');
-  const dataCheckString=[...params.entries()].filter(([key])=>key!=='hash').sort(([a],[b])=>a.localeCompare(b)).map(([key,value])=>`${key}=${value}`).join('\\n');
+  const dataCheckString=[...params.entries()].filter(([key])=>key!=='hash').sort(([a],[b])=>a<b?-1:a>b?1:0).map(([key,value])=>`${key}=${value}`).join('\\n');
   const secretKey=createHmac('sha256','WebAppData').update(botToken).digest();
   const calculated=createHmac('sha256',secretKey).update(dataCheckString).digest('hex');
   const a=Buffer.from(calculated,'hex'),b=Buffer.from(receivedHash,'hex');
