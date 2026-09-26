@@ -36,7 +36,7 @@ export async function createSession(userId,ttlSeconds=7*24*60*60){
   const p=await getPool(),client=await p.connect(),token=randomBytes(32).toString('base64url');
   try{
     await client.query('BEGIN');
-    await client.query('SELECT pg_advisory_xact_lock($1)',[String(userId)]);
+    await client.query('SELECT pg_advisory_xact_lock($1::bigint)',[String(userId)]);
     await client.query('DELETE FROM sessions WHERE user_id=$1 OR expires_at<NOW()',[userId]);
     await client.query(`INSERT INTO sessions(token_hash,user_id,expires_at) VALUES($1,$2,NOW()+($3*INTERVAL '1 second'))`,[hashSessionToken(token),userId,ttlSeconds]);
     await client.query('COMMIT');
