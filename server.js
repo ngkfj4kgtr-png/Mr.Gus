@@ -3,7 +3,7 @@ import { readFile } from 'node:fs/promises';
 import { extname, join, normalize } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { validateTelegramInitData } from './src/telegram-auth.js';
-import { initDb,migrate,upsertTelegramUser,createSession,getUserBySession,deleteSession,withPlayerTransaction,recordOperation } from './src/db.js';
+import { initDb,migrate,upsertTelegramUser,createSession,getUserBySession,deleteSession,withPlayerTransaction,recordOperation,assertOperationNotProcessed } from './src/db.js';
 import { validateOperationId, OPERATION_TYPES } from './src/operations.js';
 import { createPlayer,claimTask,buyBusiness,upgradeBusiness,collectOfflineIncome,hourlyProfit,availableTasks } from './src/economy.js';
 
@@ -38,6 +38,7 @@ demoOperations.add(`demo-user:${operationId}`);demoPlayers.set('demo-user',playe
 if(req.method==='GET'&&url.pathname==='/api/state'){const tx=await withPlayerTransaction(a.user.id,async(player,client)=>{const from=player.lastIncomeAt,now=Date.now(),out=collectOfflineIncome(player,now);if(out.seconds>0&&from!==null){const operationId=`income_auto_${from}_${player.lastIncomeAt}`;await recordOperation(client,{operationId,type:OPERATION_TYPES.INCOME_COLLECTION,userId:a.user.id,reward:out.income,at:now})}return out});return sendJson(res,200,{...serialize(tx.player,a.user),action:tx.result})}
 if(req.method==='POST'){const body=await readJson(req),operationId=String(body.operationId||'');validateOperationId(operationId);let out;const tx=await withPlayerTransaction(a.user.id,async(player,client)=>{
 const now=Date.now();
+await assertOperationNotProcessed(client,{operationId,userId:a.user.id});
 if(url.pathname==='/api/task/claim')out=claimTask(player,String(body.taskId||''));
 else if(url.pathname==='/api/business/buy'){
   const before=player.lastIncomeAt; const income=collectOfflineIncome(player,now);
