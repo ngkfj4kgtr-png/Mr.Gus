@@ -64,6 +64,9 @@ export async function deleteSession(token){if(token)await(await getPool()).query
 export function rowToPlayer(row){
   const p=createPlayer(String(row.telegram_id)); p.balance=Number(row.balance);p.xp=Number(row.xp);p.level=Number(row.level);p.businesses=row.businesses||{};
   const validTaskIds=new Set(Object.keys(TASKS));p.claimedTasks=new Set((row.claimed_tasks||[]).filter(id=>validTaskIds.has(id)));
+  const validAchievementIds=new Set(Object.keys(ACHIEVEMENTS));p.claimedAchievements=new Set((row.claimed_achievements||[]).filter(id=>validAchievementIds.has(id)));
+  const validGoalIds=new Set(Object.keys(GOALS));p.claimedGoals=new Set((row.claimed_goals||[]).filter(id=>validGoalIds.has(id)));
+  p.eventClaims=row.event_claims||{};p.stats={...p.stats,...(row.stats||{})};
   p.lastIncomeAt=row.last_income_at===null?null:Number(row.last_income_at);p.createdAt=row.created_at;return p;
 }
 export async function assertOperationNotProcessed(client,{operationId,userId}){
