@@ -10,7 +10,7 @@ function clientAddress(req){
 }
 
 function sessionToken(req){
-  return req.headers.cookie?.match(/(?:^|;\\s*)mfz_session=([^;]+)/)?.[1]||null;
+  return req.headers.cookie?.match(/(?:^|;\s*)mfz_session=([^;]+)/)?.[1]||null;
 }
 
 function bucketKey(req,kind,scope='ip'){
