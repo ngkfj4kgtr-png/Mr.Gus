@@ -21,7 +21,7 @@ export const TASKS=Object.freeze({
   first_order:Object.freeze({id:'first_order',title:'Выполнить первый заказ',description:'Сделай первый заказ и получи стартовый капитал.',reward:250,xp:50,unlockAfter:0}),
   second_order:Object.freeze({id:'second_order',title:'Выполнить второй заказ',description:'Продолжай выполнять заказы и увеличивай капитал.',reward:350,xp:75,unlockAfter:1}),
   third_order:Object.freeze({id:'third_order',title:'Выполнить третий заказ',description:'Три заказа — первый серьёзный шаг к бизнесу.',reward:500,xp:100,unlockAfter:2}),
-  busy_day:Object.freeze({id:'busy_day',title:'Выполнить 5 заказов',description:'Покажи стабильный результат и получи крупный бонус.',reward:900,xp:200,unlockAfter:3})
+  busy_day:Object.freeze({id:'busy_day',title:'Выполнить 4 задания',description:'Выполни все четыре задания и получи крупный бонус.',reward:900,xp:200,unlockAfter:3})
 });
 
 export const ACHIEVEMENTS=Object.freeze({
@@ -66,6 +66,10 @@ function assertPlayer(player){
   if(!Number.isSafeInteger(player.level)||player.level<1)throw new Error('Invalid level');
   if(!(player.claimedTasks instanceof Set)||!(player.claimedAchievements instanceof Set)||!(player.claimedGoals instanceof Set))throw new Error('Invalid progression state');
   if(!player.stats||typeof player.stats!=='object')throw new Error('Invalid stats');
+  for(const key of ['tasksCompleted','businessesOwned','businessUpgrades','totalIncome','totalEarned']){
+    if(!Number.isSafeInteger(player.stats[key])||player.stats[key]<0)throw new Error(`Invalid stat: ${key}`);
+  }
+  if(player.stats.businessesOwned!==Object.keys(player.businesses).length)throw new Error('Invalid businesses owned stat');
 }
 export function assertMoneyAmount(amount,label='Money'){
   if(!Number.isSafeInteger(amount)||amount<0)throw new Error(`${label} must be a non-negative safe integer`);
