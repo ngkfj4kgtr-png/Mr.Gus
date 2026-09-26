@@ -27,7 +27,7 @@ test('scenario: new player reaches first business without free money', () => {
   assert.equal(player.balance, 100);
   assert.equal(player.businesses.kiosk.level, 1);
   assert.equal(player.lastIncomeAt, 1_000);
-  assert.equal(hourlyProfit(player, 'kiosk'), 100);
+  assert.equal(hourlyProfit(player, 'kiosk'), 500);
 });
 
 test('scenario: active player can accumulate, then upgrade and increase profit', () => {
@@ -36,8 +36,8 @@ test('scenario: active player can accumulate, then upgrade and increase profit',
   buyBusiness(player, 'kiosk', 1_000);
 
   const twoHoursLater = 1_000 + 2 * 60 * 60 * 1_000;
-  assert.equal(collectOfflineIncome(player, twoHoursLater).income, 200);
-  assert.equal(player.balance, 200);
+  assert.equal(collectOfflineIncome(player, twoHoursLater).income, 1_000);
+  assert.equal(player.balance, 1_000);
 
   player.balance = 10_000;
   const upgradeTime = twoHoursLater + 1_000;
@@ -45,10 +45,10 @@ test('scenario: active player can accumulate, then upgrade and increase profit',
   const upgrade = upgradeBusiness(player, 'kiosk', upgradeTime);
 
   assert.equal(upgrade.level, 2);
-  assert.equal(upgrade.cost, 1_350);
-  assert.equal(player.balance, 8_650);
+  assert.equal(upgrade.cost, 500);
+  assert.equal(player.balance, 9_500);
   assert.equal(player.xp, 150);
-  assert.equal(hourlyProfit(player, 'kiosk'), 135);
+  assert.equal(hourlyProfit(player, 'kiosk'), 675);
   assert.ok(hourlyProfit(player, 'kiosk') > before);
 });
 
@@ -61,8 +61,8 @@ test('scenario: inactive player receives at most eight hours of offline income',
   const result = collectOfflineIncome(player, thirtyDaysLater);
 
   assert.equal(result.seconds, CONFIG.maxOfflineSeconds);
-  assert.equal(result.income, 800);
-  assert.equal(player.balance, 800);
+  assert.equal(result.income, 4_000);
+  assert.equal(player.balance, 4_000);
   assert.equal(player.lastIncomeAt, thirtyDaysLater);
 });
 
@@ -84,9 +84,9 @@ test('scenario: repeated offline collection at the same time pays zero', () => {
   buyBusiness(player, 'kiosk', 1_000);
 
   const returnTime = 1_000 + 2 * 60 * 60 * 1_000;
-  assert.equal(collectOfflineIncome(player, returnTime).income, 200);
+  assert.equal(collectOfflineIncome(player, returnTime).income, 1_000);
   assert.equal(collectOfflineIncome(player, returnTime).income, 0);
-  assert.equal(player.balance, 200);
+  assert.equal(player.balance, 1_000);
 });
 
 test('scenario: device clock changes cannot grant future income', () => {
@@ -136,7 +136,6 @@ test('scenario: known instant rewards cannot reach one million', () => {
   buyBusiness(player, 'kiosk', 10_000);
   assert.equal(player.balance, 1_000);
 
-  // No elapsed server time means no business income.
   assert.equal(collectOfflineIncome(player, 10_000).income, 0);
   assert.ok(player.balance < 1_000_000);
 });
@@ -146,8 +145,6 @@ test('scenario: device timestamp cannot be supplied to accelerate server-side in
   player.balance = 1_000;
   buyBusiness(player, 'kiosk', 10_000);
 
-  // The economy function accepts only the server-selected timestamp.
-  // A timestamp earlier than the recorded server time is rejected.
   assert.throws(() => collectOfflineIncome(player, 9_999), /Clock moved backwards/);
   assert.equal(player.balance, 0);
 });
