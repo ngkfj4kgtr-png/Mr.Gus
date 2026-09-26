@@ -30,7 +30,7 @@ test.before(async()=>{
 
 test('API rejects mutation without JSON Content-Type',async()=>{
   const r=await fetch(base+'/api/task/claim',{
-    method:'POST',headers:{Cookie:cookie,Origin:base},body:JSON.stringify({operationId:'content-type-test',taskId:'first_order'})
+    method:'POST',headers:{Cookie:cookie},body:JSON.stringify({operationId:'content-type-test',taskId:'first_order'})
   });
   assert.equal(r.status,415);
   assert.equal((await r.json()).error,'Content-Type must be application/json');
@@ -38,7 +38,7 @@ test('API rejects mutation without JSON Content-Type',async()=>{
 
 test('API rejects malformed JSON with a public 400 error',async()=>{
   const r=await fetch(base+'/api/task/claim',{
-    method:'POST',headers:{Cookie:cookie,Origin:base,'Content-Type':'application/json'},body:'{"broken":'
+    method:'POST',headers:{Cookie:cookie,'Content-Type':'application/json'},body:'{"broken":'
   });
   assert.equal(r.status,400);
   assert.equal((await r.json()).error,'Invalid JSON body');
