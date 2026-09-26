@@ -6,6 +6,7 @@ import { validateTelegramInitData } from './src/telegram-auth.js';
 import { initDb,migrate,upsertTelegramUser,createSession,getUserBySession,deleteSession,withPlayerTransaction,recordOperation,assertOperationNotProcessed } from './src/db.js';
 import { validateOperationId, OPERATION_TYPES } from './src/operations.js';
 import { createPlayer,claimTask,buyBusiness,upgradeBusiness,collectOfflineIncome,hourlyProfit,availableTasks } from './src/economy.js';
+import { checkRateLimit,validateSameOrigin,securityHeaders,clearRateLimitBuckets } from './src/http-security.js';
 
 const root=join(fileURLToPath(new URL('.',import.meta.url)),'public');
 const port=Number(process.env.PORT||3000),botToken=process.env.TELEGRAM_BOT_TOKEN,demoMode=process.env.DEMO_MODE==='true';
@@ -15,14 +16,24 @@ if(!demoMode){await initDb();await migrate();}
 const demoPlayers=new Map(),demoOperations=new Set();
 const cookieOptions=()=>`Path=/; HttpOnly; SameSite=Lax${process.env.NODE_ENV==='production'?'; Secure':''}`;
 function parseCookies(header=''){const out={};for(const part of header.split(';')){const i=part.indexOf('=');if(i<0)continue;const k=part.slice(0,i).trim(),v=part.slice(i+1).trim();try{out[k]=decodeURIComponent(v)}catch{}}return out}
-function sendJson(res,status,payload,extra={}){res.writeHead(status,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store',...extra});res.end(JSON.stringify(payload))}
+function sendJson(res,status,payload,extra={}){res.writeHead(status,{...securityHeaders(),'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store',...extra});res.end(JSON.stringify(payload))}
 async function readJson(req){let body='';for await(const chunk of req){body+=chunk;if(body.length>20000)throw new Error('Payload too large')}if(!body)return{};const value=JSON.parse(body);if(!value||typeof value!=='object'||Array.isArray(value))throw new Error('Invalid JSON body');return value}
 function serialize(player,user){return{id:String(user?.telegram_id??player.id),name:[user?.first_name,user?.last_name].filter(Boolean).join(' ')||'Игрок',username:user?.username??null,photoUrl:user?.photo_url??null,balance:player.balance,xp:player.xp,level:player.level,businesses:Object.values(player.businesses).map(b=>({...b,profitPerHour:hourlyProfit(player,b.id)})),claimedTasks:[...player.claimedTasks],tasks:availableTasks(player)}}
 async function auth(req,res){const cookies=parseCookies(req.headers.cookie);if(demoMode&&cookies.mfz_demo==='1'){const player=demoPlayers.get('demo-user')||createPlayer('demo-user');demoPlayers.set('demo-user',player);return{user:{id:'demo-user',telegram_id:'demo-user',first_name:'Демо',last_name:'Игрок',username:'demo'},player,demo:true}}const user=await getUserBySession(cookies.mfz_session);if(!user){sendJson(res,401,{error:'Authentication required'});return null}return{user,sessionToken:cookies.mfz_session}}
-function errorStatus(message){if(message==='Operation already processed')return 409;if(/authentication|required|invalid|expired|already|insufficient|maximum|clock|task|business|locked|overflow|payload|json/i.test(message))return 400;if(message==='Endpoint not found')return 404;return 500}
+function errorStatus(message){if(message==='Operation already processed')return 409;if(/authentication|required|invalid|expired|already|insufficient|maximum|clock|task|business|locked|overflow|payload|json|origin|site|too many/i.test(message))return 400;if(message==='Endpoint not found')return 404;return 500}
 
 const server=http.createServer(async(req,res)=>{try{
+clearRateLimitBuckets();
 const url=new URL(req.url,`http://${req.headers.host||'localhost'}`);
+if(url.pathname.startsWith('/api/') && (req.method==='POST'||req.method==='PUT'||req.method==='PATCH'||req.method==='DELETE')){
+  validateSameOrigin(req);
+  const limit=checkRateLimit(req,{mutation:true});
+  if(!limit.allowed)return sendJson(res,429,{error:'Too many requests'},{'Retry-After':String(limit.retryAfter)});
+}
+if(url.pathname.startsWith('/api/') && req.method==='GET'){
+  const limit=checkRateLimit(req);
+  if(!limit.allowed)return sendJson(res,429,{error:'Too many requests'},{'Retry-After':String(limit.retryAfter)});
+}
 if(req.method==='POST'&&url.pathname==='/api/auth/telegram'){
 if(demoMode&&!req.headers['x-telegram-init-data']){res.setHeader('Set-Cookie',`mfz_demo=1; ${cookieOptions()}; Max-Age=604800`);return sendJson(res,200,{ok:true,demo:true,user:{first_name:'Демо',last_name:'Игрок',username:'demo'}})}
 const verified=validateTelegramInitData(String(req.headers['x-telegram-init-data']||''),botToken),user=await upsertTelegramUser(verified.user),token=await createSession(user.id);
