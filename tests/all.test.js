@@ -146,3 +146,24 @@ test('Telegram initData rejects a tampered payload',()=>{
   params.set('user',JSON.stringify({id:2,first_name:'Tampered'}));
   assert.throws(()=>validateTelegramInitData(params.toString(),botToken,{now:authDate}),/Invalid Telegram signature/);
 });
+
+
+test('Telegram initData rejects expired authentication data',()=>{
+  const botToken='123456:TEST_TOKEN';
+  const authDate=1700000000;
+  const params=new URLSearchParams({auth_date:String(authDate),user:JSON.stringify({id:1,first_name:'Test'})});
+  const dataCheckString=[...params.entries()].sort(([a],[b])=>a<b?-1:a>b?1:0).map(([key,value])=>`${key}=${value}`).join('\\n');
+  const secretKey=createHmac('sha256','WebAppData').update(botToken).digest();
+  params.set('hash',createHmac('sha256',secretKey).update(dataCheckString).digest('hex'));
+  assert.throws(()=>validateTelegramInitData(params.toString(),botToken,{now:authDate+86401}),/expired/);
+});
+
+test('Telegram initData rejects future authentication data',()=>{
+  const botToken='123456:TEST_TOKEN';
+  const authDate=1700000061;
+  const params=new URLSearchParams({auth_date:String(authDate),user:JSON.stringify({id:1,first_name:'Test'})});
+  const dataCheckString=[...params.entries()].sort(([a],[b])=>a<b?-1:a>b?1:0).map(([key,value])=>`${key}=${value}`).join('\\n');
+  const secretKey=createHmac('sha256','WebAppData').update(botToken).digest();
+  params.set('hash',createHmac('sha256',secretKey).update(dataCheckString).digest('hex'));
+  assert.throws(()=>validateTelegramInitData(params.toString(),botToken,{now:authDate-61}),/future/);
+});
