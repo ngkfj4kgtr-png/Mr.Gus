@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createPlayer,claimTask,buyBusiness,collectOfflineIncome,hourlyProfit,upgradeBusiness,availableTasks,CONFIG} from '../src/economy.js';
 import {createOperationId,validateOperationId} from '../src/operations.js';
+import {assertOperationNotProcessed} from '../src/db.js';
 
 test('new player starts safely',()=>{const p=createPlayer('u');assert.equal(p.balance,0);assert.equal(p.level,1);});
 test('task chain cannot be skipped',()=>{const p=createPlayer('u');assert.equal(availableTasks(p)[1].locked,true);claimTask(p,'first_order');assert.equal(p.balance,250);assert.throws(()=>claimTask(p,'third_order'),/locked/);});
@@ -28,4 +29,15 @@ test('buying another business must preserve accrued income of existing businesse
   const accrued=collectOfflineIncome(p,t).income;
   assert.equal(accrued,200);
   assert.equal(p.lastIncomeAt,t);
+});
+
+
+test('stage 5: duplicate operation is rejected before mutation',async()=>{
+  const client={query:async(sql,args)=>({rowCount:sql.includes('SELECT')?1:0,rows:sql.includes('SELECT')?[{operation_id:args[1],operation_type:'task_reward',reward_amount:250,created_at:new Date()}]:[]})};
+  await assert.rejects(()=>assertOperationNotProcessed(client,{operationId:'task_retry_123',userId:42}),/Operation already processed/);
+});
+
+test('stage 5: new operation passes precheck',async()=>{
+  const client={query:async()=>({rowCount:0,rows:[]})};
+  await assert.doesNotReject(()=>assertOperationNotProcessed(client,{operationId:'task_new_123',userId:42}));
 });
