@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {checkRateLimit,validateSameOrigin,securityHeaders,clearRateLimitBuckets} from '../src/http-security.js';
+import {checkRateLimit,validateSameOrigin,validateFetchMetadata,securityHeaders,clearRateLimitBuckets} from '../src/http-security.js';
 
 function req(ip='203.0.113.10',headers={}){return{headers:{'x-forwarded-for':ip,...headers},socket:{remoteAddress:ip}}}
 
@@ -37,6 +37,14 @@ test('cross-site state-changing origin is blocked',()=>{
     origin:'https://evil.example',
     host:'game.example'
   }),),/Cross-site request blocked/);
+});
+
+test('cross-site fetch metadata is blocked for state-changing requests',()=>{
+  assert.throws(()=>validateFetchMetadata(req('198.51.100.7',{'sec-fetch-site':'cross-site'}),{stateChanging:true}),/Cross-site request blocked/);
+});
+
+test('same-origin fetch metadata is accepted for state-changing requests',()=>{
+  assert.doesNotThrow(()=>validateFetchMetadata(req('198.51.100.8',{'sec-fetch-site':'same-origin'}),{stateChanging:true}));
 });
 
 test('same origin is accepted',()=>{
