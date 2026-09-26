@@ -128,7 +128,7 @@ test('Telegram initData accepts a valid signed payload',()=>{
   params.set('auth_date',String(authDate));
   params.set('query_id','AA123');
   params.set('user',JSON.stringify({id:123456789,first_name:'Test',username:'tester'}));
-  const dataCheckString=[...params.entries()].sort(([a],[b])=>a<b?-1:a>b?1:0).map(([key,value])=>`${key}=${value}`).join('\\n');
+  const dataCheckString=[...params.entries()].sort(([a],[b])=>a<b?-1:a>b?1:0).map(([key,value])=>`${key}=${value}`).join('\n');
   const secretKey=createHmac('sha256','WebAppData').update(botToken).digest();
   const hash=createHmac('sha256',secretKey).update(dataCheckString).digest('hex');
   params.set('hash',hash);
