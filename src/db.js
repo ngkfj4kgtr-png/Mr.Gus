@@ -47,6 +47,19 @@ export function rowToPlayer(row){
   const validTaskIds=new Set(Object.keys(TASKS));p.claimedTasks=new Set((row.claimed_tasks||[]).filter(id=>validTaskIds.has(id)));
   p.lastIncomeAt=row.last_income_at===null?null:Number(row.last_income_at);p.createdAt=row.created_at;return p;
 }
+export async function assertOperationNotProcessed(client,{operationId,userId}){
+  const existing=await client.query(
+    'SELECT operation_id,operation_type,reward_amount,created_at FROM economy_operations WHERE user_id=$1 AND operation_id=$2 FOR SHARE',
+    [String(userId),operationId]
+  );
+  if(existing.rowCount){
+    const err=new Error('Operation already processed');
+    err.code='OPERATION_ALREADY_PROCESSED';
+    err.operation=existing.rows[0];
+    throw err;
+  }
+}
+
 export async function recordOperation(client,{operationId,type,userId,reward=0,at=Date.now()}){
   const record=(await import('./operations.js')).operationRecord({operationId,type,userId,reward,at});
   const r=await client.query(`INSERT INTO economy_operations(operation_id,operation_type,user_id,reward_amount)
