@@ -3,7 +3,12 @@ const WINDOW_MS=60_000;
 const MAX_REQUESTS=120;
 const MAX_MUTATIONS=30;
 
-function bucketKey(req,kind){return `${kind}:${req.headers['x-forwarded-for']?.split(',')[0]?.trim()||req.socket.remoteAddress||'unknown'}`;}
+function bucketKey(req,kind){
+  const session=req.headers.cookie?.match(/(?:^|;\\s*)mfz_session=([^;]+)/)?.[1];
+  if(session)return `${kind}:session:${session}`;
+  const forwarded=process.env.TRUST_PROXY==='true'?req.headers['x-forwarded-for']?.split(',')[0]?.trim():null;
+  return `${kind}:ip:${forwarded||req.socket.remoteAddress||'unknown'}`;
+}
 
 function consume(key,limit,now=Date.now()){
   const current=buckets.get(key);
