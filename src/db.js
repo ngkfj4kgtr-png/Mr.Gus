@@ -6,7 +6,7 @@ let pool; let Pool;
 export async function initDb(){
   if(!process.env.DATABASE_URL) throw new Error('DATABASE_URL is required');
   if(!Pool)({Pool}=await import('pg'));
-  pool??=new Pool({connectionString:process.env.DATABASE_URL,max:10,ssl:process.env.PGSSL==='disable'?false:{rejectUnauthorized:false}});
+  pool??=new Pool({connectionString:process.env.DATABASE_URL,max:10,ssl:process.env.PGSSL==='disable'?false:{rejectUnauthorized:true,ca:process.env.PGSSL_CA||undefined}});
   return pool;
 }
 export async function getPool(){if(!pool)await initDb();return pool}
@@ -47,6 +47,10 @@ export async function createSession(userId,ttlSeconds=7*24*60*60){
   }finally{
     client.release();
   }
+}
+export async function cleanupExpiredSessions(){
+  const r=await(await getPool()).query('DELETE FROM sessions WHERE expires_at<=NOW()');
+  return r.rowCount;
 }
 export async function getUserBySession(token){
   if(!token)return null;
