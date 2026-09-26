@@ -1,6 +1,6 @@
 import { randomBytes } from 'node:crypto';
 import { hashSessionToken } from './telegram-auth.js';
-import { createPlayer, TASKS } from './economy.js';
+import { createPlayer, TASKS, assertMoneyAmount } from './economy.js';
 let pool; let Pool;
 
 export async function initDb(){
@@ -77,6 +77,6 @@ export async function updatePlayer(userId,player,client){
 export async function withPlayerTransaction(userId,fn){
   const p=await getPool(),client=await p.connect();
   try{await client.query('BEGIN');const r=await client.query('SELECT * FROM users WHERE id=$1 FOR UPDATE',[userId]);if(!r.rowCount)throw new Error('User not found');
-    const player=rowToPlayer(r.rows[0]);const result=await fn(player,client);await updatePlayer(userId,player,client);await client.query('COMMIT');return{result,player};
+    const player=rowToPlayer(r.rows[0]);const result=await fn(player,client);assertMoneyAmount(player.balance,'Balance');await updatePlayer(userId,player,client);await client.query('COMMIT');return{result,player};
   }catch(e){await client.query('ROLLBACK');throw e}finally{client.release()}
 }
