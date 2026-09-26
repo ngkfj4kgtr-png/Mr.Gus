@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createPlayer,claimTask,buyBusiness,collectOfflineIncome,hourlyProfit,upgradeBusiness,availableTasks,CONFIG} from '../src/economy.js';
+import {createPlayer,claimTask,buyBusiness,collectOfflineIncome,hourlyProfit,upgradeBusiness,availableTasks,CONFIG,assertMoneyAmount} from '../src/economy.js';
 import {createOperationId,validateOperationId} from '../src/operations.js';
 import {assertOperationNotProcessed} from '../src/db.js';
 
@@ -40,4 +40,36 @@ test('stage 5: duplicate operation is rejected before mutation',async()=>{
 test('stage 5: new operation passes precheck',async()=>{
   const client={query:async()=>({rowCount:0,rows:[]})};
   await assert.doesNotReject(()=>assertOperationNotProcessed(client,{operationId:'task_new_123',userId:42}));
+});
+
+
+test('stage 7: insufficient purchase cannot make balance negative',()=>{
+  const p=createPlayer('u');p.balance=999;
+  assert.throws(()=>buyBusiness(p,'kiosk',1000),/Insufficient balance/);
+  assert.equal(p.balance,999);
+});
+
+test('stage 7: insufficient upgrade cannot make balance negative',()=>{
+  const p=createPlayer('u');p.balance=1000;buyBusiness(p,'kiosk',1000);
+  assert.throws(()=>upgradeBusiness(p,'kiosk',2000),/Insufficient balance/);
+  assert.equal(p.balance,0);
+});
+
+test('stage 8: money must be an integer safe amount',()=>{
+  assertMoneyAmount(1000);
+  assert.throws(()=>assertMoneyAmount(999.99),/safe integer/);
+  assert.throws(()=>assertMoneyAmount(Number.MAX_SAFE_INTEGER+1),/safe integer/);
+  assert.throws(()=>assertMoneyAmount(Infinity),/safe integer/);
+  assert.throws(()=>assertMoneyAmount(NaN),/safe integer/);
+});
+
+test('stage 8: balance overflow is rejected without changing balance',()=>{
+  const p=createPlayer('u');p.balance=Number.MAX_SAFE_INTEGER;
+  assert.throws(()=>claimTask(p,'first_order'),/Balance overflow/);
+  assert.equal(p.balance,Number.MAX_SAFE_INTEGER);
+});
+
+test('stage 8: fractional balance is rejected by player invariant',()=>{
+  const p=createPlayer('u');p.balance=100.5;
+  assert.throws(()=>hourlyProfit(p,'kiosk'),/Invalid balance/);
 });
