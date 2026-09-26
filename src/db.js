@@ -1,6 +1,6 @@
 import { randomBytes } from 'node:crypto';
 import { hashSessionToken } from './telegram-auth.js';
-import { createPlayer, TASKS, assertMoneyAmount } from './economy.js';
+import { createPlayer, TASKS, ACHIEVEMENTS, GOALS, assertMoneyAmount } from './economy.js';
 let pool; let Pool;
 
 export async function initDb(){
