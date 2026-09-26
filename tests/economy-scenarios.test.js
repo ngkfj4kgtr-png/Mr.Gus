@@ -221,6 +221,15 @@ test('scenario: business upgrade income collection respects the daily event mult
 });
 
 
+test('scenario: ten-thousand income goal ignores reward-only earnings', () => {
+  const player = createPlayer('income-goal-semantics-player');
+  player.stats.totalEarned = 10_000;
+  player.stats.totalIncome = 9_999;
+  assert.equal(availableGoals(player).find(x => x.id === 'earn_10k').unlocked, false);
+  player.stats.totalIncome = 10_000;
+  assert.equal(availableGoals(player).find(x => x.id === 'earn_10k').unlocked, true);
+});
+
 test('scenario: stats validation rejects corrupted progression counters', () => {
   const player = createPlayer('stats-validation-player');
   player.stats.totalEarned = -1;
