@@ -61,4 +61,4 @@ return sendJson(res,200,{...serialize(tx.player,a.user),action:out})}
 return sendJson(res,405,{error:'Method not allowed'})}
 const requested=url.pathname==='/'?'/index.html':url.pathname,safe=normalize(requested).replace(/^\.\.(\/|\\)+/,'');const file=join(root,safe),data=await readFile(file);res.writeHead(200,{'Content-Type':({'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8'})[extname(file)]||'application/octet-stream','Cache-Control':'no-store'});res.end(data);
 }catch(e){const msg=e?.message||'Server error';if(req.url?.startsWith('/api/'))return sendJson(res,errorStatus(msg),{error:msg});res.writeHead(500,{'Content-Type':'text/plain; charset=utf-8'});res.end('Server error')}});
-server.listen(port,'0.0.0.0',()=>console.log(`Mr.Gus — stages 1–6: http://localhost:${port}`));
+server.listen(port,'0.0.0.0',()=>console.log(`Mr.Gus — stages 1–8: http://localhost:${port}`));
