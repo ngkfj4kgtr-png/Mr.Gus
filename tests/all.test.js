@@ -1,8 +1,10 @@
 import test from 'node:test';
+import {createHmac} from 'node:crypto';
 import assert from 'node:assert/strict';
 import {createPlayer,claimTask,buyBusiness,collectOfflineIncome,hourlyProfit,upgradeBusiness,availableTasks,CONFIG,assertMoneyAmount} from '../src/economy.js';
 import {createOperationId,validateOperationId} from '../src/operations.js';
 import {assertOperationNotProcessed} from '../src/db.js';
+import {validateTelegramInitData} from '../src/telegram-auth.js';
 
 test('new player starts safely',()=>{const p=createPlayer('u');assert.equal(p.balance,0);assert.equal(p.level,1);});
 test('task chain cannot be skipped',()=>{const p=createPlayer('u');assert.equal(availableTasks(p)[1].locked,true);claimTask(p,'first_order');assert.equal(p.balance,250);assert.throws(()=>claimTask(p,'third_order'),/locked/);});
@@ -72,4 +74,31 @@ test('stage 8: balance overflow is rejected without changing balance',()=>{
 test('stage 8: fractional balance is rejected by player invariant',()=>{
   const p=createPlayer('u');p.balance=100.5;
   assert.throws(()=>hourlyProfit(p,'kiosk'),/Invalid balance/);
+});
+
+
+test('Telegram initData accepts a valid signed payload',()=>{
+  const botToken='123456:TEST_TOKEN';
+  const authDate=1700000000;
+  const params=new URLSearchParams();
+  params.set('auth_date',String(authDate));
+  params.set('query_id','AA123');
+  params.set('user',JSON.stringify({id:123456789,first_name:'Test',username:'tester'}));
+  const dataCheckString=[...params.entries()].sort(([a],[b])=>a<b?-1:a>b?1:0).map(([key,value])=>`${key}=${value}`).join('\\n');
+  const secretKey=createHmac('sha256','WebAppData').update(botToken).digest();
+  const hash=createHmac('sha256',secretKey).update(dataCheckString).digest('hex');
+  params.set('hash',hash);
+  const result=validateTelegramInitData(params.toString(),botToken,{now:authDate});
+  assert.equal(result.user.id,123456789);
+});
+
+test('Telegram initData rejects a tampered payload',()=>{
+  const botToken='123456:TEST_TOKEN';
+  const authDate=1700000000;
+  const params=new URLSearchParams({auth_date:String(authDate),user:JSON.stringify({id:1,first_name:'Test'})});
+  const dataCheckString=[...params.entries()].sort(([a],[b])=>a<b?-1:a>b?1:0).map(([key,value])=>`${key}=${value}`).join('\\n');
+  const secretKey=createHmac('sha256','WebAppData').update(botToken).digest();
+  params.set('hash',createHmac('sha256',secretKey).update(dataCheckString).digest('hex'));
+  params.set('user',JSON.stringify({id:2,first_name:'Tampered'}));
+  assert.throws(()=>validateTelegramInitData(params.toString(),botToken,{now:authDate}),/Invalid Telegram signature/);
 });
