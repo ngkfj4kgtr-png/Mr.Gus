@@ -37,7 +37,20 @@ if(url.pathname==='/api/task/claim')action=claimTask(player,String(body.taskId||
 demoOperations.add(`demo-user:${operationId}`);demoPlayers.set('demo-user',player);return sendJson(res,200,{...serialize(player,a.user),action})}return sendJson(res,405,{error:'Method not allowed'})}
 if(req.method==='GET'&&url.pathname==='/api/state'){const tx=await withPlayerTransaction(a.user.id,async(player,client)=>{const from=player.lastIncomeAt,now=Date.now(),out=collectOfflineIncome(player,now);if(out.seconds>0&&from!==null){const operationId=`income_auto_${from}_${player.lastIncomeAt}`;await recordOperation(client,{operationId,type:OPERATION_TYPES.INCOME_COLLECTION,userId:a.user.id,reward:out.income,at:now})}return out});return sendJson(res,200,{...serialize(tx.player,a.user),action:tx.result})}
 if(req.method==='POST'){const body=await readJson(req),operationId=String(body.operationId||'');validateOperationId(operationId);let out;const tx=await withPlayerTransaction(a.user.id,async(player,client)=>{
-if(url.pathname==='/api/task/claim')out=claimTask(player,String(body.taskId||''));else if(url.pathname==='/api/business/buy')out=buyBusiness(player,String(body.businessId||''),Date.now());else if(url.pathname==='/api/business/upgrade')out=upgradeBusiness(player,String(body.businessId||''),Date.now());else if(url.pathname==='/api/income/collect')out=collectOfflineIncome(player,Date.now());else throw new Error('Endpoint not found');
+const now=Date.now();
+if(url.pathname==='/api/task/claim')out=claimTask(player,String(body.taskId||''));
+else if(url.pathname==='/api/business/buy'){
+  const before=player.lastIncomeAt; const income=collectOfflineIncome(player,now);
+  if(income.income>0&&before!==null) await recordOperation(client,{operationId:`income_auto_${before}_${player.lastIncomeAt}`,type:OPERATION_TYPES.INCOME_COLLECTION,userId:a.user.id,reward:income.income,at:now});
+  out=buyBusiness(player,String(body.businessId||''),now);
+}
+else if(url.pathname==='/api/business/upgrade'){
+  const before=player.lastIncomeAt; const income=collectOfflineIncome(player,now);
+  if(income.income>0&&before!==null) await recordOperation(client,{operationId:`income_auto_${before}_${player.lastIncomeAt}`,type:OPERATION_TYPES.INCOME_COLLECTION,userId:a.user.id,reward:income.income,at:now});
+  out=upgradeBusiness(player,String(body.businessId||''),now);
+}
+else if(url.pathname==='/api/income/collect')out=collectOfflineIncome(player,now);
+else throw new Error('Endpoint not found');
 const type=url.pathname==='/api/task/claim'?OPERATION_TYPES.TASK_REWARD:url.pathname==='/api/business/buy'?OPERATION_TYPES.BUSINESS_PURCHASE:url.pathname==='/api/business/upgrade'?OPERATION_TYPES.BUSINESS_UPGRADE:OPERATION_TYPES.INCOME_COLLECTION;
 const reward=Number(out?.reward??out?.income??0);await recordOperation(client,{operationId,type,userId:a.user.id,reward});return out});
 return sendJson(res,200,{...serialize(tx.player,a.user),action:out})}
