@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { validateTelegramInitData } from './src/telegram-auth.js';
 import { initDb,migrate,upsertTelegramUser,createSession,getUserBySession,deleteSession,cleanupExpiredSessions,withPlayerTransaction,recordOperation,assertOperationNotProcessed } from './src/db.js';
 import { validateOperationId, OPERATION_TYPES } from './src/operations.js';
-import { createPlayer,claimTask,buyBusiness,upgradeBusiness,collectOfflineIncome,hourlyProfit,availableTasks } from './src/economy.js';
+import { createPlayer,claimTask,buyBusiness,upgradeBusiness,collectOfflineIncome,hourlyProfit,availableTasks,availableAchievements,availableGoals,claimAchievement,claimGoal,currentEvent,claimEvent,BUSINESS,canBuyBusiness,businessUnlockLevel } from './src/economy.js';
 import { checkRateLimit,validateSameOrigin,validateFetchMetadata,securityHeaders,clearRateLimitBuckets } from './src/http-security.js';
 
 const root=join(fileURLToPath(new URL('.',import.meta.url)),'public');
@@ -28,7 +28,7 @@ async function readJson(req){
   if(!value||typeof value!=='object'||Array.isArray(value))throw new Error('Invalid JSON body');
   return value;
 }
-function serialize(player,user){return{id:String(user?.telegram_id??player.id),name:[user?.first_name,user?.last_name].filter(Boolean).join(' ')||'Игрок',username:user?.username??null,photoUrl:user?.photo_url??null,balance:player.balance,xp:player.xp,level:player.level,businesses:Object.values(player.businesses).map(b=>({...b,profitPerHour:hourlyProfit(player,b.id)})),claimedTasks:[...player.claimedTasks],tasks:availableTasks(player)}}
+function serialize(player,user){return{id:String(user?.telegram_id??player.id),name:[user?.first_name,user?.last_name].filter(Boolean).join(' ')||'Игрок',username:user?.username??null,photoUrl:user?.photo_url??null,balance:player.balance,xp:player.xp,level:player.level,businesses:Object.values(player.businesses).map(b=>({...b,profitPerHour:hourlyProfit(player,b.id)})),businessCatalog:Object.values(BUSINESS).map(b=>({id:b.id,name:b.name,description:b.description,cost:b.baseCost,unlockLevel:businessUnlockLevel(b.id),unlocked:canBuyBusiness(player,b.id),owned:!!player.businesses[b.id]})),claimedTasks:[...player.claimedTasks],tasks:availableTasks(player),achievements:availableAchievements(player),goals:availableGoals(player),event:{...currentEvent(),claimed:!!player.eventClaims[currentEvent().dateKey]},stats:player.stats}}
 async function auth(req,res){const cookies=parseCookies(req.headers.cookie);if(demoMode&&cookies.mfz_demo==='1'){const player=demoPlayers.get('demo-user')||createPlayer('demo-user');demoPlayers.set('demo-user',player);return{user:{id:'demo-user',telegram_id:'demo-user',first_name:'Демо',last_name:'Игрок',username:'demo'},player,demo:true}}const user=await getUserBySession(cookies.mfz_session);if(!user){sendJson(res,401,{error:'Authentication required'});return null}return{user,sessionToken:cookies.mfz_session}}
 function errorStatus(message){if(message==='Operation already processed')return 409;if(message==='Endpoint not found')return 404;if(message==='Content-Type must be application/json')return 415;if(/authentication|required|invalid|expired|already|insufficient|maximum|clock|task|business|locked|overflow|payload|json|origin|site|too many/i.test(message))return 400;return 500}
 function publicError(message){return errorStatus(message)===500?'Internal server error':message}
@@ -55,11 +55,15 @@ if(url.pathname.startsWith('/api/')){
 const a=await auth(req,res);if(!a)return;
 if(a.demo){const player=a.player;if(req.method==='GET'&&url.pathname==='/api/state'){collectOfflineIncome(player,Date.now());return sendJson(res,200,serialize(player,a.user))}
 if(req.method==='POST'){const body=await readJson(req),operationId=String(body.operationId||'');validateOperationId(operationId);if(demoOperations.has(`demo-user:${operationId}`))throw new Error('Operation already processed');let action;
-if(url.pathname==='/api/task/claim')action=claimTask(player,String(body.taskId||''));else if(url.pathname==='/api/business/buy')action=buyBusiness(player,String(body.businessId||''),Date.now());else if(url.pathname==='/api/business/upgrade')action=upgradeBusiness(player,String(body.businessId||''),Date.now());else if(url.pathname==='/api/income/collect')action=collectOfflineIncome(player,Date.now());else return sendJson(res,404,{error:'Endpoint not found'});
+if(url.pathname==='/api/task/claim')action=claimTask(player,String(body.taskId||''));else if(url.pathname==='/api/business/buy')action=buyBusiness(player,String(body.businessId||''),Date.now());else if(url.pathname==='/api/business/upgrade')action=upgradeBusiness(player,String(body.businessId||''),Date.now());else if(url.pathname==='/api/income/collect')action=collectOfflineIncome(player,Date.now());
+else if(url.pathname==='/api/achievement/claim')action=claimAchievement(player,String(body.achievementId||''));
+else if(url.pathname==='/api/goal/claim')action=claimGoal(player,String(body.goalId||''));
+else if(url.pathname==='/api/event/claim')action=claimEvent(player,Date.now());
+else return sendJson(res,404,{error:'Endpoint not found'});
 demoOperations.add(`demo-user:${operationId}`);demoPlayers.set('demo-user',player);return sendJson(res,200,{...serialize(player,a.user),action})}return sendJson(res,405,{error:'Method not allowed'})}
 if(req.method==='GET'&&url.pathname==='/api/state'){const tx=await withPlayerTransaction(a.user.id,async(player,client)=>{const from=player.lastIncomeAt,now=Date.now(),out=collectOfflineIncome(player,now);if(out.seconds>0&&from!==null){const operationId=`income_auto_${from}_${player.lastIncomeAt}`;await recordOperation(client,{operationId,type:OPERATION_TYPES.INCOME_COLLECTION,userId:a.user.id,reward:out.income,at:now})}return out});return sendJson(res,200,{...serialize(tx.player,a.user),action:tx.result})}
 if(req.method==='POST'){
-const allowedPostEndpoints=new Set(['/api/task/claim','/api/business/buy','/api/business/upgrade','/api/income/collect']);
+const allowedPostEndpoints=new Set(['/api/task/claim','/api/business/buy','/api/business/upgrade','/api/income/collect','/api/achievement/claim','/api/goal/claim','/api/event/claim']);
 if(!allowedPostEndpoints.has(url.pathname))return sendJson(res,404,{error:'Endpoint not found'});
 const body=await readJson(req),operationId=String(body.operationId||'');validateOperationId(operationId);let out;const tx=await withPlayerTransaction(a.user.id,async(player,client)=>{
 const now=Date.now();
@@ -76,12 +80,15 @@ else if(url.pathname==='/api/business/upgrade'){
   out=upgradeBusiness(player,String(body.businessId||''),now);
 }
 else if(url.pathname==='/api/income/collect')out=collectOfflineIncome(player,now);
+else if(url.pathname==='/api/achievement/claim')out=claimAchievement(player,String(body.achievementId||''));
+else if(url.pathname==='/api/goal/claim')out=claimGoal(player,String(body.goalId||''));
+else if(url.pathname==='/api/event/claim')out=claimEvent(player,now);
 else throw new Error('Endpoint not found');
-const type=url.pathname==='/api/task/claim'?OPERATION_TYPES.TASK_REWARD:url.pathname==='/api/business/buy'?OPERATION_TYPES.BUSINESS_PURCHASE:url.pathname==='/api/business/upgrade'?OPERATION_TYPES.BUSINESS_UPGRADE:OPERATION_TYPES.INCOME_COLLECTION;
+const type=url.pathname==='/api/task/claim'?OPERATION_TYPES.TASK_REWARD:url.pathname==='/api/business/buy'?OPERATION_TYPES.BUSINESS_PURCHASE:url.pathname==='/api/business/upgrade'?OPERATION_TYPES.BUSINESS_UPGRADE:url.pathname==='/api/achievement/claim'?OPERATION_TYPES.ACHIEVEMENT_REWARD:url.pathname==='/api/goal/claim'?OPERATION_TYPES.GOAL_REWARD:url.pathname==='/api/event/claim'?OPERATION_TYPES.EVENT_REWARD:OPERATION_TYPES.INCOME_COLLECTION;
 const reward=Number(out?.reward??out?.income??0);await recordOperation(client,{operationId,type,userId:a.user.id,reward});return out});
 return sendJson(res,200,{...serialize(tx.player,a.user),action:out})}
 return sendJson(res,405,{error:'Method not allowed'})}
 const requested=url.pathname==='/'?'/index.html':url.pathname,safe=normalize(requested).replace(/^\.\.(\/|\\)+/,'');const file=join(root,safe),data=await readFile(file);res.writeHead(200,{...securityHeaders(),'Content-Type':({'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8'})[extname(file)]||'application/octet-stream','Cache-Control':'no-store'});res.end(data);
 }catch(e){const msg=e?.message||'Server error';if(req.url?.startsWith('/api/'))return sendJson(res,errorStatus(msg),{error:publicError(msg)});res.writeHead(500,{'Content-Type':'text/plain; charset=utf-8'});res.end('Server error')}});
 if(!demoMode){setInterval(()=>cleanupExpiredSessions().catch(()=>{}),15*60*1000).unref()}
-server.listen(port,'0.0.0.0',()=>console.log(`Mr.Gus — stages 1–8: http://localhost:${port}`));
+server.listen(port,'0.0.0.0',()=>console.log(`Mr.Gus — stage 9 progression: http://localhost:${port}`));
