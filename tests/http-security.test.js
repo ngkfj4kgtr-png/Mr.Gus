@@ -11,6 +11,13 @@ test('rate limit allows normal traffic and blocks mutation spam',()=>{
   assert.equal(checkRateLimit(req('198.51.100.1'),{mutation:true,now}).allowed,false);
 });
 
+test('forged session cookies cannot bypass the IP rate limit',()=>{
+  const now=2_500_000;
+  clearRateLimitBuckets(now);
+  for(let i=0;i<30;i++)assert.equal(checkRateLimit(req('198.51.100.9',{cookie:`mfz_session=fake_${i}`}),{mutation:true,now}).allowed,true);
+  assert.equal(checkRateLimit(req('198.51.100.9',{cookie:'mfz_session=fake_30'}),{mutation:true,now}).allowed,false);
+});
+
 test('rate limits are isolated by client address',()=>{
   const now=2_000_000;
   clearRateLimitBuckets(now);
