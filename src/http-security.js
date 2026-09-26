@@ -50,7 +50,7 @@ export function securityHeaders(){
     'X-Frame-Options':'DENY',
     'Referrer-Policy':'no-referrer',
     'Permissions-Policy':'camera=(), microphone=(), geolocation=()',
-    'Content-Security-Policy':"default-src 'self'; script-src 'self' https://telegram.org https://*.telegram.org; connect-src 'self'; img-src 'self' data: https://t.me https://*.telegram.org; style-src 'self' 'unsafe-inline'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+    'Content-Security-Policy':"default-src 'self'; script-src 'self' https://telegram.org https://*.telegram.org; connect-src 'self'; img-src 'self' data: https://t.me https://*.telegram.org; style-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
   };
 }
 
