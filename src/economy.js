@@ -42,7 +42,7 @@ export const GOALS=Object.freeze({
 export const EVENTS=Object.freeze([
   Object.freeze({id:'trade_rush',title:'🔥 Торговый ажиотаж',description:'Сегодня доход бизнеса повышен на 20%.',incomeMultiplier:1.20,reward:500,xp:100}),
   Object.freeze({id:'gus_bonus',title:'🪿 Бонус Mr.Gus',description:'Сегодня за активность начисляется дополнительный бонус.',incomeMultiplier:1,reward:750,xp:150}),
-  Object.freeze({id:'smart_saving',title:'💼 День экономии',description:'Сегодня расходы бизнеса снижены на 15%.',incomeMultiplier:1.10,reward:600,xp:120})
+  Object.freeze({id:'smart_saving',title:'💼 День экономии',description:'Сегодня доход бизнеса повышен на 10%.',incomeMultiplier:1.10,reward:600,xp:120})
 ]);
 
 export function xpForLevel(level){
@@ -95,7 +95,7 @@ function progressionUnlocked(player,kind,id){
     if(id==='business_owner')return Object.keys(player.businesses).length>=2;
     if(id==='business_tycoon')return Object.keys(player.businesses).length>=4;
     if(id==='level_five')return player.level>=5;
-    if(id==='millionaire')return player.balance>=1_000_000;
+    if(id==='millionaire')return (player.stats.totalEarned||0)>=1_000_000;
   }
   if(kind==='goal'){
     if(id==='start_business')return Object.keys(player.businesses).length>=1;
