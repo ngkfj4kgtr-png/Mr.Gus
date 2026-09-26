@@ -19,6 +19,7 @@ function friendlyError(error){
   if(message==="Business not owned")return "Сначала купите бизнес.";
   if(message==="Clock moved backwards")return "Время устройства изменилось. Обновите игру.";
   if(message==="Authentication required")return "Сессия истекла. Откройте игру через Telegram ещё раз.";
+  if(message==="Too many requests")return "Слишком много запросов. Подождите немного.";
   return message;
 }
 
@@ -36,17 +37,22 @@ async function auth(){
     if(!tg?.initData)throw Error("Откройте Mr.Gus через кнопку Telegram «Открыть Mr.Gus».");
     setStatus("Авторизация через Telegram…");
     await api("/api/auth/telegram",{method:"POST"});
-    await refresh();
+    await refresh(true);
     setStatus("Вы вошли через Telegram");
   }catch(e){setStatus(friendlyError(e),true);alert(friendlyError(e))}
 }
 
-async function refresh(){
+async function refresh(fromAuth=false){
   try{
     const s=await api("/api/state");
     render(s);
-    setStatus("Подключено");
-  }catch(e){setStatus(friendlyError(e),true)}
+    setStatus(fromAuth?"Вы вошли через Telegram":"Подключено");
+    return s;
+  }catch(e){
+    setStatus(friendlyError(e),true);
+    if(fromAuth)throw e;
+    return null;
+  }
 }
 
 function nextUpgradeCost(level){
