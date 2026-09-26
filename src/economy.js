@@ -79,6 +79,12 @@ function assertPlayer(player){
   for(const id of player.claimedTasks)if(!validTaskIds.has(id))throw new Error('Invalid claimed task');
   for(const id of player.claimedAchievements)if(!validAchievementIds.has(id))throw new Error('Invalid claimed achievement');
   for(const id of player.claimedGoals)if(!validGoalIds.has(id))throw new Error('Invalid claimed goal');
+  if(!player.eventClaims||typeof player.eventClaims!=='object'||Array.isArray(player.eventClaims))throw new Error('Invalid event claims');
+  for(const [dateKey,claimed] of Object.entries(player.eventClaims)){
+    const parts=dateKey.split('-');
+    if(parts.length!==3||parts.some(part=>!/^\\d+$/.test(part))||parts[0].length!==4||parts[1].length!==2||parts[2].length!==2||claimed!==true)throw new Error('Invalid event claim');
+  }
+  if(player.lastIncomeAt!==null&&(!Number.isSafeInteger(player.lastIncomeAt)||player.lastIncomeAt<0))throw new Error('Invalid last income timestamp');
   if(!player.stats||typeof player.stats!=='object')throw new Error('Invalid stats');
   for(const key of ['tasksCompleted','businessesOwned','businessUpgrades','totalIncome','totalEarned']){
     if(!Number.isSafeInteger(player.stats[key])||player.stats[key]<0)throw new Error(`Invalid stat: ${key}`);
