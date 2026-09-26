@@ -70,7 +70,7 @@ export function rowToPlayer(row){
   p.eventClaims={};
   if(rawEventClaims&&typeof rawEventClaims==='object'&&!Array.isArray(rawEventClaims)){
     for(const [dateKey,claimed] of Object.entries(rawEventClaims)){
-      const m=/^(\\d{4})-(\\d{2})-(\\d{2})$/.exec(dateKey);
+      const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(dateKey);
       if(!m||claimed!==true)continue;
       const year=Number(m[1]),month=Number(m[2]),day=Number(m[3]);
       const daysInMonth=new Date(Date.UTC(year,month,0)).getUTCDate();
