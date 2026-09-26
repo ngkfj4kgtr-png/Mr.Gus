@@ -73,6 +73,12 @@ function assertPlayer(player){
     if(!Number.isSafeInteger(business.purchasedAt)||business.purchasedAt<0)throw new Error('Invalid business timestamp');
   }
   if(!(player.claimedTasks instanceof Set)||!(player.claimedAchievements instanceof Set)||!(player.claimedGoals instanceof Set))throw new Error('Invalid progression state');
+  const validTaskIds=new Set(Object.keys(TASKS));
+  const validAchievementIds=new Set(Object.keys(ACHIEVEMENTS));
+  const validGoalIds=new Set(Object.keys(GOALS));
+  for(const id of player.claimedTasks)if(!validTaskIds.has(id))throw new Error('Invalid claimed task');
+  for(const id of player.claimedAchievements)if(!validAchievementIds.has(id))throw new Error('Invalid claimed achievement');
+  for(const id of player.claimedGoals)if(!validGoalIds.has(id))throw new Error('Invalid claimed goal');
   if(!player.stats||typeof player.stats!=='object')throw new Error('Invalid stats');
   for(const key of ['tasksCompleted','businessesOwned','businessUpgrades','totalIncome','totalEarned']){
     if(!Number.isSafeInteger(player.stats[key])||player.stats[key]<0)throw new Error(`Invalid stat: ${key}`);
