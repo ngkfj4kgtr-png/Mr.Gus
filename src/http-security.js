@@ -2,6 +2,7 @@ const buckets=new Map();
 const WINDOW_MS=60_000;
 const MAX_REQUESTS=120;
 const MAX_MUTATIONS=30;
+const MAX_BUCKETS=10_000;
 
 function bucketKey(req,kind){
   const session=req.headers.cookie?.match(/(?:^|;\\s*)mfz_session=([^;]+)/)?.[1];
@@ -11,6 +12,10 @@ function bucketKey(req,kind){
 }
 
 function consume(key,limit,now=Date.now()){
+  if(buckets.size>=MAX_BUCKETS&&!buckets.has(key)){
+    clearRateLimitBuckets(now);
+    if(buckets.size>=MAX_BUCKETS){const oldest=buckets.keys().next().value;if(oldest)buckets.delete(oldest)}
+  }
   const current=buckets.get(key);
   if(!current||now-current.startedAt>=WINDOW_MS){
     buckets.set(key,{startedAt:now,count:1});
