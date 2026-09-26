@@ -157,13 +157,13 @@ export function hourlyProfit(player,businessId){
   if(!d||!owned)throw new Error('Business not owned');if(!Number.isSafeInteger(owned.level)||owned.level<1||owned.level>d.maxLevel)throw new Error('Invalid business level');
   const scale=d.upgradeMultiplier**(owned.level-1);return Math.max(0,Math.floor(d.grossPerHour*scale)-Math.floor(d.expensesPerHour*scale));
 }
-export function collectOfflineIncome(player,now=Date.now()){
-  assertPlayer(player);if(!Number.isSafeInteger(now)||now<0)throw new Error('Invalid timestamp');
+export function collectOfflineIncome(player,now=Date.now(),incomeMultiplier=1){
+  assertPlayer(player);if(!Number.isSafeInteger(now)||now<0)throw new Error('Invalid timestamp');if(typeof incomeMultiplier!=='number'||!Number.isFinite(incomeMultiplier)||incomeMultiplier<0||incomeMultiplier>10)throw new Error('Invalid income multiplier');
   if(player.lastIncomeAt===null){player.lastIncomeAt=now;return {seconds:0,income:0,balance:player.balance};}
   if(!Number.isSafeInteger(player.lastIncomeAt)||player.lastIncomeAt<0)throw new Error('Invalid last income timestamp');
   if(now<player.lastIncomeAt)throw new Error('Clock moved backwards');
   const elapsed=Math.min(now-player.lastIncomeAt,CONFIG.maxOfflineSeconds*1000),seconds=Math.floor(elapsed/1000);
-  let income=0;for(const id of Object.keys(player.businesses))income+=Math.floor(hourlyProfit(player,id)*seconds/3600);
+  let income=0;for(const id of Object.keys(player.businesses))income+=Math.floor(hourlyProfit(player,id)*seconds/3600*incomeMultiplier);
   addBalance(player,income);player.lastIncomeAt=now;player.stats.totalIncome=assertMoneyAmount((player.stats.totalIncome||0)+income,'Total income');assertPlayer(player);
   return {seconds,income,balance:player.balance};
 }
