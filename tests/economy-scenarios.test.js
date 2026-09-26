@@ -234,3 +234,14 @@ test('scenario: all four tasks unlock the final task with consistent wording', (
   assert.equal(task.locked, false);
   assert.equal(task.title, 'Выполнить 4 задания');
 });
+
+
+test('scenario: persisted progression IDs and event claims must be valid', () => {
+  const player = createPlayer('corrupt-progression-player');
+  player.claimedTasks.add('unknown_task');
+  assert.throws(() => availableTasks(player), /Invalid claimed task/);
+
+  const clean = createPlayer('corrupt-event-player');
+  clean.eventClaims['not-a-date'] = true;
+  assert.throws(() => availableGoals(clean), /Invalid event claim/);
+});
