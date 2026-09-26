@@ -64,6 +64,14 @@ function assertPlayer(player){
   if(!Number.isSafeInteger(player.balance)||player.balance<0||player.balance>CONFIG.maxMoney)throw new Error('Invalid balance');
   if(!Number.isSafeInteger(player.xp)||player.xp<0)throw new Error('Invalid XP');
   if(!Number.isSafeInteger(player.level)||player.level<1)throw new Error('Invalid level');
+  if(player.level!==levelFromXp(player.xp))throw new Error('Level does not match XP');
+  if(!player.businesses||typeof player.businesses!=='object'||Array.isArray(player.businesses))throw new Error('Invalid businesses');
+  for(const [id,business] of Object.entries(player.businesses)){
+    const definition=BUSINESS[id];
+    if(!definition||!business||typeof business!=='object'||Array.isArray(business))throw new Error('Invalid business');
+    if(business.id!==id||!Number.isSafeInteger(business.level)||business.level<1||business.level>definition.maxLevel)throw new Error('Invalid business');
+    if(!Number.isSafeInteger(business.purchasedAt)||business.purchasedAt<0)throw new Error('Invalid business timestamp');
+  }
   if(!(player.claimedTasks instanceof Set)||!(player.claimedAchievements instanceof Set)||!(player.claimedGoals instanceof Set))throw new Error('Invalid progression state');
   if(!player.stats||typeof player.stats!=='object')throw new Error('Invalid stats');
   for(const key of ['tasksCompleted','businessesOwned','businessUpgrades','totalIncome','totalEarned']){
