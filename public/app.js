@@ -9,6 +9,19 @@ function setStatus(message,error=false){
   if(el){el.textContent=message;el.dataset.error=error?"1":"0"}
 }
 
+function friendlyError(error){
+  const message=String(error?.message||"Ошибка");
+  if(message==="Insufficient balance")return "Недостаточно денег для этой покупки.";
+  if(message==="Business already owned")return "Этот бизнес уже куплен.";
+  if(message==="Maximum business level reached")return "Достигнут максимальный уровень бизнеса.";
+  if(message==="Task reward already claimed")return "Это задание уже выполнено.";
+  if(message==="Task is locked")return "Это задание пока заблокировано.";
+  if(message==="Business not owned")return "Сначала купите бизнес.";
+  if(message==="Clock moved backwards")return "Время устройства изменилось. Обновите игру.";
+  if(message==="Authentication required")return "Сессия истекла. Откройте игру через Telegram ещё раз.";
+  return message;
+}
+
 async function api(path,opt={}){
   const h={"Content-Type":"application/json",...(opt.headers||{})};
   if(tg?.initData)h["X-Telegram-Init-Data"]=tg.initData;
@@ -20,12 +33,12 @@ async function api(path,opt={}){
 
 async function auth(){
   try{
-    if(!tg?.initData)throw Error("Откройте SellAI через кнопку Telegram «Открыть SellAI».");
+    if(!tg?.initData)throw Error("Откройте Mr.Gus через кнопку Telegram «Открыть Mr.Gus».");
     setStatus("Авторизация через Telegram…");
     await api("/api/auth/telegram",{method:"POST"});
     await refresh();
     setStatus("Вы вошли через Telegram");
-  }catch(e){setStatus(e.message,true);alert(e.message)}
+  }catch(e){setStatus(friendlyError(e),true);alert(friendlyError(e))}
 }
 
 async function refresh(){
@@ -34,8 +47,7 @@ async function refresh(){
     render(s);
     setStatus("Подключено");
   }catch(e){
-    if(e.message.includes("401"))setStatus("Нажмите «Войти через Telegram»",true);
-    else setStatus(e.message,true);
+    setStatus(friendlyError(e),true);
   }
 }
 
@@ -50,27 +62,31 @@ function render(s){
   document.querySelector("#tasks").innerHTML=(s.tasks||[]).map(t=>"<div class='card'><b>"+t.title+"</b><p class='muted'>"+(t.description||"")+"</p><button class='btn' "+(t.claimed||t.locked?"disabled":"")+" data-action='claim' data-task-id='"+String(t.id).replaceAll("'","&#39;")+"'>"+(t.claimed?"Готово":t.locked?"🔒":"Забрать")+"</button></div>").join("");
 }
 
-async function buy(){try{render(await api("/api/business/buy",{method:"POST",body:JSON.stringify({businessId:"kiosk",operationId:op("buy")})}))}catch(e){setStatus(e.message,true)}}
-async function upgrade(){try{render(await api("/api/business/upgrade",{method:"POST",body:JSON.stringify({businessId:"kiosk",operationId:op("upgrade")})}))}catch(e){setStatus(e.message,true)}}
-async function collect(){try{render(await api("/api/income/collect",{method:"POST",body:JSON.stringify({operationId:op("income")})}))}catch(e){setStatus(e.message,true)}}
-async function claim(id){try{render(await api("/api/task/claim",{method:"POST",body:JSON.stringify({taskId:id,operationId:op("task")})}))}catch(e){setStatus(e.message,true)}}
+async function action(button,fn){
+  if(!button||button.disabled)return;
+  button.disabled=true;
+  try{render(await fn())}
+  catch(e){setStatus(friendlyError(e),true)}
+  finally{button.disabled=false}
+}
+async function buy(button){await action(button,()=>api("/api/business/buy",{method:"POST",body:JSON.stringify({businessId:"kiosk",operationId:op("buy")})}))}
+async function upgrade(button){await action(button,()=>api("/api/business/upgrade",{method:"POST",body:JSON.stringify({businessId:"kiosk",operationId:op("upgrade")})}))}
+async function collect(button){await action(button,()=>api("/api/income/collect",{method:"POST",body:JSON.stringify({operationId:op("income")})}))}
+async function claim(button,id){await action(button,()=>api("/api/task/claim",{method:"POST",body:JSON.stringify({taskId:id,operationId:op("task")})}))}
 
 document.addEventListener("click",event=>{
   const button=event.target.closest("[data-action]");
   if(!button||button.disabled)return;
-  const action=button.dataset.action;
-  if(action==="auth")auth();
-  else if(action==="refresh")refresh();
-  else if(action==="buy")buy();
-  else if(action==="upgrade")upgrade();
-  else if(action==="collect")collect();
-  else if(action==="claim")claim(button.dataset.taskId);
+  const actionName=button.dataset.action;
+  if(actionName==="auth")auth();
+  else if(actionName==="refresh")refresh();
+  else if(actionName==="buy")buy(button);
+  else if(actionName==="upgrade")upgrade(button);
+  else if(actionName==="collect")collect(button);
+  else if(actionName==="claim")claim(button,button.dataset.taskId);
 });
 
 window.addEventListener("load",async()=>{
-  if(tg?.initData){
-    await auth();
-  }else{
-    setStatus("Ожидается запуск из Telegram");
-  }
+  if(tg?.initData)await auth();
+  else setStatus("Ожидается запуск из Telegram");
 });
