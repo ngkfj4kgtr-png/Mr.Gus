@@ -29,7 +29,7 @@ export const ACHIEVEMENTS=Object.freeze({
   business_owner:Object.freeze({id:'business_owner',title:'Предприниматель',description:'Владей двумя разными бизнесами.',reward:1_000,xp:200}),
   business_tycoon:Object.freeze({id:'business_tycoon',title:'Империя',description:'Владей четырьмя разными бизнесами.',reward:5_000,xp:500}),
   level_five:Object.freeze({id:'level_five',title:'Пятый уровень',description:'Достигни 5 уровня игрока.',reward:2_000,xp:300}),
-  millionaire:Object.freeze({id:'millionaire',title:'Крупный капитал',description:'Накопи 1 000 000 ₽.',reward:10_000,xp:1_000})
+  millionaire:Object.freeze({id:'millionaire',title:'Крупный капитал',description:'Получи 1 000 000 ₽ суммарного дохода за всё время.',reward:10_000,xp:1_000})
 });
 
 export const GOALS=Object.freeze({
@@ -82,7 +82,9 @@ function assertPlayer(player){
   if(!player.eventClaims||typeof player.eventClaims!=='object'||Array.isArray(player.eventClaims))throw new Error('Invalid event claims');
   for(const [dateKey,claimed] of Object.entries(player.eventClaims)){
     const parts=dateKey.split('-');
-    if(parts.length!==3||parts.some(part=>!/^\d+$/.test(part))||parts[0].length!==4||parts[1].length!==2||parts[2].length!==2||claimed!==true)throw new Error('Invalid event claim');
+    const year=Number(parts[0]),month=Number(parts[1]),day=Number(parts[2]);
+    const daysInMonth=month>=1&&month<=12?new Date(Date.UTC(year,month,0)).getUTCDate():0;
+    if(parts.length!==3||parts.some(part=>!/^\d+$/.test(part))||parts[0].length!==4||parts[1].length!==2||parts[2].length!==2||year<1970||month<1||month>12||day<1||day>daysInMonth||claimed!==true)throw new Error('Invalid event claim');
   }
   if(player.lastIncomeAt!==null&&(!Number.isSafeInteger(player.lastIncomeAt)||player.lastIncomeAt<0))throw new Error('Invalid last income timestamp');
   if(!player.stats||typeof player.stats!=='object')throw new Error('Invalid stats');
