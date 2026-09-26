@@ -49,13 +49,18 @@ async function refresh(){
   }catch(e){setStatus(friendlyError(e),true)}
 }
 
+function nextUpgradeCost(level){
+  return Math.round(500*Math.pow(1.35,Math.max(0,level-1)));
+}
+
 function render(s){
   document.querySelector("#balance").textContent=money(s.balance);
   document.querySelector("#level").textContent=s.level;
   const b=s.businesses?.[0];
   document.querySelector("#income").textContent=money(b?.profitPerHour||0)+"/ч";
+  const upgradeCost=b?nextUpgradeCost(b.level):0;
   document.querySelector("#business").innerHTML=b
-    ? "<b>Торговая точка</b><p>+"+money(b.profitPerHour)+"/час</p><p class='muted'>Улучшение: 500 ₽</p><button class='btn' data-action='collect'>Забрать доход</button><button class='btn' data-action='upgrade'>Улучшить за 500 ₽</button>"
+    ? "<b>Торговая точка — уровень "+b.level+"</b><p>+"+money(b.profitPerHour)+"/час</p><p class='muted'>Следующее улучшение: "+money(upgradeCost)+"</p><button class='btn' data-action='collect'>Забрать доход</button><button class='btn' data-action='upgrade'>Улучшить за "+money(upgradeCost)+"</button>"
     : "<p>Первая торговая точка — 1 000 ₽</p><button class='btn' data-action='buy'>Открыть</button>";
   document.querySelector("#tasks").innerHTML=(s.tasks||[]).map(t=>"<div class='card'><b>"+t.title+"</b><p class='muted'>"+(t.description||"")+"</p><button class='btn' "+(t.claimed||t.locked?"disabled":"")+" data-action='claim' data-task-id='"+String(t.id).replaceAll("'","&#39;")+"'>"+(t.claimed?"Готово":t.locked?"🔒":"Забрать")+"</button></div>").join("");
 }
