@@ -67,6 +67,8 @@ export function rowToPlayer(row){
   const validAchievementIds=new Set(Object.keys(ACHIEVEMENTS));p.claimedAchievements=new Set((row.claimed_achievements||[]).filter(id=>validAchievementIds.has(id)));
   const validGoalIds=new Set(Object.keys(GOALS));p.claimedGoals=new Set((row.claimed_goals||[]).filter(id=>validGoalIds.has(id)));
   p.eventClaims=row.event_claims||{};p.stats={...p.stats,...(row.stats||{})};
+  // Keep the derived ownership counter backward-compatible with players created before Stage 9.
+  p.stats.businessesOwned=Object.keys(p.businesses).length;
   p.lastIncomeAt=row.last_income_at===null?null:Number(row.last_income_at);p.createdAt=row.created_at;return p;
 }
 export async function assertOperationNotProcessed(client,{operationId,userId}){
