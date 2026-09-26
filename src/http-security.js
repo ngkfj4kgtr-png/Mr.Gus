@@ -50,6 +50,12 @@ export function checkRateLimit(req,{mutation=false,now=Date.now()}={}){
   return mutationLimit;
 }
 
+export function validateFetchMetadata(req,{stateChanging=false}={}){
+  if(!stateChanging)return;
+  const site=req.headers['sec-fetch-site'];
+  if(site==='cross-site')throw new Error('Cross-site request blocked');
+}
+
 export function validateSameOrigin(req){
   const origin=req.headers.origin;
   if(!origin)return;
