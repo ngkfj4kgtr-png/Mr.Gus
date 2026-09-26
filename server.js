@@ -6,7 +6,7 @@ import { validateTelegramInitData } from './src/telegram-auth.js';
 import { initDb,migrate,upsertTelegramUser,createSession,getUserBySession,deleteSession,withPlayerTransaction,recordOperation,assertOperationNotProcessed } from './src/db.js';
 import { validateOperationId, OPERATION_TYPES } from './src/operations.js';
 import { createPlayer,claimTask,buyBusiness,upgradeBusiness,collectOfflineIncome,hourlyProfit,availableTasks } from './src/economy.js';
-import { checkRateLimit,validateSameOrigin,securityHeaders,clearRateLimitBuckets } from './src/http-security.js';
+import { checkRateLimit,validateSameOrigin,validateFetchMetadata,securityHeaders,clearRateLimitBuckets } from './src/http-security.js';
 
 const root=join(fileURLToPath(new URL('.',import.meta.url)),'public');
 const port=Number(process.env.PORT||3000),botToken=process.env.TELEGRAM_BOT_TOKEN,demoMode=process.env.DEMO_MODE==='true';
@@ -26,7 +26,10 @@ const server=http.createServer(async(req,res)=>{try{
 clearRateLimitBuckets();
 const url=new URL(req.url,`http://${req.headers.host||'localhost'}`);
 if(url.pathname.startsWith('/api/') && (req.method==='POST'||req.method==='PUT'||req.method==='PATCH'||req.method==='DELETE'||url.pathname==='/api/state')){
-  if(url.pathname!=='/api/auth/telegram')validateSameOrigin(req);
+  if(url.pathname!=='/api/auth/telegram'){
+    validateSameOrigin(req);
+    validateFetchMetadata(req,{stateChanging:true});
+  }
   const limit=checkRateLimit(req,{mutation:true});
   if(!limit.allowed)return sendJson(res,429,{error:'Too many requests'},{'Retry-After':String(limit.retryAfter)});
 }
