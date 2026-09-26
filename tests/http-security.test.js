@@ -55,6 +55,18 @@ test('same origin is accepted',()=>{
   })));
 });
 
+
+test('APP_ORIGIN overrides attacker-controlled Host for origin validation',()=>{
+  const previous=process.env.APP_ORIGIN;
+  process.env.APP_ORIGIN='https://mrgus.example';
+  try{
+    assert.doesNotThrow(()=>validateSameOrigin(req('198.51.100.10',{origin:'https://mrgus.example',host:'evil.example'})));
+    assert.throws(()=>validateSameOrigin(req('198.51.100.10',{origin:'https://evil.example',host:'mrgus.example'})),/Cross-site request blocked/);
+  }finally{
+    if(previous===undefined)delete process.env.APP_ORIGIN;else process.env.APP_ORIGIN=previous;
+  }
+});
+
 test('security headers are defined',()=>{
   const h=securityHeaders();
   assert.equal(h['X-Content-Type-Options'],'nosniff');
