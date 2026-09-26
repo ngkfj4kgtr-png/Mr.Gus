@@ -44,6 +44,7 @@ if(url.pathname.startsWith('/api/') && (req.method==='POST'||req.method==='PUT'|
   const limit=checkRateLimit(req,{mutation:true});
   if(!limit.allowed)return sendJson(res,429,{error:'Too many requests'},{'Retry-After':String(limit.retryAfter)});
 }
+if(req.method==='GET'&&url.pathname==='/health'){return sendJson(res,200,{ok:true,service:'Mr.Gus',status:'healthy'})}
 if(req.method==='POST'&&url.pathname==='/api/auth/telegram'){
 if(demoMode&&!req.headers['x-telegram-init-data']){res.setHeader('Set-Cookie',`mfz_demo=1; ${cookieOptions()}; Max-Age=604800`);return sendJson(res,200,{ok:true,demo:true,user:{first_name:'Демо',last_name:'Игрок',username:'demo'}})}
 const verified=validateTelegramInitData(String(req.headers['x-telegram-init-data']||''),botToken),user=await upsertTelegramUser(verified.user),token=await createSession(user.id);
