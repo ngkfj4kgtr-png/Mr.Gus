@@ -41,11 +41,19 @@ function assertPlayer(player){
   if(!Number.isSafeInteger(player.level)||player.level<1) throw new Error('Invalid level');
   if(!(player.claimedTasks instanceof Set)) throw new Error('Invalid claimed tasks');
 }
+export function assertMoneyAmount(amount,label='Money'){
+  if(!Number.isSafeInteger(amount)||amount<0) throw new Error(`${label} must be a non-negative safe integer`);
+  return amount;
+}
+function assertBalanceInvariant(player){
+  if(!Number.isSafeInteger(player.balance)||player.balance<0||player.balance>CONFIG.maxMoney) throw new Error('Balance invariant violated');
+}
 function addBalance(player,amount){
-  if(!Number.isSafeInteger(amount)||amount<0) throw new Error('Invalid reward');
+  assertMoneyAmount(amount,'Reward');
   const next=player.balance+amount;
   if(!Number.isSafeInteger(next)||next>CONFIG.maxMoney) throw new Error('Balance overflow');
   player.balance=next;
+  assertBalanceInvariant(player);
 }
 export function availableTasks(player){
   assertPlayer(player); const claimedCount=player.claimedTasks.size;
@@ -65,7 +73,7 @@ export function buyBusiness(player,businessId,now=Date.now()){
   if(player.businesses[businessId]) throw new Error('Business already owned');
   if(!Number.isSafeInteger(now)||now<0) throw new Error('Invalid timestamp');
   if(player.balance<definition.baseCost) throw new Error('Insufficient balance');
-  player.balance-=definition.baseCost; player.businesses[businessId]={id:businessId,level:1,purchasedAt:now}; player.lastIncomeAt=now;
+  player.balance-=definition.baseCost; assertBalanceInvariant(player); player.businesses[businessId]={id:businessId,level:1,purchasedAt:now}; player.lastIncomeAt=now;
   return player.businesses[businessId];
 }
 export function hourlyProfit(player,businessId){
@@ -83,7 +91,7 @@ export function collectOfflineIncome(player,now=Date.now()){
   if(now<player.lastIncomeAt) throw new Error('Clock moved backwards');
   const elapsed=Math.min(now-player.lastIncomeAt,CONFIG.maxOfflineSeconds*1000),seconds=Math.floor(elapsed/1000);
   let income=0; for(const id of Object.keys(player.businesses)) income+=Math.floor(hourlyProfit(player,id)*seconds/3600);
-  addBalance(player,income); player.lastIncomeAt=now;
+  addBalance(player,income); player.lastIncomeAt=now; assertBalanceInvariant(player);
   return {seconds,income,balance:player.balance};
 }
 export function upgradeBusiness(player,businessId,now=Date.now()){
@@ -93,6 +101,6 @@ export function upgradeBusiness(player,businessId,now=Date.now()){
   if(!Number.isSafeInteger(now)||now<0) throw new Error('Invalid timestamp');
   const cost=Math.max(definition.baseCost,Math.round(definition.baseCost*definition.upgradeMultiplier**owned.level));
   if(player.balance<cost) throw new Error('Insufficient balance');
-  player.balance-=cost; owned.level+=1;
+  player.balance-=cost; assertBalanceInvariant(player); owned.level+=1;
   return {level:owned.level,cost,balance:player.balance,profitPerHour:hourlyProfit(player,businessId)};
 }
