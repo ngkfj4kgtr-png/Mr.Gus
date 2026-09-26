@@ -50,7 +50,7 @@ async function refresh(){
 }
 
 function nextUpgradeCost(level){
-  return Math.round(500*Math.pow(1.35,Math.max(0,level-1)));
+  return Math.max(500,Math.round(500*Math.pow(1.35,Math.max(0,level-1))));
 }
 
 function render(s){
@@ -68,8 +68,11 @@ function render(s){
 async function action(button,fn){
   if(!button||button.disabled)return;
   button.disabled=true;
-  try{render(await fn())}
-  catch(e){setStatus(friendlyError(e),true)}
+  try{
+    const state=await fn();
+    render(state);
+    setStatus("Готово");
+  }catch(e){setStatus(friendlyError(e),true)}
   finally{button.disabled=false}
 }
 async function buy(button){await action(button,()=>api("/api/business/buy",{method:"POST",body:JSON.stringify({businessId:"kiosk",operationId:op("buy")})}))}
