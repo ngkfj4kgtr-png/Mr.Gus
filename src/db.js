@@ -66,7 +66,18 @@ export function rowToPlayer(row){
   const validTaskIds=new Set(Object.keys(TASKS));p.claimedTasks=new Set((row.claimed_tasks||[]).filter(id=>validTaskIds.has(id)));
   const validAchievementIds=new Set(Object.keys(ACHIEVEMENTS));p.claimedAchievements=new Set((row.claimed_achievements||[]).filter(id=>validAchievementIds.has(id)));
   const validGoalIds=new Set(Object.keys(GOALS));p.claimedGoals=new Set((row.claimed_goals||[]).filter(id=>validGoalIds.has(id)));
-  p.eventClaims=row.event_claims||{};p.stats={...p.stats,...(row.stats||{})};
+  const rawEventClaims=row.event_claims||{};
+  p.eventClaims={};
+  if(rawEventClaims&&typeof rawEventClaims==='object'&&!Array.isArray(rawEventClaims)){
+    for(const [dateKey,claimed] of Object.entries(rawEventClaims)){
+      const m=/^(\\d{4})-(\\d{2})-(\\d{2})$/.exec(dateKey);
+      if(!m||claimed!==true)continue;
+      const year=Number(m[1]),month=Number(m[2]),day=Number(m[3]);
+      const daysInMonth=new Date(Date.UTC(year,month,0)).getUTCDate();
+      if(year>=1970&&month>=1&&month<=12&&day>=1&&day<=daysInMonth)p.eventClaims[dateKey]=true;
+    }
+  }
+  p.stats={...p.stats,...(row.stats||{})};
   // Keep the derived ownership counter backward-compatible with players created before Stage 9.
   p.stats.businessesOwned=Object.keys(p.businesses).length;
   p.lastIncomeAt=row.last_income_at===null?null:Number(row.last_income_at);p.createdAt=row.created_at;return p;
