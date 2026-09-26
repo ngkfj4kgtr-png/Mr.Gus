@@ -15,7 +15,7 @@ export async function migrate(){
   await p.query(`CREATE TABLE IF NOT EXISTS users(
     id BIGSERIAL PRIMARY KEY,telegram_id BIGINT NOT NULL UNIQUE,username TEXT,first_name TEXT NOT NULL DEFAULT '',last_name TEXT NOT NULL DEFAULT '',photo_url TEXT,
     balance BIGINT NOT NULL DEFAULT 0 CHECK(balance>=0),xp BIGINT NOT NULL DEFAULT 0 CHECK(xp>=0),level INTEGER NOT NULL DEFAULT 1 CHECK(level>=1),
-    businesses JSONB NOT NULL DEFAULT '{}'::jsonb,claimed_tasks JSONB NOT NULL DEFAULT '[]'::jsonb,last_income_at BIGINT,
+    businesses JSONB NOT NULL DEFAULT '{}'::jsonb,claimed_tasks JSONB NOT NULL DEFAULT '[]'::jsonb,claimed_achievements JSONB NOT NULL DEFAULT '[]'::jsonb,claimed_goals JSONB NOT NULL DEFAULT '[]'::jsonb,event_claims JSONB NOT NULL DEFAULT '{}'::jsonb,stats JSONB NOT NULL DEFAULT '{}'::jsonb,last_income_at BIGINT,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW());
     CREATE TABLE IF NOT EXISTS sessions(
       id BIGSERIAL PRIMARY KEY,token_hash CHAR(64) NOT NULL UNIQUE,user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -25,7 +25,11 @@ export async function migrate(){
     CREATE TABLE IF NOT EXISTS economy_operations(
       id BIGSERIAL PRIMARY KEY,operation_id TEXT NOT NULL,operation_type TEXT NOT NULL,user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
       reward_amount BIGINT NOT NULL DEFAULT 0 CHECK(reward_amount>=0),created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),UNIQUE(user_id,operation_id));
-    CREATE INDEX IF NOT EXISTS economy_operations_user_created_idx ON economy_operations(user_id,created_at DESC);`);
+    CREATE INDEX IF NOT EXISTS economy_operations_user_created_idx ON economy_operations(user_id,created_at DESC);
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS claimed_achievements JSONB NOT NULL DEFAULT '[]'::jsonb;
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS claimed_goals JSONB NOT NULL DEFAULT '[]'::jsonb;
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS event_claims JSONB NOT NULL DEFAULT '{}'::jsonb;
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS stats JSONB NOT NULL DEFAULT '{}'::jsonb;`);
 }
 export async function upsertTelegramUser(tgUser){
   const r=await(await getPool()).query(`INSERT INTO users(telegram_id,username,first_name,last_name,photo_url) VALUES($1,$2,$3,$4,$5)
@@ -85,8 +89,8 @@ export async function recordOperation(client,{operationId,type,userId,reward=0,a
 }
 export async function updatePlayer(userId,player,client){
   client??=await getPool();
-  const r=await client.query(`UPDATE users SET balance=$1,xp=$2,level=$3,businesses=$4::jsonb,claimed_tasks=$5::jsonb,last_income_at=$6,updated_at=NOW() WHERE id=$7 RETURNING *`,
-    [player.balance,player.xp,player.level,JSON.stringify(player.businesses),JSON.stringify([...player.claimedTasks]),player.lastIncomeAt,userId]);
+  const r=await client.query(`UPDATE users SET balance=$1,xp=$2,level=$3,businesses=$4::jsonb,claimed_tasks=$5::jsonb,claimed_achievements=$6::jsonb,claimed_goals=$7::jsonb,event_claims=$8::jsonb,stats=$9::jsonb,last_income_at=$10,updated_at=NOW() WHERE id=$11 RETURNING *`,
+    [player.balance,player.xp,player.level,JSON.stringify(player.businesses),JSON.stringify([...player.claimedTasks]),JSON.stringify([...player.claimedAchievements]),JSON.stringify([...player.claimedGoals]),JSON.stringify(player.eventClaims),JSON.stringify(player.stats),player.lastIncomeAt,userId]);
   if(!r.rowCount)throw new Error('User not found');return r.rows[0];
 }
 export async function withPlayerTransaction(userId,fn){
