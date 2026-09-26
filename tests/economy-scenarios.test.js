@@ -148,3 +148,16 @@ test('scenario: device timestamp cannot be supplied to accelerate server-side in
   assert.throws(() => collectOfflineIncome(player, 9_999), /Clock moved backwards/);
   assert.equal(player.balance, 0);
 });
+
+
+test('scenario: daily event multiplier increases collected business income', () => {
+  const player = createPlayer('event-income-player');
+  player.balance = 1_000;
+  buyBusiness(player, 'kiosk', 1_000);
+
+  const twoHoursLater = 1_000 + 2 * 60 * 60 * 1_000;
+  const result = collectOfflineIncome(player, twoHoursLater, 1.20);
+
+  assert.equal(result.income, 1_200);
+  assert.equal(player.balance, 1_200);
+});
