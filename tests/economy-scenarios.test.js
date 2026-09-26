@@ -7,7 +7,13 @@ import {
   upgradeBusiness,
   collectOfflineIncome,
   hourlyProfit,
-  CONFIG
+  CONFIG,
+  availableAchievements,
+  availableGoals,
+  claimAchievement,
+  claimGoal,
+  currentEvent,
+  claimEvent
 } from '../src/economy.js';
 
 test('scenario: new player reaches first business without free money', () => {
@@ -160,4 +166,36 @@ test('scenario: daily event multiplier increases collected business income', () 
 
   assert.equal(result.income, 1_200);
   assert.equal(player.balance, 1_200);
+});
+
+test('scenario: progression rewards are one-time and unlock from server state', () => {
+  const player = createPlayer('progression-player');
+
+  claimTask(player, 'first_order');
+  claimTask(player, 'second_order');
+  claimTask(player, 'third_order');
+  buyBusiness(player, 'kiosk', 1_000);
+
+  assert.equal(availableAchievements(player).find(x => x.id === 'first_business').unlocked, true);
+  assert.equal(availableGoals(player).find(x => x.id === 'start_business').unlocked, true);
+
+  const achievement = claimAchievement(player, 'first_business');
+  const goal = claimGoal(player, 'start_business');
+
+  assert.equal(achievement.reward, 300);
+  assert.equal(goal.reward, 500);
+  assert.throws(() => claimAchievement(player, 'first_business'), /already claimed/);
+  assert.throws(() => claimGoal(player, 'start_business'), /already claimed/);
+});
+
+test('scenario: daily event reward is claimable once per date', () => {
+  const player = createPlayer('event-player');
+  const now = Date.parse('2026-09-26T12:00:00.000Z');
+
+  const event = currentEvent(now);
+  const reward = claimEvent(player, now);
+
+  assert.equal(reward.eventId, event.id);
+  assert.equal(reward.dateKey, event.dateKey);
+  assert.throws(() => claimEvent(player, now), /already claimed/);
 });
