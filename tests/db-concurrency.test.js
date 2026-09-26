@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { initDb,migrate,getPool,upsertTelegramUser,withPlayerTransaction,assertOperationNotProcessed,recordOperation } from '../src/db.js';
+import { initDb,migrate,getPool,upsertTelegramUser,createSession,getUserBySession,deleteSession,withPlayerTransaction,assertOperationNotProcessed,recordOperation } from '../src/db.js';
 import {collectOfflineIncome} from '../src/economy.js';
 import {OPERATION_TYPES} from '../src/operations.js';
 
@@ -38,3 +38,26 @@ test('PostgreSQL transaction rollback preserves progress',{skip:!enabled},async(
  }finally{await cleanup(user.id);} });
 
 test.after(async()=>{if(enabled){const pool=await getPool();await pool.end();}});
+
+test('PostgreSQL sessions: rotation invalidates the previous token',{skip:!enabled},async()=>{
+ const user=await freshUser(); try{
+  const first=await createSession(user.id);
+  assert.ok(await getUserBySession(first));
+  const second=await createSession(user.id);
+  assert.ok(await getUserBySession(second));
+  assert.equal(await getUserBySession(first),null);
+ }finally{await cleanup(user.id);}
+});
+
+test('PostgreSQL sessions: expired token is rejected and logout deletes active token',{skip:!enabled},async()=>{
+ const user=await freshUser(); try{
+  const token=await createSession(user.id);
+  const pool=await getPool();
+  await pool.query("UPDATE sessions SET expires_at=NOW()-INTERVAL '1 second' WHERE user_id=$1",[user.id]);
+  assert.equal(await getUserBySession(token),null);
+  const active=await createSession(user.id);
+  assert.ok(await getUserBySession(active));
+  await deleteSession(active);
+  assert.equal(await getUserBySession(active),null);
+ }finally{await cleanup(user.id);}
+});
