@@ -151,12 +151,14 @@ function renderCityMap(s){
     const lane=i%4, y=[53,56,59,62][lane], dur=12+(i%5)*2, delay=-(i*1.7);
     return '<i class="city-car traffic-car lane-'+lane+'" style="--road-y:'+y+'%;--car-duration:'+dur+'s;--car-delay:'+delay+'s"></i>';
   }).join("");
-  const walkers=Array.from({length:people},(_,i)=>{
-    const target=businessTargets.length?businessTargets[i%businessTargets.length]:{m:{spot:[50,67]}};
-    const sx=50+(i%3-1)*2,sy=67+(i%2)*2,tx=target.m.spot[0]-sx,ty=target.m.spot[1]-sy;
-    const dur=7+(i%4)*2,delay=-(i*1.1);
-    return '<i class="city-person customer-person" style="left:'+sx+'%;top:'+sy+'%;--customer-x:'+tx+'%;--customer-y:'+ty+'%;--customer-duration:'+dur+'s;--customer-delay:'+delay+'s" title="Посетитель '+(target.id||'города')+'"></i>';
+  const npcList=Array.isArray(live.npcs)?live.npcs:[];
+  const walkers=npcList.slice(0,16).map((n,i)=>{
+    const target=n.targetBusiness&&businessTargets.find(x=>x.id===n.targetBusiness);
+    const spot=target?.m?.spot||[50,55];
+    const sx=20+(i%6)*12,sy=65+(Math.floor(i/6)%2)*7;
+    return '<i class="city-person customer-person npc-'+n.type+' npc-'+n.phase+'" style="left:'+sx+'%;top:'+sy+'%;--customer-x:'+(spot[0]-sx)+'%;--customer-y:'+(spot[1]-sy)+'%;--customer-duration:'+(5+(i%5))+'s;--customer-delay:-'+(i*.55)+'s" title="'+n.typeName+'"></i>';
   }).join("");
+  const queueBadges=businesses.map(b=>{const m=meta[b.id];if(!m)return "";const q=Number(live.queues?.[b.id]||0),d=Number(live.demand?.[b.id]||0);if(!q&&!d)return "";return '<span class="business-demand-badge" style="left:'+m.spot[0]+'%;top:'+(m.spot[1]-6)+'%">'+(q?'👥 '+q+' в очереди':'📈 спрос '+d)+'</span>';}).join("");
   const streetLife='<i class="city-tree tree-1">🌳</i><i class="city-tree tree-2">🌲</i><i class="city-tree tree-3">🌳</i><i class="city-lamp lamp-1">💡</i><i class="city-lamp lamp-2">💡</i>';
   const activeBusinesses=businesses.filter(b=>Number(b.level||1)>=5);
   const trucks=activeBusinesses.filter(b=>b.id==="workshop"||b.id==="factory").slice(0,4).map((b,i)=>'<i class="city-truck truck-route-'+b.id+'" style="--i:'+i+'"></i>').join("");
