@@ -82,7 +82,7 @@ export function levelFromXp(xp){
 }
 export function createPlayer(id){
   if(!id||typeof id!=='string')throw new Error('Invalid player id');
-  return {id,balance:0,xp:0,level:1,businesses:{},claimedTasks:new Set(),claimedAchievements:new Set(),claimedGoals:new Set(),eventClaims:{},stats:{tasksCompleted:0,businessesOwned:0,businessUpgrades:0,totalIncome:0,totalEarned:0},lastIncomeAt:null,createdAt:new Date().toISOString()};
+  return {id,balance:0,xp:0,level:1,businesses:{},claimedTasks:new Set(),claimedAchievements:new Set(),claimedGoals:new Set(),eventClaims:{},stats:{tasksCompleted:0,businessesOwned:0,businessUpgrades:0,totalIncome:0,totalEarned:0},lastIncomeAt:null,inventory:{},activeBonuses:{},createdAt:new Date().toISOString()};
 }
 function assertPlayer(player){
   if(!player||typeof player!=='object')throw new Error('Player not found');
@@ -101,6 +101,8 @@ function assertPlayer(player){
     if(!Number.isSafeInteger(business.investment)||business.investment<0||business.investment>INVESTMENT.maxTotal)throw new Error('Invalid investment');
     if(!Number.isSafeInteger(business.purchasedAt)||business.purchasedAt<0)throw new Error('Invalid business timestamp');
   }
+  if(!player.inventory||typeof player.inventory!=='object'||Array.isArray(player.inventory))throw new Error('Invalid inventory');
+  if(!player.activeBonuses||typeof player.activeBonuses!=='object'||Array.isArray(player.activeBonuses))throw new Error('Invalid active bonuses');
   if(!(player.claimedTasks instanceof Set)||!(player.claimedAchievements instanceof Set)||!(player.claimedGoals instanceof Set))throw new Error('Invalid progression state');
   const validTaskIds=new Set(Object.keys(TASKS));
   const validAchievementIds=new Set(Object.keys(ACHIEVEMENTS));
@@ -270,4 +272,23 @@ export function activateBusinessBoost(player,businessId,now=Date.now()){
   if(!Number.isSafeInteger(now)||now<0)throw new Error('Invalid timestamp');if((business.boostUntil||0)>now)throw new Error('Business boost already active');
   if(player.balance<1_000)throw new Error('Insufficient balance');player.balance-=1_000;business.boostUntil=now+2*60*60*1000;business.boostMultiplier=1.25;
   return {businessId,boostUntil:business.boostUntil,cost:1_000};
+}
+
+export const SHOP_ITEMS=Object.freeze({
+  income_boost:Object.freeze({id:'income_boost',title:'Ускоритель дохода',description:'Доход бизнеса +25% на 2 часа.',cost:3_000,durationMs:2*60*60*1000,type:'income_multiplier',value:1.25}),
+  xp_boost:Object.freeze({id:'xp_boost',title:'XP-ускоритель',description:'Мгновенно даёт 500 XP.',cost:5_000,type:'instant_xp',value:500}),
+  lucky_ticket:Object.freeze({id:'lucky_ticket',title:'Счастливый билет',description:'Одноразовый бонус 2 500 ₽.',cost:7_500,type:'instant_money',value:2_500}),
+  premium_pack:Object.freeze({id:'premium_pack',title:'Премиум-набор',description:'Редкий набор: 10 000 ₽ и 1 000 XP.',cost:25_000,type:'instant_pack',value:1})
+});
+export function availableShop(player){assertPlayer(player);return Object.values(SHOP_ITEMS).map(item=>({...item,owned:Number(player.inventory[item.id]||0)}));}
+export function buyShopItem(player,itemId,now=Date.now()){
+  assertPlayer(player);const item=SHOP_ITEMS[itemId];if(!item)throw new Error('Shop item not found');
+  if(!Number.isSafeInteger(now)||now<0)throw new Error('Invalid timestamp');if(player.balance<item.cost)throw new Error('Insufficient balance');
+  player.balance-=item.cost;
+  if(item.type==='income_multiplier'){player.activeBonuses.income={multiplier:item.value,until:now+item.durationMs};}
+  else if(item.type==='instant_xp'){addXp(player,item.value);}
+  else if(item.type==='instant_money'){addBalance(player,item.value);}
+  else if(item.type==='instant_pack'){addBalance(player,10_000);addXp(player,1_000);}
+  player.inventory[item.id]=Number(player.inventory[item.id]||0)+1;
+  return {itemId,price:item.cost,inventoryCount:player.inventory[item.id],balance:player.balance,level:player.level};
 }
