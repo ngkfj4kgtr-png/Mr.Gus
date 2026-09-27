@@ -1069,3 +1069,40 @@ body:has(.city-map-card) .page-screen[data-page]:not(.city-map-card){display:non
   .city-map .city-tree,.city-map .city-lamp{font-size:19px!important}
   .city-map .city-time-night:after{opacity:.08!important}
 }
+
+/* iPhone final layout: the map owns the screen; no global HUD collisions */
+@media(max-width:600px){
+  body:has(.city-map-card.page-active) .stats{display:none!important}
+  body:has(.city-map-card.page-active) .city-map-card{background:#071019!important}
+  body:has(.city-map-card.page-active) .city-map{background:#071019!important}
+  .city-map .map-hud{
+    left:10px!important;top:10px!important;right:auto!important;
+    max-width:calc(100% - 110px)!important;z-index:90!important;
+    pointer-events:none!important;
+  }
+  .city-map .map-hud span{
+    padding:6px 9px!important;font-size:10px!important;
+    background:rgba(8,14,22,.92)!important;border-color:rgba(130,145,170,.28)!important;
+  }
+  .city-map .map-city-status{
+    top:64px!important;right:50%!important;
+    max-width:58%!important;transform:translateX(50%)!important;
+    z-index:90!important;
+  }
+  .city-map .map-compass{top:10px!important;left:auto!important;right:58px!important;z-index:91!important}
+  .city-map .map-zoom-controls{top:10px!important;right:10px!important;bottom:auto!important;z-index:92!important}
+  .city-map .map-district,
+  .city-map .map-road,
+  .city-map .map-water,
+  .city-map .map-route,
+  .city-map .business-route{display:none!important}
+  .city-map .map-center-label,
+  .city-map .map-scale-label,
+  .city-map .map-legend{display:none!important}
+  .city-map .city-houses-layer{opacity:.28!important}
+  .city-map .city-street-life{opacity:.35!important}
+  .city-map .city-traffic,.city-map .city-life,.city-map .city-logistics,
+  .city-map .city-economy-flow,.city-map .city-business-life,
+  .city-map .city-business-routes{opacity:.28!important}
+  .city-map .map-plaza{opacity:.72!important}
+}
