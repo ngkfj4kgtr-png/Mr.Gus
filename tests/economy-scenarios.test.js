@@ -263,6 +263,7 @@ test('scenario: persisted progression IDs and event claims must be valid', () =>
 
 
 import { migrate, upsertTelegramUser, withPlayerTransaction, recordOperation, assertOperationNotProcessed, getPool } from '../src/db.js';
+import { OPERATION_TYPES } from '../src/operations.js';
 
 const integrationEnabled = Boolean(process.env.DATABASE_URL);
 const testTelegramId = () => (BigInt(Date.now()) * 100000n + BigInt(process.pid)).toString();
