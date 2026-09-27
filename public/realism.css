@@ -109,3 +109,9 @@
  .arch-tree::after,.city-tree::after{transform:scale(.82);transform-origin:bottom}
  .city-zone-label{font-size:7px}
 }
+
+.city-history-chart{height:110px;display:flex;align-items:flex-end;gap:3px;padding:10px 8px;border-radius:10px;background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(0,0,0,.18));border:1px solid rgba(255,255,255,.08);overflow:hidden}
+.city-history-bar{flex:1;height:100%;display:flex;align-items:flex-end;min-width:3px}
+.city-history-bar i{display:block;width:100%;min-height:3px;border-radius:3px 3px 1px 1px;background:linear-gradient(180deg,#d7bd72,#7d9a6b);box-shadow:0 0 8px rgba(213,190,114,.18)}
+.city-list-item em{font-style:normal;color:#e8d18b;font-weight:700}
+.city-panel-note{line-height:1.4}
