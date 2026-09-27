@@ -199,7 +199,7 @@ async function shop(button,id){await action(button,()=>api("/api/shop/buy",{meth
 async function daily(button){await action(button,()=>api("/api/daily/claim",{method:"POST",body:JSON.stringify({operationId:op("daily")})}))}
 document.addEventListener("click",e=>{
   const cityOpen=e.target.closest("[data-city-open]");
-  if(cityOpen){e.preventDefault();openCityPanel(cityOpen.dataset.cityOpen,cityOpen.dataset.businessId);return}
+  if(cityOpen){e.preventDefault();openCityPanel(cityOpen.dataset.cityOpen,cityOpen.dataset.businessId||cityOpen.dataset.territory);return}
   if(e.target.closest("[data-city-close]")){closeCityPanel();return}
 
   const marker=e.target.closest("[data-map-title]");
