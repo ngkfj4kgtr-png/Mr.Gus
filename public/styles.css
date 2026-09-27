@@ -784,3 +784,10 @@ body:has(.city-map-card.page-active) .map-center-label{bottom:62px}
 @media(prefers-reduced-motion:reduce){
 .business-flow,.city-business-life:before,.business-marker.working .building-lights{animation:none!important}
 }
+
+/* Visible city logistics routes */
+.business-route{position:absolute;z-index:3;left:var(--sx);top:var(--sy);width:var(--len);height:2px;transform-origin:0 50%;transform:rotate(var(--angle));background:linear-gradient(90deg,rgba(114,227,154,.2),rgba(114,227,154,.08));border-top:1px dashed rgba(114,227,154,.18);pointer-events:none;opacity:.45}
+.route-kiosk,.route-cafe{border-color:rgba(255,214,112,.18);background:linear-gradient(90deg,rgba(255,214,112,.18),rgba(255,214,112,.04))}
+.route-workshop{border-color:rgba(118,180,255,.2);background:linear-gradient(90deg,rgba(118,180,255,.2),rgba(118,180,255,.04))}
+.route-factory{border-color:rgba(114,227,154,.2)}
+.city-stage-village .business-route{opacity:.18}.city-stage-town .business-route{opacity:.3}.city-stage-small .business-route{opacity:.42}.city-stage-large .business-route,.city-stage-mega .business-route{opacity:.55}
