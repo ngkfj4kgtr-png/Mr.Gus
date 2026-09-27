@@ -6,7 +6,7 @@ let pool; let Pool;
 export async function initDb(){
   if(!process.env.DATABASE_URL) throw new Error('DATABASE_URL is required');
   if(!Pool)({Pool}=await import('pg'));
-  pool??=new Pool({connectionString:process.env.DATABASE_URL,max:10,ssl:process.env.PGSSL==='disable'?false:{rejectUnauthorized:true,ca:process.env.PGSSL_CA||undefined}});
+  pool??=new Pool({connectionString:process.env.DATABASE_URL,max:10,connectionTimeoutMillis:5000,idleTimeoutMillis:30000,maxLifetimeSeconds:1800,ssl:process.env.PGSSL==='disable'?false:{rejectUnauthorized:true,ca:process.env.PGSSL_CA||undefined}});
   return pool;
 }
 export async function getPool(){if(!pool)await initDb();return pool}
@@ -22,10 +22,12 @@ export async function migrate(){
       expires_at TIMESTAMPTZ NOT NULL,created_at TIMESTAMPTZ NOT NULL DEFAULT NOW());
     CREATE INDEX IF NOT EXISTS sessions_token_hash_idx ON sessions(token_hash);
     CREATE INDEX IF NOT EXISTS sessions_expires_at_idx ON sessions(expires_at);
+    CREATE INDEX IF NOT EXISTS users_created_at_idx ON users(created_at DESC);
     CREATE TABLE IF NOT EXISTS economy_operations(
       id BIGSERIAL PRIMARY KEY,operation_id TEXT NOT NULL,operation_type TEXT NOT NULL,user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
       reward_amount BIGINT NOT NULL DEFAULT 0 CHECK(reward_amount>=0),created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),UNIQUE(user_id,operation_id));
     CREATE INDEX IF NOT EXISTS economy_operations_user_created_idx ON economy_operations(user_id,created_at DESC);
+    CREATE INDEX IF NOT EXISTS economy_operations_created_user_idx ON economy_operations(created_at DESC,user_id);
     ALTER TABLE users ADD COLUMN IF NOT EXISTS claimed_achievements JSONB NOT NULL DEFAULT '[]'::jsonb;
     ALTER TABLE users ADD COLUMN IF NOT EXISTS inventory JSONB NOT NULL DEFAULT '{}'::jsonb;
     ALTER TABLE users ADD COLUMN IF NOT EXISTS active_bonuses JSONB NOT NULL DEFAULT '{}'::jsonb;
