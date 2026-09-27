@@ -811,3 +811,7 @@ body:has(.city-map-card.page-active) .map-center-label{bottom:62px}
 .map-scale-label{position:absolute;z-index:20;left:12px;bottom:64px;padding:5px 8px;border:1px solid rgba(120,140,170,.18);border-radius:9px;background:rgba(7,11,18,.58);font-size:7px;font-weight:900;letter-spacing:.08em;color:rgba(210,220,235,.62)}
 @media(max-width:500px){.map-compass{left:8px;top:62px}.map-scale-label{left:8px;bottom:62px}}
 @media(prefers-reduced-motion:reduce){.home-pulse-ring{animation:none}}
+
+.map-world{position:absolute;inset:0;transform-origin:50% 50%;touch-action:none;will-change:transform}
+.city-map{touch-action:none;cursor:grab}
+.city-map:active{cursor:grabbing}
