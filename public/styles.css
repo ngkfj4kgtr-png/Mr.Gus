@@ -265,3 +265,60 @@ body{
 @media(prefers-reduced-motion:reduce){
   .page-screen,.mini-card,.btn,.quick-bar button{animation:none!important;transition:none!important}
 }
+
+/* Mr.Gus UI pass 4 — profile and rankings */
+.profile-card{
+  overflow:hidden;position:relative;
+  background:
+    radial-gradient(circle at 100% 0%,rgba(118,108,255,.15),transparent 35%),
+    linear-gradient(145deg,#151c29,#0d121a);
+}
+.profile-card:after{
+  content:"";position:absolute;right:-35px;bottom:-45px;width:120px;height:120px;
+  border-radius:50%;background:rgba(118,108,255,.06);pointer-events:none;
+}
+.profile-head{
+  display:flex;align-items:center;gap:13px;
+  min-height:64px;
+}
+.avatar{
+  width:58px;height:58px;min-width:58px;
+  border-radius:17px;
+  box-shadow:0 7px 18px rgba(0,0,0,.28);
+}
+.profile-head strong{font-size:18px;font-weight:900}
+.profile-head .muted{font-size:12px;margin-top:2px}
+.rank-tabs{
+  display:flex;gap:6px;padding:4px;
+  background:#0a0f17;border:1px solid #222d3e;
+  border-radius:14px;overflow-x:auto;
+}
+.rank-tab{
+  min-height:38px;padding:7px 12px;border-radius:10px;
+  font-weight:800;white-space:nowrap;
+}
+.rank-tab.active{box-shadow:0 4px 12px rgba(118,108,255,.2)}
+.rank-list,.ranking-list{
+  margin-top:9px;
+}
+.rank-row,.ranking-row{
+  min-height:52px;padding:9px 11px;margin:6px 0;
+  border:1px solid #252f40;border-radius:13px;
+  background:linear-gradient(145deg,#121a25,#0b1017);
+  display:flex;align-items:center;gap:9px;
+}
+.rank-row:first-child,.ranking-row:first-child{
+  border-color:#414c68;
+  background:linear-gradient(145deg,#181f2d,#0d131c);
+}
+.profile-card .btn{min-height:40px}
+.actions{
+  gap:7px;margin-top:12px;
+}
+.actions .btn{min-height:42px}
+@media(max-width:500px){
+  .profile-head{gap:11px}
+  .avatar{width:52px;height:52px;min-width:52px;border-radius:15px}
+  .profile-head strong{font-size:16px}
+  .rank-tabs{margin-left:-2px;margin-right:-2px}
+}
