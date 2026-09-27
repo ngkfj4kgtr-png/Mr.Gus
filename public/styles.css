@@ -401,3 +401,68 @@ body{
     grid-template-columns:1fr 1fr;
   }
 }
+
+/* Mr.Gus UI pass 6 — centered action feedback */
+.status{
+  position:fixed;
+  left:50%;
+  top:50%;
+  z-index:1000;
+  width:min(88vw,420px);
+  min-height:58px;
+  margin:0;
+  padding:14px 18px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  font-size:16px;
+  font-weight:850;
+  line-height:1.25;
+  color:#fff;
+  background:rgba(15,20,30,.96);
+  border:1px solid #47536d;
+  border-radius:17px;
+  box-shadow:0 18px 55px rgba(0,0,0,.52),0 0 0 1px rgba(118,108,255,.08);
+  backdrop-filter:blur(18px);
+  -webkit-backdrop-filter:blur(18px);
+  transform:translate(-50%,-50%);
+  pointer-events:none;
+}
+.status:empty{display:none}
+.status[data-error="1"]{
+  border-color:#8d5360;
+  background:rgba(35,17,24,.97);
+}
+.status:not([data-error="1"]){
+  border-color:#4c4a80;
+}
+.btn,.quick-bar button{
+  position:relative;
+  overflow:hidden;
+  -webkit-tap-highlight-color:transparent;
+}
+.btn:after,.quick-bar button:after{
+  content:"";
+  position:absolute;
+  inset:0;
+  border-radius:inherit;
+  background:rgba(255,255,255,.08);
+  opacity:0;
+  transition:opacity .12s ease;
+  pointer-events:none;
+}
+.btn:active:after,.quick-bar button:active:after{opacity:1}
+.btn:active{transform:scale(.965)}
+.quick-bar button:active{transform:scale(.94)}
+@media(max-width:500px){
+  .status{
+    width:calc(100vw - 28px);
+    min-height:56px;
+    font-size:15px;
+    border-radius:16px;
+  }
+}
+@media(prefers-reduced-motion:reduce){
+  .btn:after,.quick-bar button:after{transition:none}
+}
