@@ -83,43 +83,42 @@ async function loadSocial(){
 }
 
 function initCityMapControls(){
-  const map=document.querySelector(".city-map"),world=document.querySelector(".map-world");if(!map||!world||map.dataset.controls==="1")return;
+  const map=document.querySelector(".city-map"),world=document.querySelector(".map-world");
+  if(!map||!world||map.dataset.controls==="1")return;
   map.dataset.controls="1";
-  let scale=1,tx=0,ty=0,startX=0,startY=0,startTx=0,startTy=0,drag=false,moved=false,pinchStart=0;
-  const clamp=()=>{scale=Math.max(.85,Math.min(2.4,scale));tx=Math.max(-map.clientWidth*(scale-1)*.55,Math.min(map.clientWidth*(scale-1)*.55,tx));ty=Math.max(-map.clientHeight*(scale-1)*.55,Math.min(map.clientHeight*(scale-1)*.55,ty));};
+  let scale=1,tx=0,ty=0,dragId=null,startX=0,startY=0,startTx=0,startTy=0;
+  const pointers=new Map();let pinchDistance=0,pinchScale=1;
+  const clamp=()=>{
+    scale=Math.max(.85,Math.min(2.4,scale));
+    const maxX=map.clientWidth*(scale-1)*.55,maxY=map.clientHeight*(scale-1)*.55;
+    tx=Math.max(-maxX,Math.min(maxX,tx));ty=Math.max(-maxY,Math.min(maxY,ty));
+  };
   const apply=()=>{clamp();world.style.transform='translate3d('+tx+'px,'+ty+'px,0) scale('+scale+')';};
-  let pointers=new Map(),pinchDistance=0,pinchScale=1;
-  map.addEventListener("pointerdown",e=>{
-    if(e.target.closest("button,.city-panel"))return;
+  const dist=()=>{const p=[...pointers.values()];return p.length<2?0:Math.hypot(p[0].x-p[1].x,p[0].y-p[1].y)};
+  const down=e=>{
+    if(e.target.closest("button,.city-panel,.map-zoom-controls"))return;
     pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
-    if(pointers.size===2){const p=[...pointers.values()];pinchDistance=Math.hypot(p[0].x-p[1].x,p[0].y-p[1].y);pinchScale=scale;drag=false;}
-  });
-  map.addEventListener("pointermove",e=>{
-    if(!pointers.has(e.pointerId))return;pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
-    if(pointers.size===2){const p=[...pointers.values()],d=Math.hypot(p[0].x-p[1].x,p[0].y-p[1].y);if(pinchDistance){scale=pinchScale*d/pinchDistance;apply();}}
-  });
-  map.addEventListener("pointerup",e=>pointers.delete(e.pointerId));
-  map.addEventListener("pointercancel",e=>pointers.delete(e.pointerId));
-  map.addEventListener("pointerdown",e=>{
-    if(e.target.closest("button,.city-panel"))return;
-    drag=true;moved=false;startX=e.clientX;startY=e.clientY;startTx=tx;startTy=ty;
     try{map.setPointerCapture(e.pointerId)}catch{}
-  });
-  map.addEventListener("pointermove",e=>{if(!drag)return;const dx=e.clientX-startX,dy=e.clientY-startY;if(Math.abs(dx)+Math.abs(dy)>5)moved=true;tx=startTx+dx;ty=startTy+dy;apply();});
-  map.addEventListener("pointerup",e=>{drag=false;try{map.releasePointerCapture(e.pointerId)}catch{}});
-  map.addEventListener("pointercancel",()=>{drag=false});
-  map.addEventListener("wheel",e=>{e.preventDefault();const old=scale,dir=e.deltaY<0?1.12:.89;scale*=dir;const r=map.getBoundingClientRect(),cx=e.clientX-r.left-r.width/2,cy=e.clientY-r.top-r.height/2;tx=cx-(cx-tx)*(scale/old);ty=cy-(cy-ty)*(scale/old);apply()},{passive:false});
-  let lastDist=0;
-  map.addEventListener("touchstart",e=>{if(e.touches.length===2){const a=e.touches[0],b=e.touches[1];lastDist=Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY);pinchStart=scale;}},{passive:true});
-  map.addEventListener("touchmove",e=>{if(e.touches.length===2&&lastDist){const a=e.touches[0],b=e.touches[1],d=Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY);scale=pinchStart*d/lastDist;apply();}},{passive:true});
-  map.addEventListener("touchend",()=>{lastDist=0},{passive:true});
-  const zoom=(d)=>{scale+=d;apply()};
-  const hud=document.createElement("div");hud.className="map-hud";hud.innerHTML='<span>🗺️ '+cityNames[cityStage]+'</span><span>Ур. '+level+'</span><span>🏢 '+owned+'/4</span><span>💰 '+money(totalIncome)+'/ч</span>';
-  map.appendChild(hud);
-  const live=document.createElement("div");live.className="map-live-feed";live.innerHTML='<span class="map-live-dot"></span><span>Город развивается</span>';map.appendChild(live);
+    if(pointers.size===2){pinchDistance=dist();pinchScale=scale;dragId=null}
+    else {dragId=e.pointerId;startX=e.clientX;startY=e.clientY;startTx=tx;startTy=ty}
+  };
+  const move=e=>{
+    if(!pointers.has(e.pointerId))return;
+    pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
+    if(pointers.size===2&&pinchDistance){scale=pinchScale*dist()/pinchDistance;apply();return}
+    if(pointers.size===1&&dragId===e.pointerId){tx=startTx+e.clientX-startX;ty=startTy+e.clientY-startY;apply()}
+  };
+  const up=e=>{
+    pointers.delete(e.pointerId);try{map.releasePointerCapture(e.pointerId)}catch{}
+    if(pointers.size<2)pinchDistance=0;
+    if(pointers.size===1){const [id,p]=[...pointers.entries()][0];dragId=id;startX=p.x;startY=p.y;startTx=tx;startTy=ty}else dragId=null;
+  };
+  map.addEventListener("pointerdown",down);map.addEventListener("pointermove",move);
+  map.addEventListener("pointerup",up);map.addEventListener("pointercancel",up);
+  map.addEventListener("wheel",e=>{e.preventDefault();const old=scale;scale*=e.deltaY<0?1.12:.89;const r=map.getBoundingClientRect(),cx=e.clientX-r.left-r.width/2,cy=e.clientY-r.top-r.height/2;tx=cx-(cx-tx)*(scale/old);ty=cy-(cy-ty)*(scale/old);apply()},{passive:false});
   const controls=document.createElement("div");controls.className="map-zoom-controls";controls.innerHTML='<button type="button" data-map-zoom="-1" aria-label="Уменьшить">−</button><button type="button" data-map-zoom="1" aria-label="Увеличить">+</button><button type="button" data-map-reset="1" aria-label="Сбросить карту">⌖</button>';
   map.appendChild(controls);
-  controls.addEventListener("click",e=>{const z=e.target.closest("[data-map-zoom]");if(z){zoom(Number(z.dataset.mapZoom)*.18);return}if(e.target.closest("[data-map-reset]")){scale=1;tx=0;ty=0;apply()}});
+  controls.addEventListener("click",e=>{const z=e.target.closest("[data-map-zoom]");if(z){scale+=Number(z.dataset.mapZoom)*.18;apply();return}if(e.target.closest("[data-map-reset]")){scale=1;tx=0;ty=0;apply()}});
 }
 
 function renderCityMap(s){
