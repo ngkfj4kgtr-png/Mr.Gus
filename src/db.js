@@ -119,7 +119,7 @@ export async function recordOperation(client,{operationId,type,userId,reward=0,a
 }
 export async function updatePlayer(userId,player,client){
   client??=await getPool();
-  const r=await client.query(`UPDATE users SET balance=$1,xp=$2,level=$3,businesses=$4::jsonb,claimed_tasks=$5::jsonb,claimed_achievements=$6::jsonb,claimed_goals=$7::jsonb,event_claims=$8::jsonb,stats=$9::jsonb,inventory=$10::jsonb,active_bonuses=$11::jsonb,daily_state=$12::jsonb,last_income_at=$13,updated_at=NOW() WHERE id=$14 RETURNING *
+  const r=await client.query(`UPDATE users SET balance=$1,xp=$2,level=$3,businesses=$4::jsonb,claimed_tasks=$5::jsonb,claimed_achievements=$6::jsonb,claimed_goals=$7::jsonb,event_claims=$8::jsonb,stats=$9::jsonb,inventory=$10::jsonb,active_bonuses=$11::jsonb,daily_state=$12::jsonb,last_income_at=$13,updated_at=NOW() WHERE id=$14 RETURNING *`,
     [player.balance,player.xp,player.level,JSON.stringify(player.businesses),JSON.stringify([...player.claimedTasks]),JSON.stringify([...player.claimedAchievements]),JSON.stringify([...player.claimedGoals]),JSON.stringify(player.eventClaims),JSON.stringify(player.stats),JSON.stringify(player.inventory||{}),JSON.stringify(player.activeBonuses||{}),JSON.stringify(player.dailyState||{}),player.lastIncomeAt,userId]);
   if(!r.rowCount)throw new Error('User not found');return r.rows[0];
 }
