@@ -15,7 +15,7 @@ export async function migrate(){
   await p.query(`CREATE TABLE IF NOT EXISTS users(
     id BIGSERIAL PRIMARY KEY,telegram_id BIGINT NOT NULL UNIQUE,username TEXT,first_name TEXT NOT NULL DEFAULT '',last_name TEXT NOT NULL DEFAULT '',photo_url TEXT,
     balance BIGINT NOT NULL DEFAULT 0 CHECK(balance>=0),xp BIGINT NOT NULL DEFAULT 0 CHECK(xp>=0),level INTEGER NOT NULL DEFAULT 1 CHECK(level>=1),
-    businesses JSONB NOT NULL DEFAULT '{}'::jsonb,claimed_tasks JSONB NOT NULL DEFAULT '[]'::jsonb,claimed_achievements JSONB NOT NULL DEFAULT '[]'::jsonb,claimed_goals JSONB NOT NULL DEFAULT '[]'::jsonb,event_claims JSONB NOT NULL DEFAULT '{}'::jsonb,stats JSONB NOT NULL DEFAULT '{}'::jsonb,last_income_at BIGINT,
+    businesses JSONB NOT NULL DEFAULT '{}'::jsonb,claimed_tasks JSONB NOT NULL DEFAULT '[]'::jsonb,claimed_achievements JSONB NOT NULL DEFAULT '[]'::jsonb,claimed_goals JSONB NOT NULL DEFAULT '[]'::jsonb,event_claims JSONB NOT NULL DEFAULT '{}'::jsonb,stats JSONB NOT NULL DEFAULT '{}'::jsonb,inventory JSONB NOT NULL DEFAULT '{}'::jsonb,active_bonuses JSONB NOT NULL DEFAULT '{}'::jsonb,last_income_at BIGINT,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW());
     CREATE TABLE IF NOT EXISTS sessions(
       id BIGSERIAL PRIMARY KEY,token_hash CHAR(64) NOT NULL UNIQUE,user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -27,6 +27,8 @@ export async function migrate(){
       reward_amount BIGINT NOT NULL DEFAULT 0 CHECK(reward_amount>=0),created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),UNIQUE(user_id,operation_id));
     CREATE INDEX IF NOT EXISTS economy_operations_user_created_idx ON economy_operations(user_id,created_at DESC);
     ALTER TABLE users ADD COLUMN IF NOT EXISTS claimed_achievements JSONB NOT NULL DEFAULT '[]'::jsonb;
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS inventory JSONB NOT NULL DEFAULT '{}'::jsonb;
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS active_bonuses JSONB NOT NULL DEFAULT '{}'::jsonb;
     ALTER TABLE users ADD COLUMN IF NOT EXISTS claimed_goals JSONB NOT NULL DEFAULT '[]'::jsonb;
     ALTER TABLE users ADD COLUMN IF NOT EXISTS event_claims JSONB NOT NULL DEFAULT '{}'::jsonb;
     ALTER TABLE users ADD COLUMN IF NOT EXISTS stats JSONB NOT NULL DEFAULT '{}'::jsonb;`);
@@ -84,6 +86,8 @@ export function rowToPlayer(row){
     }
   }
   p.stats={...p.stats,...(row.stats||{})};
+  p.inventory=row.inventory&&typeof row.inventory==='object'&&!Array.isArray(row.inventory)?row.inventory:{};
+  p.activeBonuses=row.active_bonuses&&typeof row.active_bonuses==='object'&&!Array.isArray(row.active_bonuses)?row.active_bonuses:{};
   // Keep the derived ownership counter backward-compatible with players created before Stage 9.
   p.stats.businessesOwned=Object.keys(p.businesses).length;
   p.lastIncomeAt=row.last_income_at===null?null:Number(row.last_income_at);p.createdAt=row.created_at;return p;
@@ -111,8 +115,8 @@ export async function recordOperation(client,{operationId,type,userId,reward=0,a
 }
 export async function updatePlayer(userId,player,client){
   client??=await getPool();
-  const r=await client.query(`UPDATE users SET balance=$1,xp=$2,level=$3,businesses=$4::jsonb,claimed_tasks=$5::jsonb,claimed_achievements=$6::jsonb,claimed_goals=$7::jsonb,event_claims=$8::jsonb,stats=$9::jsonb,last_income_at=$10,updated_at=NOW() WHERE id=$11 RETURNING *`,
-    [player.balance,player.xp,player.level,JSON.stringify(player.businesses),JSON.stringify([...player.claimedTasks]),JSON.stringify([...player.claimedAchievements]),JSON.stringify([...player.claimedGoals]),JSON.stringify(player.eventClaims),JSON.stringify(player.stats),player.lastIncomeAt,userId]);
+  const r=await client.query(`UPDATE users SET balance=$1,xp=$2,level=$3,businesses=$4::jsonb,claimed_tasks=$5::jsonb,claimed_achievements=$6::jsonb,claimed_goals=$7::jsonb,event_claims=$8::jsonb,stats=$9::jsonb,inventory=$10::jsonb,active_bonuses=$11::jsonb,last_income_at=$12,updated_at=NOW() WHERE id=$11 RETURNING *`,
+    [player.balance,player.xp,player.level,JSON.stringify(player.businesses),JSON.stringify([...player.claimedTasks]),JSON.stringify([...player.claimedAchievements]),JSON.stringify([...player.claimedGoals]),JSON.stringify(player.eventClaims),JSON.stringify(player.stats),JSON.stringify(player.inventory||{}),JSON.stringify(player.activeBonuses||{}),player.lastIncomeAt,userId]);
   if(!r.rowCount)throw new Error('User not found');return r.rows[0];
 }
 export async function withPlayerTransaction(userId,fn){
