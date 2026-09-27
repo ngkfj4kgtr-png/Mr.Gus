@@ -98,6 +98,11 @@ function renderCityMap(s){
   const trucks=activeBusinesses.filter(b=>b.id==="workshop"||b.id==="factory").slice(0,4).map((b,i)=>'<i class="city-truck truck-route-'+b.id+'" style="--i:'+i+'">🚚</i>').join("");
   const moneyFlows=businesses.slice(0,4).map((b,i)=>{const m=meta[b.id]||{spot:[48,55]};return '<i class="money-flow money-'+b.id+'" style="--x:'+m.spot[0]+';--y:'+m.spot[1]+';--i:'+i+'">+'+Math.max(1,Math.round(Number(b.profitPerHour||0)))+'</i>'}).join("");
   const activity=businesses.map(b=>{const m=meta[b.id];if(!m)return "";const count=Math.min(3,Math.max(1,Math.floor((Number(b.level)||1)/5)));return Array.from({length:count},(_,i)=>'<i class="business-worker worker-'+b.id+'" style="--n:'+i+';left:'+m.spot[0]+'%;top:'+(m.spot[1]+5+i*2)+'%"></i>').join("")}).join("");
+  const routeLines=businesses.map(b=>{
+    const m=meta[b.id];if(!m)return "";
+    const dx=48-m.spot[0],dy=55-m.spot[1],len=Math.sqrt(dx*dx+dy*dy);
+    return '<i class="business-route route-'+b.id+'" style="--sx:'+m.spot[0]+'%;--sy:'+m.spot[1]+'%;--len:'+len+'%;--angle:'+Math.atan2(dy,dx)*180/Math.PI+'deg"></i>';
+  }).join("");
   const businessFlows=businesses.map((b,i)=>{
     const m=meta[b.id];if(!m)return "";
     return '<i class="business-flow flow-'+b.id+'" style="--sx:'+m.spot[0]+'%;--sy:'+m.spot[1]+'%;--tx:48%;--ty:55%;--delay:'+(i*.8)+'s"></i>';
