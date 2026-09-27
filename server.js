@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { validateTelegramInitData } from './src/telegram-auth.js';
 import { initDb,migrate,upsertTelegramUser,createSession,getUserBySession,deleteSession,cleanupExpiredSessions,withPlayerTransaction,recordOperation,assertOperationNotProcessed,getPool } from './src/db.js';
 import { validateOperationId, OPERATION_TYPES } from './src/operations.js';
-import { createPlayer,claimTask,buyBusiness,upgradeBusiness,collectOfflineIncome,hourlyProfit,availableTasks,availableAchievements,availableGoals,claimAchievement,claimGoal,currentEvent,claimEvent,BUSINESS,canBuyBusiness,businessUnlockLevel,xpForLevel } from './src/economy.js';
+import { createPlayer,claimTask,buyBusiness,upgradeBusiness,collectOfflineIncome,hourlyProfit,availableTasks,availableAchievements,availableGoals,claimAchievement,claimGoal,currentEvent,claimEvent,BUSINESS,canBuyBusiness,businessUnlockLevel,xpForLevel,hireEmployee,expandBusiness,addInvestment,activateBusinessBoost } from './src/economy.js';
 import { checkRateLimit,validateSameOrigin,validateFetchMetadata,securityHeaders,clearRateLimitBuckets } from './src/http-security.js';
 
 const root=join(fileURLToPath(new URL('.',import.meta.url)),'public');
@@ -59,11 +59,15 @@ if(url.pathname==='/api/task/claim')action=claimTask(player,String(body.taskId||
 else if(url.pathname==='/api/achievement/claim')action=claimAchievement(player,String(body.achievementId||''));
 else if(url.pathname==='/api/goal/claim')action=claimGoal(player,String(body.goalId||''));
 else if(url.pathname==='/api/event/claim')action=claimEvent(player,Date.now());
+else if(url.pathname==='/api/business/employee/hire')action=hireEmployee(player,String(body.businessId||''),String(body.role||''),Date.now());
+else if(url.pathname==='/api/business/expand')action=expandBusiness(player,String(body.businessId||''),Date.now());
+else if(url.pathname==='/api/business/invest')action=addInvestment(player,String(body.businessId||''),Number(body.amount));
+else if(url.pathname==='/api/business/boost')action=activateBusinessBoost(player,String(body.businessId||''),Date.now());
 else return sendJson(res,404,{error:'Endpoint not found'});
 demoOperations.add(`demo-user:${operationId}`);demoPlayers.set('demo-user',player);return sendJson(res,200,{...serialize(player,a.user),action})}return sendJson(res,405,{error:'Method not allowed'})}
 if(req.method==='GET'&&url.pathname==='/api/state'){const tx=await withPlayerTransaction(a.user.id,async(player,client)=>{const from=player.lastIncomeAt,now=Date.now(),out=collectOfflineIncome(player,now,currentEvent(now).incomeMultiplier);if(out.seconds>0&&from!==null){const operationId=`income_auto_${from}_${player.lastIncomeAt}`;await recordOperation(client,{operationId,type:OPERATION_TYPES.INCOME_COLLECTION,userId:a.user.id,reward:out.income,at:now})}return out});return sendJson(res,200,{...serialize(tx.player,a.user),action:tx.result})}
 if(req.method==='POST'){
-const allowedPostEndpoints=new Set(['/api/task/claim','/api/business/buy','/api/business/upgrade','/api/income/collect','/api/achievement/claim','/api/goal/claim','/api/event/claim']);
+const allowedPostEndpoints=new Set(['/api/task/claim','/api/business/buy','/api/business/upgrade','/api/income/collect','/api/achievement/claim','/api/goal/claim','/api/event/claim','/api/business/employee/hire','/api/business/expand','/api/business/invest','/api/business/boost']);
 if(!allowedPostEndpoints.has(url.pathname))return sendJson(res,404,{error:'Endpoint not found'});
 const body=await readJson(req),operationId=String(body.operationId||'');validateOperationId(operationId);let out;const tx=await withPlayerTransaction(a.user.id,async(player,client)=>{
 const now=Date.now();
@@ -83,8 +87,12 @@ else if(url.pathname==='/api/income/collect')out=collectOfflineIncome(player,now
 else if(url.pathname==='/api/achievement/claim')out=claimAchievement(player,String(body.achievementId||''));
 else if(url.pathname==='/api/goal/claim')out=claimGoal(player,String(body.goalId||''));
 else if(url.pathname==='/api/event/claim')out=claimEvent(player,now);
+else if(url.pathname==='/api/business/employee/hire')out=hireEmployee(player,String(body.businessId||''),String(body.role||''),now);
+else if(url.pathname==='/api/business/expand')out=expandBusiness(player,String(body.businessId||''),now);
+else if(url.pathname==='/api/business/invest')out=addInvestment(player,String(body.businessId||''),Number(body.amount));
+else if(url.pathname==='/api/business/boost')out=activateBusinessBoost(player,String(body.businessId||''),now);
 else throw new Error('Endpoint not found');
-const type=url.pathname==='/api/task/claim'?OPERATION_TYPES.TASK_REWARD:url.pathname==='/api/business/buy'?OPERATION_TYPES.BUSINESS_PURCHASE:url.pathname==='/api/business/upgrade'?OPERATION_TYPES.BUSINESS_UPGRADE:url.pathname==='/api/achievement/claim'?OPERATION_TYPES.ACHIEVEMENT_REWARD:url.pathname==='/api/goal/claim'?OPERATION_TYPES.GOAL_REWARD:url.pathname==='/api/event/claim'?OPERATION_TYPES.EVENT_REWARD:OPERATION_TYPES.INCOME_COLLECTION;
+const type=url.pathname==='/api/task/claim'?OPERATION_TYPES.TASK_REWARD:url.pathname==='/api/business/buy'?OPERATION_TYPES.BUSINESS_PURCHASE:url.pathname==='/api/business/upgrade'?OPERATION_TYPES.BUSINESS_UPGRADE:url.pathname==='/api/business/employee/hire'?OPERATION_TYPES.EMPLOYEE_HIRE:url.pathname==='/api/business/expand'?OPERATION_TYPES.BUSINESS_EXPANSION:url.pathname==='/api/business/invest'?OPERATION_TYPES.BUSINESS_INVESTMENT:url.pathname==='/api/business/boost'?OPERATION_TYPES.BUSINESS_BOOST:url.pathname==='/api/achievement/claim'?OPERATION_TYPES.ACHIEVEMENT_REWARD:url.pathname==='/api/goal/claim'?OPERATION_TYPES.GOAL_REWARD:url.pathname==='/api/event/claim'?OPERATION_TYPES.EVENT_REWARD:OPERATION_TYPES.INCOME_COLLECTION;
 const reward=Number(out?.reward??out?.income??0);await recordOperation(client,{operationId,type,userId:a.user.id,reward});return out});
 return sendJson(res,200,{...serialize(tx.player,a.user),action:out})}
 return sendJson(res,405,{error:'Method not allowed'})}
