@@ -1351,3 +1351,70 @@ body.map-fullscreen{overflow:hidden}
   body.map-fullscreen .city-map .map-scale-label,
   body.map-fullscreen .city-map .map-legend{display:none!important}
 }
+
+/* Mr.Gus UI repair 5 — fixed HUD/dock and clean hierarchy */
+@media(max-width:600px){
+  body.map-fullscreen > .wrap > .stats,
+  body.map-fullscreen .stats,
+  body.map-fullscreen .stats .stat{display:none!important}
+
+  body.map-fullscreen .city-map .map-ui-layer{
+    position:absolute!important;inset:0!important;z-index:240!important;
+    pointer-events:none!important;
+  }
+  body.map-fullscreen .city-map .map-ui-layer .map-hud,
+  body.map-fullscreen .city-map .map-ui-layer .map-city-status,
+  body.map-fullscreen .city-map .map-ui-layer .map-compass,
+  body.map-fullscreen .city-map .map-ui-layer .city-service-marker{
+    pointer-events:auto!important;
+  }
+
+  body.map-fullscreen .city-map .map-ui-layer .map-hud{
+    left:10px!important;top:max(10px,env(safe-area-inset-top) + 7px)!important;
+    right:auto!important;max-width:none!important;z-index:250!important;
+  }
+  body.map-fullscreen .city-map .map-ui-layer .map-city-status{
+    left:50%!important;right:auto!important;
+    top:max(10px,env(safe-area-inset-top) + 7px)!important;
+    transform:translateX(-50%)!important;max-width:34%!important;
+    z-index:250!important;padding:7px 9px!important;border-radius:12px!important;
+  }
+
+  body.map-fullscreen .city-map .map-ui-layer .map-compass{
+    top:max(10px,env(safe-area-inset-top) + 7px)!important;
+    left:auto!important;right:52px!important;width:30px!important;height:30px!important;
+    z-index:251!important;
+  }
+
+  body.map-fullscreen .city-map .map-ui-layer .city-service-marker{
+    top:auto!important;bottom:calc(env(safe-area-inset-bottom) + 10px)!important;
+    transform:translateX(-50%)!important;
+    width:46px!important;min-width:46px!important;max-width:46px!important;
+    height:48px!important;padding:3px 2px!important;border-radius:14px!important;
+    display:flex!important;flex-direction:column!important;align-items:center!important;
+    justify-content:center!important;gap:2px!important;
+    background:rgba(5,11,18,.96)!important;
+    border:1px solid rgba(155,170,195,.28)!important;
+    box-shadow:0 7px 20px rgba(0,0,0,.40)!important;z-index:260!important;
+  }
+  body.map-fullscreen .city-map .map-ui-layer .city-service-marker span{
+    font-size:18px!important;line-height:18px!important;
+  }
+  body.map-fullscreen .city-map .map-ui-layer .city-service-marker small{
+    display:block!important;max-width:41px!important;font-size:6px!important;
+    line-height:7px!important;color:#c8d1df!important;text-align:center!important;
+    overflow:hidden!important;white-space:nowrap!important;text-overflow:ellipsis!important;
+  }
+  body.map-fullscreen .city-map .map-ui-layer .city-service-marker em{display:none!important}
+
+  body.map-fullscreen .city-map .business-marker{z-index:120!important}
+  body.map-fullscreen .city-map .home-marker{z-index:125!important}
+  body.map-fullscreen .city-map .city-event-marker{z-index:130!important}
+  body.map-fullscreen .city-map .territory-marker{z-index:115!important}
+
+  body.map-fullscreen .city-map .map-district,
+  body.map-fullscreen .city-map .map-center-label,
+  body.map-fullscreen .city-map .map-scale-label,
+  body.map-fullscreen .city-map .map-legend{display:none!important}
+  body.map-fullscreen .city-map .map-plaza{opacity:.40!important}
+}
