@@ -11,6 +11,7 @@ import { getRankings,getProfile,isAdminTelegramId,getAdminSnapshot,setBlocked,wr
 
 const root=join(fileURLToPath(new URL('.',import.meta.url)),'public');
 const port=Number(process.env.PORT||3000),botToken=process.env.TELEGRAM_BOT_TOKEN,demoMode=process.env.DEMO_MODE==='true';
+const runtimeMetrics={requests:0,apiErrors:0,rateLimited:0};
 if(!botToken&&!demoMode)throw new Error('TELEGRAM_BOT_TOKEN is required');
 if(!process.env.DATABASE_URL&&!demoMode)throw new Error('DATABASE_URL is required');
 if(!demoMode){await initDb();await migrate();}
@@ -34,7 +35,7 @@ async function auth(req,res){const cookies=parseCookies(req.headers.cookie);if(d
 function errorStatus(message){if(message==='Operation already processed')return 409;if(message==='Authentication required')return 401;if(message==='Endpoint not found')return 404;if(message==='Content-Type must be application/json')return 415;if(/authentication|required|invalid|expired|already|insufficient|maximum|clock|task|business|achievement|goal|event|locked|overflow|payload|json|origin|site|too many/i.test(message))return 400;return 500}
 function publicError(message){return errorStatus(message)===500?'Internal server error':message}
 
-const server=http.createServer(async(req,res)=>{try{
+const server=http.createServer(async(req,res)=>{try{runtimeMetrics.requests++;
 clearRateLimitBuckets();
 const url=new URL(req.url,`http://${req.headers.host||'localhost'}`);
 if(url.pathname.startsWith('/api/') && (req.method==='POST'||req.method==='PUT'||req.method==='PATCH'||req.method==='DELETE'||url.pathname==='/api/state')){
@@ -43,9 +44,9 @@ if(url.pathname.startsWith('/api/') && (req.method==='POST'||req.method==='PUT'|
     validateFetchMetadata(req,{stateChanging:true});
   }
   const limit=checkRateLimit(req,{mutation:true});
-  if(!limit.allowed){writeError({path:url.pathname,message:'Rate limit exceeded',severity:'warn',details:{method:req.method}});return sendJson(res,429,{error:'Too many requests'},{'Retry-After':String(limit.retryAfter)});}
+  if(!limit.allowed){runtimeMetrics.rateLimited++;writeError({path:url.pathname,message:'Rate limit exceeded',severity:'warn',details:{method:req.method}});return sendJson(res,429,{error:'Too many requests'},{'Retry-After':String(limit.retryAfter)});}
 }
-if(req.method==='GET'&&url.pathname==='/health'){if(!demoMode)await (await getPool()).query('SELECT 1');return sendJson(res,200,{ok:true,service:'Mr.Gus',status:'healthy',database:demoMode?'demo':'ok'})}
+if(req.method==='GET'&&url.pathname==='/health'){if(!demoMode)await (await getPool()).query('SELECT 1');return sendJson(res,200,{ok:true,service:'Mr.Gus',status:'healthy',database:demoMode?'demo':'ok',metrics:runtimeMetrics})}
 if(req.method==='POST'&&url.pathname==='/api/auth/telegram'){
 if(demoMode&&!req.headers['x-telegram-init-data']){res.setHeader('Set-Cookie',`mfz_demo=1; ${cookieOptions()}; Max-Age=604800`);return sendJson(res,200,{ok:true,demo:true,user:{first_name:'Демо',last_name:'Игрок',username:'demo'}})}
 const verified=validateTelegramInitData(String(req.headers['x-telegram-init-data']||''),botToken),user=await upsertTelegramUser(verified.user),token=await createSession(user.id);
@@ -102,10 +103,10 @@ else if(url.pathname==='/api/shop/buy')out=buyShopItem(player,String(body.itemId
 else if(url.pathname==='/api/daily/claim')out=claimDailyActivity(player,now);
 else throw new Error('Endpoint not found');
 const type=url.pathname==='/api/task/claim'?OPERATION_TYPES.TASK_REWARD:url.pathname==='/api/business/buy'?OPERATION_TYPES.BUSINESS_PURCHASE:url.pathname==='/api/business/upgrade'?OPERATION_TYPES.BUSINESS_UPGRADE:url.pathname==='/api/business/employee/hire'?OPERATION_TYPES.EMPLOYEE_HIRE:url.pathname==='/api/business/expand'?OPERATION_TYPES.BUSINESS_EXPANSION:url.pathname==='/api/business/invest'?OPERATION_TYPES.BUSINESS_INVESTMENT:url.pathname==='/api/business/boost'?OPERATION_TYPES.BUSINESS_BOOST:url.pathname==='/api/shop/buy'?OPERATION_TYPES.SHOP_PURCHASE:url.pathname==='/api/daily/claim'?OPERATION_TYPES.DAILY_REWARD:url.pathname==='/api/achievement/claim'?OPERATION_TYPES.ACHIEVEMENT_REWARD:url.pathname==='/api/goal/claim'?OPERATION_TYPES.GOAL_REWARD:url.pathname==='/api/event/claim'?OPERATION_TYPES.EVENT_REWARD:OPERATION_TYPES.INCOME_COLLECTION;
-const reward=Number(out?.reward??out?.income??0);await recordOperation(client,{operationId,type,userId:a.user.id,reward});return out});
+const reward=Number(out?.reward??out?.income??0);await recordOperation(client,{operationId,type,userId:a.user.id,reward});await writeAudit({userId:a.user.id,telegramId:a.user.telegram_id,action:type,details:{operationId,reward,path:url.pathname}});if(reward>100000)await writeAudit({userId:a.user.id,telegramId:a.user.telegram_id,action:'suspicious_high_reward',details:{operationId,reward,path:url.pathname}});return out});
 return sendJson(res,200,{...serialize(tx.player,a.user),action:out})}
 return sendJson(res,405,{error:'Method not allowed'})}
 const requested=url.pathname==='/'?'/index.html':url.pathname,safe=normalize(requested).replace(/^\.\.(\/|\\)+/,'');const file=join(root,safe),data=await readFile(file);res.writeHead(200,{...securityHeaders(),'Content-Type':({'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8'})[extname(file)]||'application/octet-stream','Cache-Control':'no-store'});res.end(data);
-}catch(e){const msg=e?.message||'Server error';if(req.url?.startsWith('/api/')){console.error(JSON.stringify({type:'api_error',path:req.url,message:msg,code:e?.code||null}));writeError({path:req.url,message:msg,details:{code:e?.code||null}});return sendJson(res,errorStatus(msg),{error:publicError(msg)})}res.writeHead(500,{'Content-Type':'text/plain; charset=utf-8'});res.end('Server error')}});
+}catch(e){const msg=e?.message||'Server error';if(req.url?.startsWith('/api/')){runtimeMetrics.apiErrors++;console.error(JSON.stringify({type:'api_error',path:req.url,message:msg,code:e?.code||null}));writeError({path:req.url,message:msg,details:{code:e?.code||null}});return sendJson(res,errorStatus(msg),{error:publicError(msg)})}res.writeHead(500,{'Content-Type':'text/plain; charset=utf-8'});res.end('Server error')}});
 if(!demoMode){setInterval(()=>cleanupExpiredSessions().catch(()=>{}),15*60*1000).unref()}
 server.listen(port,'0.0.0.0',()=>console.log(`Mr.Gus — stage 9 progression: http://localhost:${port}`));
