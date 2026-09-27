@@ -1,4 +1,4 @@
-import { BUSINESS } from './economy.js';
+import { BUSINESS, xpForLevel, levelFromXp } from './economy.js';
 
 export const BUSINESS_SPECIALIZATIONS=Object.freeze({
   kiosk:{name:'Розничная торговля',demand:'повседневный спрос',district:'commercial'},
@@ -42,8 +42,6 @@ function seedNpcState(state,now){
 }
 function businessCapacity(player,businessId){const b=player.businesses?.[businessId];if(!b)return 0;const e=b.employees||{};return Math.max(1,2+(Number(e.cashier)||0)*2+(Number(e.manager)||0)+(Number(b.expansionLevel)||0)*2)}
 function completeNpcVisit(player,state,npc,now){const id=npc.targetBusiness,b=player.businesses?.[id],def=BUSINESS_DEMAND[id];if(!b||!def)return null;const level=Math.max(1,Number(b.level)||1),reward=Math.max(10,Math.round(def.ticket*(1+(level-1)*.06))),xp=Math.max(1,Math.round(reward/25));player.balance+=reward;player.xp+=xp;player.level=levelFromXp(player.xp);player.stats.totalEarned=Number(player.stats.totalEarned||0)+reward;player.stats.totalIncome=Number(player.stats.totalIncome||0)+reward;player.stats.visitsCompleted=Number(player.stats.visitsCompleted||0)+1;state.visitRevenue=Number(state.visitRevenue||0)+reward;state.visitsCompleted=Number(state.visitsCompleted||0)+1;state.lastVisitAt=now;return {npcId:npc.id,businessId:id,reward,xp}}
-function levelFromXp(xp){let level=1;while(level<100&&xp>=xpForLevel(level+1))level+=1;return level}
-function xpForLevel(level){return level<=1?0:Math.round(500+(level-2)*700)}
 function simulateNpcs(player,state,now){
   seedNpcState(state,now);
   const owned=Object.keys(player.businesses||{}), tick=Math.floor(now/15000);
