@@ -1495,3 +1495,80 @@ body.map-fullscreen{overflow:hidden}
   body.map-fullscreen .city-map .city-economy-flow{opacity:.16!important}
   body.map-fullscreen .city-map .city-business-life{opacity:.20!important}
 }
+
+/* Mr.Gus UI repair 7 — final mobile map cleanup */
+@media(max-width:600px){
+  body.map-fullscreen{overflow:hidden!important}
+  body.map-fullscreen .city-map{
+    min-height:0!important;
+    height:100dvh!important;
+    border:0!important;
+    border-radius:0!important;
+  }
+  body.map-fullscreen .city-map .map-world{
+    inset:0!important;
+    min-height:0!important;
+  }
+
+  /* Home sits in the playable center, not in the top HUD area. */
+  body.map-fullscreen .city-map .home-marker{
+    left:50%!important;
+    top:62%!important;
+    width:60px!important;height:60px!important;
+    min-width:60px!important;max-width:60px!important;
+    z-index:145!important;
+  }
+
+  /* Keep the playable objects below the header and above the background. */
+  body.map-fullscreen .city-map .business-marker{
+    z-index:135!important;
+  }
+  body.map-fullscreen .city-map .city-event-marker{
+    z-index:140!important;
+  }
+  body.map-fullscreen .city-map .territory-marker{
+    z-index:130!important;
+  }
+
+  /* The map should read as a city, not an almost-black empty grid. */
+  body.map-fullscreen .city-map{
+    background:
+      radial-gradient(circle at 50% 48%,rgba(100,125,175,.13),transparent 34%),
+      radial-gradient(circle at 18% 70%,rgba(70,130,100,.10),transparent 25%),
+      linear-gradient(160deg,#0c1723 0%,#08121c 55%,#071019 100%)!important;
+  }
+  body.map-fullscreen .city-map .city-houses-layer{opacity:.34!important}
+  body.map-fullscreen .city-map .city-street-life{opacity:.32!important}
+  body.map-fullscreen .city-map .city-traffic,
+  body.map-fullscreen .city-map .city-life,
+  body.map-fullscreen .city-map .city-logistics{opacity:.27!important}
+  body.map-fullscreen .city-map .city-business-life{opacity:.25!important}
+  body.map-fullscreen .city-map .city-economy-flow{opacity:.18!important}
+
+  /* Bottom dock: never overlaps an open panel and stays inside safe area. */
+  body.map-fullscreen .city-map .map-ui-layer .city-service-marker{
+    bottom:calc(env(safe-area-inset-bottom) + 10px)!important;
+    width:44px!important;min-width:44px!important;max-width:44px!important;
+    height:50px!important;
+    border-radius:14px!important;
+  }
+  body.map-fullscreen.map-panel-open .city-map .map-ui-layer .city-service-marker,
+  body.map-fullscreen.map-panel-open .city-map .map-zoom-controls{
+    display:none!important;
+  }
+
+  /* Panel gets the full lower stage without the dock underneath it. */
+  body.map-fullscreen.map-panel-open .city-map #cityPanel{
+    left:10px!important;right:10px!important;
+    bottom:calc(env(safe-area-inset-bottom) + 10px)!important;
+    max-height:calc(100dvh - 95px)!important;
+    z-index:500!important;
+  }
+
+  /* Avoid a second visual layer competing with the city title. */
+  body.map-fullscreen .city-map .map-scale-label,
+  body.map-fullscreen .city-map .map-legend,
+  body.map-fullscreen .city-map .map-center-label{
+    display:none!important;
+  }
+}
