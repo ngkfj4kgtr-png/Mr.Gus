@@ -1,4 +1,6 @@
 const tg=window.Telegram?.WebApp;
+const t=(key,vars={})=>window.MrGusLocale?.t(key,vars)||key;
+const lang=()=>window.MrGusLocale?.get()||"ru";
 if(tg){tg.ready();tg.expand();try{tg.enableClosingConfirmation?.()}catch{}}
 
 const op=t=>t+"_"+crypto.randomUUID();
@@ -8,6 +10,8 @@ function setStatus(message,error=false){const el=document.querySelector("#status
 function friendlyError(error){
   const message=String(error?.message||"Ошибка");
   const map={
+    "Откройте Mr.Gus через Telegram.":t("errors.telegram"),
+    "Недостаточно денег.":t("errors.balance"),
     "Insufficient balance":"Недостаточно денег.",
     "Business already owned":"Этот бизнес уже куплен.",
     "Business is locked":"Этот бизнес пока закрыт. Поднимите уровень.",
@@ -42,7 +46,7 @@ async function auth(){
   }catch(e){setStatus(friendlyError(e),true)}
 }
 async function refresh(fromAuth=false){
-  try{const s=await api("/api/state");render(s);setStatus(fromAuth?"Вы вошли через Telegram":"Подключено");return s}
+  try{const s=await api("/api/state");render(s);setStatus(fromAuth?t("status.loggedIn"):t("status.connected"));return s}
   catch(e){setStatus(friendlyError(e),true);return null}
 }
 function button(action,label,extra="",disabled=false){return `<button class="btn" data-action="${action}" ${extra} ${disabled?"disabled":""}>${label}</button>`}
@@ -58,11 +62,11 @@ function render(s){
   const current=level<=thresholds.length?thresholds[level-1]:thresholds.at(-1);
   const nextXp=level<thresholds.length?thresholds[level]:null;
   if(nextXp===null){document.querySelector("#xpBar").style.width="100%";document.querySelector("#xpHint").textContent="Прогресс продолжается с повышением уровня."}
-  else{document.querySelector("#xpBar").style.width=Math.max(0,Math.min(100,((xp-current)/(nextXp-current))*100))+"%";document.querySelector("#xpHint").textContent="До уровня "+(level+1)+": "+Math.max(0,nextXp-xp)+" XP"}
+  else{document.querySelector("#xpBar").style.width=Math.max(0,Math.min(100,((xp-current)/(nextXp-current))*100))+"%";document.querySelector("#xpHint").textContent="t("xp.next",{level:level+1,xp:Math.max(0,nextXp-xp)})"}
   const ownedIds=new Set((s.businesses||[]).map(b=>b.id));
   document.querySelector("#businesses").innerHTML=(s.businessCatalog||[]).map(b=>{
     const owned=s.businesses?.find(x=>x.id===b.id);
-    if(owned)return `<div class="mini-card"><div class="row"><div><b>${b.name} · ур. ${owned.level}</b><p class="muted">${b.description}</p></div><strong>${money(owned.profitPerHour)}/ч</strong></div><div class="row"><span class="muted">Следующий уровень</span>${button("upgrade","Улучшить",`data-business-id="${b.id}"`)}</div></div>`;
+    if(owned)return `<div class="mini-card"><div class="row"><div><b>${b.name} · ур. ${owned.level}</b><p class="muted">${b.description}</p></div><strong>${money(owned.profitPerHour)}/ч</strong></div><div class="row"><span class="muted" data-i18n="nextLevel">Следующий уровень</span>${button("upgrade","Улучшить",`data-business-id="${b.id}"`)}</div></div>`;
     return `<div class="mini-card"><div class="row"><div><b>${b.name}</b><p class="muted">${b.description}</p></div><strong>${money(b.cost)}</strong></div><p class="muted">Открывается с уровня ${b.unlockLevel}</p>${button("buy","Открыть",`data-business-id="${b.id}"`,!b.unlocked)}</div>`;
   }).join("");
   document.querySelector("#incomeAction").innerHTML=button("collect","💰 Забрать накопленный доход");
@@ -72,7 +76,7 @@ function render(s){
   const e=s.event||{};document.querySelector("#event").innerHTML=`<div class="event-card"><b>${e.title||"Событие"}</b><p class="muted">${e.description||""}</p><span class="reward">+${money(e.reward||0)} · +${e.xp||0} XP</span><div>${button("event",e.claimed?"Получено":"Забрать бонус")}</div></div>`;if(e.claimed)document.querySelector("#event button").disabled=true;
   const st=s.stats||{};document.querySelector("#stats").innerHTML=`<div><span>Заданий</span><b>${st.tasksCompleted||0}</b></div><div><span>Бизнесов</span><b>${st.businessesOwned||0}</b></div><div><span>Улучшений</span><b>${st.businessUpgrades||0}</b></div><div><span>Доход получен</span><b>${money(st.totalIncome||0)}</b></div><div><span>Всего заработано</span><b>${money(st.totalEarned||0)}</b></div>`;
 }
-async function action(button,fn){if(!button||button.disabled)return;button.disabled=true;try{const state=await fn();render(state);setStatus("Готово")}catch(e){setStatus(friendlyError(e),true)}finally{button.disabled=false}}
+async function action(button,fn){if(!button||button.disabled)return;button.disabled=true;try{const state=await fn();render(state);setStatus(t("status.done"))}catch(e){setStatus(friendlyError(e),true)}finally{button.disabled=false}}
 async function buy(button,id){await action(button,()=>api("/api/business/buy",{method:"POST",body:JSON.stringify({businessId:id,operationId:op("buy")})}))}
 async function upgrade(button,id){await action(button,()=>api("/api/business/upgrade",{method:"POST",body:JSON.stringify({businessId:id,operationId:op("upgrade")})}))}
 async function collect(button){await action(button,()=>api("/api/income/collect",{method:"POST",body:JSON.stringify({operationId:op("income")})}))}
@@ -81,4 +85,6 @@ async function claimAchievement(button,id){await action(button,()=>api("/api/ach
 async function claimGoal(button,id){await action(button,()=>api("/api/goal/claim",{method:"POST",body:JSON.stringify({goalId:id,operationId:op("goal")})}))}
 async function claimEvent(button){await action(button,()=>api("/api/event/claim",{method:"POST",body:JSON.stringify({operationId:op("event")})}))}
 document.addEventListener("click",e=>{const b=e.target.closest("[data-action]");if(!b||b.disabled)return;const a=b.dataset.action;if(a==="auth")auth();else if(a==="refresh")refresh();else if(a==="buy")buy(b,b.dataset.businessId);else if(a==="upgrade")upgrade(b,b.dataset.businessId);else if(a==="collect")collect(b);else if(a==="claim")claim(b,b.dataset.taskId);else if(a==="achievement")claimAchievement(b,b.dataset.id);else if(a==="goal")claimGoal(b,b.dataset.id);else if(a==="event")claimEvent(b)});
-window.addEventListener("load",async()=>{if(tg?.initData)await auth();else setStatus("Ожидается запуск из Telegram")});
+window.addEventListener("load",async()=>{if(tg?.initData)await auth();else setStatus(t("status.waitingTelegram"))});
+
+window.addEventListener("mr-gus-language-changed",()=>{const s=window.__mrGusState;if(s)render(s);});
