@@ -298,18 +298,22 @@ export function buyShopItem(player,itemId,now=Date.now()){
 export function dailyActivity(player,now=Date.now()){
   assertPlayer(player);if(!Number.isSafeInteger(now)||now<0)throw new Error('Invalid timestamp');
   const date=new Date(now).toISOString().slice(0,10),state=player.dailyState;
+  const currentWeek=new Date(Date.parse(date+'T00:00:00Z'));const day=(currentWeek.getUTCDay()+6)%7;currentWeek.setUTCDate(currentWeek.getUTCDate()-day);
+  const weekStart=currentWeek.toISOString().slice(0,10);
+  if(state.weekStart!==weekStart){state.weekStart=weekStart;state.weekRewardClaimed=false;}
   const previous=state.lastClaimDate;
   const previousTime=previous?Date.parse(previous+'T00:00:00Z'):NaN;
   const diff=Number.isFinite(previousTime)?Math.floor((Date.parse(date+'T00:00:00Z')-previousTime)/86400000):null;
   const already=previous===date;
   const streak=already?Math.max(1,Number(state.streak)||1):(diff===1?Math.min(30,(Number(state.streak)||0)+1):1);
   const reward=250*streak;
-  return {date,already,streak,reward,xp:50+streak*10,weekReady:streak>=7&&!state.weekRewardClaimed};
+  return {date,already,streak,reward,xp:50+streak*10,weekReady:streak>=7&&!state.weekRewardClaimed,weekStart};
 }
 export function claimDailyActivity(player,now=Date.now()){
   const d=dailyActivity(player,now);if(d.already)throw new Error('Daily bonus already claimed');
   addBalance(player,d.reward);addXp(player,d.xp);
-  player.dailyState.lastClaimDate=d.date;player.dailyState.streak=d.streak;
-  if(d.streak>=7&&!player.dailyState.weekRewardClaimed){addBalance(player,5_000);addXp(player,500);player.dailyState.weekRewardClaimed=true;}
-  return {reward:d.reward,xp:d.xp,streak:d.streak,weeklyReward:d.streak>=7?5_000:0,level:player.level};
+  player.dailyState.lastClaimDate=d.date;player.dailyState.streak=d.streak;player.dailyState.weekStart=d.weekStart;
+  let weeklyReward=0;
+  if(d.streak>=7&&!player.dailyState.weekRewardClaimed){addBalance(player,5_000);addXp(player,500);player.dailyState.weekRewardClaimed=true;weeklyReward=5_000;}
+  return {reward:d.reward,xp:d.xp,streak:d.streak,weeklyReward,level:player.level};
 }
