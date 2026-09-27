@@ -5,6 +5,7 @@ import {
   claimAchievement, claimGoal, claimEvent, claimDailyActivity, buyShopItem,
   hireEmployee, expandBusiness, addInvestment, activateBusinessBoost
 } from '../src/economy.js';
+import { validateOperationId, createOperationId } from '../src/operations.js';
 
 const seed=()=>{
   const p=createPlayer('test');
@@ -99,4 +100,11 @@ test('shop purchases apply expected effects',()=>{
   assert.equal(out.itemId,'xp_boost');
   assert.ok(p.xp>beforeXp);
   assert.equal(p.inventory.xp_boost,1);
+});
+
+
+test('operation IDs reserve system namespace and remain valid for normal clients',()=>{
+  const id=createOperationId('client');
+  assert.equal(validateOperationId(id),id);
+  assert.throws(()=>validateOperationId('sys_income_12345678'),/Invalid operation ID/);
 });
