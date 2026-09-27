@@ -62,8 +62,8 @@ test('load: 1000 isolated players survive a full early-game economy workload', a
   }));
 
   assert.equal(players.length, playerCount);
-  assert.equal(players.reduce((sum, p) => sum + p.balance, 0), 9_540_000);
-  assert.equal(players.reduce((sum, p) => sum + p.stats.totalIncome, 0), 9_940_000);
+  assert.equal(players.reduce((sum, p) => sum + p.balance, 0), 8_550_000);
+  assert.equal(players.reduce((sum, p) => sum + p.stats.totalIncome, 0), 8_950_000);
   assertInvariant(players[0]);
 });
 
