@@ -39,6 +39,7 @@ export async function getRankings(limit=50,currentTelegramId=null){
   const p=await getPool(),safe=Math.max(1,Math.min(100,Number(limit)||50));
   const users=(await p.query('SELECT id,telegram_id,username,first_name,last_name,photo_url,balance,xp,level,businesses,claimed_achievements,stats,created_at FROM users WHERE blocked=false')).rows.map(playerRow);
   const addPositions=(rows,key)=>rows.map((r,i)=>({...r,position:i+1,isMe:String(r.id)===String(currentTelegramId)}));
+  const trimWithMe=(rows)=>{const ranked=addPositions(rows);const top=ranked.slice(0,safe);const me=ranked.find(r=>r.isMe);return me&&!top.some(r=>r.isMe)?[...top,me]:top;};
   const overall=sortRows(users.map(r=>({...r,score:r.level*1000000+r.balance+r.achievements*10000+r.businesses*5000})), 'score');
   const level=sortRows([...users], 'level');
   const capital=sortRows([...users], 'balance');
@@ -50,7 +51,7 @@ export async function getRankings(limit=50,currentTelegramId=null){
   const season=(await p.query(`SELECT u.telegram_id,u.username,u.first_name,u.last_name,u.photo_url,COALESCE(SUM(o.reward_amount),0)::bigint AS points,COUNT(o.id)::bigint AS operations
     FROM users u LEFT JOIN economy_operations o ON o.user_id=u.id AND o.created_at>=date_trunc('month',NOW())
     WHERE u.blocked=false GROUP BY u.id ORDER BY points DESC,operations DESC,u.id ASC LIMIT $1`,[safe])).rows.map(r=>({...playerRow({...r,balance:0,xp:0,level:0,businesses:{},claimed_achievements:[],stats:{},created_at:null}),points:Number(r.points),operations:Number(r.operations)}));
-  return {overall:addPositions(overall,'score'),level:addPositions(level,'level'),capital:addPositions(capital,'balance'),businesses:addPositions(businesses,'businesses'),achievements:addPositions(achievements,'achievements'),weekly:addPositions(weekly,'points'),season:addPositions(season,'points'),seasonKey:new Date().toISOString().slice(0,7)};
+  return {overall:trimWithMe(overall),level:trimWithMe(level),capital:trimWithMe(capital),businesses:trimWithMe(businesses),achievements:trimWithMe(achievements),weekly:trimWithMe(weekly),season:trimWithMe(season),seasonKey:new Date().toISOString().slice(0,7)};
 }
 export async function getProfile(telegramId){
   const r=(await (await getPool()).query('SELECT * FROM users WHERE telegram_id=$1 AND blocked=false',[String(telegramId)])).rows[0];
