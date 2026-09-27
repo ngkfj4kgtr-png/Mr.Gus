@@ -141,7 +141,7 @@ function showPage(page){
     el.classList.toggle("active",active);
     el.setAttribute("aria-current",active?"page":"false");
   });
-  window.scrollTo({top:0,behavior:"instant"});
+  window.scrollTo(0,0);
   try{history.replaceState(null,"","#"+page)}catch{}
   if(tg?.BackButton){
     if(page==="home")tg.BackButton.hide();else tg.BackButton.show();
