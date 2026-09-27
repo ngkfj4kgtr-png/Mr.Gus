@@ -76,7 +76,7 @@ function render(s){
   const st=s.stats||{};document.querySelector("#stats").innerHTML=`<div><span>Заданий</span><b>${st.tasksCompleted||0}</b></div><div><span>Бизнесов</span><b>${st.businessesOwned||0}</b></div><div><span>Улучшений</span><b>${st.businessUpgrades||0}</b></div><div><span>Доход получен</span><b>${money(st.totalIncome||0)}</b></div><div><span>Всего заработано</span><b>${money(st.totalEarned||0)}</b></div>`;
 }
 async function loadSocial(){
-  try{const r=await api("/api/rankings"),p=await api("/api/profile");renderProfile(p);renderRankings(r);if(window.__mrGusState?.isAdmin){const a=await api("/api/admin");renderAdmin(a)}}
+  try{const r=await api("/api/rankings"),p=await api("/api/profile");renderProfile(p);window.__mrGusRankings=r;renderRankings(r);if(window.__mrGusState?.isAdmin){const a=await api("/api/admin");renderAdmin(a)}}
   catch(e){if(!String(e.message).includes("Forbidden"))console.warn("social load",e.message)}
 }
 function renderProfile(p){
@@ -88,9 +88,13 @@ function rankList(title,rows,key){
   const html=rows.slice(0,10).map((r,i)=>"<div class=\"rank-row\"><span>#"+(i+1)+" "+r.name+"</span><b>"+(key==="balance"?money(r[key]):(r[key]??0))+"</b></div>").join("");
   return "<div class=\"rank-block\"><b>"+title+"</b>"+(html||"<div class=\"muted\">Пока нет игроков</div>")+"</div>";
 }
+let currentRankTab="overall";
 function renderRankings(r){
   const el=document.querySelector("#rankings");if(!el)return;
-  el.innerHTML=rankList("Общий рейтинг",r.overall,"score")+rankList("По уровню",r.level,"level")+rankList("По капиталу",r.capital,"balance")+rankList("По бизнесам",r.businesses,"businesses")+rankList("По достижениям",r.achievements,"achievements")+rankList("Неделя",r.weekly,"points")+rankList("Сезон "+r.seasonKey,r.season,"points");
+  const titles={overall:"Общий рейтинг",level:"По уровню",capital:"По капиталу",businesses:"По бизнесам",achievements:"По достижениям",weekly:"Недельный рейтинг",season:"Сезон "+r.seasonKey};
+  const keys={overall:"score",level:"level",capital:"balance",businesses:"businesses",achievements:"achievements",weekly:"points",season:"points"};
+  el.innerHTML=rankList(titles[currentRankTab]||titles.overall,r[currentRankTab]||[],keys[currentRankTab]||"score");
+  document.querySelectorAll("[data-rank-tab]").forEach(b=>b.classList.toggle("active",b.dataset.rankTab===currentRankTab));
 }
 function renderAdmin(a){
   const panel=document.querySelector("#adminPanel"),el=document.querySelector("#admin");if(!panel||!el)return;panel.hidden=false;
@@ -110,7 +114,7 @@ async function invest(button,id){await action(button,()=>api("/api/business/inve
 async function boost(button,id){await action(button,()=>api("/api/business/boost",{method:"POST",body:JSON.stringify({businessId:id,operationId:op("boost")})}))}
 async function shop(button,id){await action(button,()=>api("/api/shop/buy",{method:"POST",body:JSON.stringify({itemId:id,operationId:op("shop")})}))}
 async function daily(button){await action(button,()=>api("/api/daily/claim",{method:"POST",body:JSON.stringify({operationId:op("daily")})}))}
-document.addEventListener("click",e=>{const admin=e.target.closest("[data-admin-block]");if(admin){(async()=>{try{await api("/api/admin/"+admin.dataset.adminBlock,{method:"POST",body:JSON.stringify({userId:admin.dataset.adminUser,operationId:op("admin")})});await loadSocial();setStatus("Админ-действие выполнено")}catch(err){setStatus(friendlyError(err),true)}})();return}const b=e.target.closest("[data-action]");if(!b||b.disabled)return;const a=b.dataset.action;if(a==="auth")auth();else if(a==="refresh")refresh();else if(a==="buy")buy(b,b.dataset.businessId);else if(a==="upgrade")upgrade(b,b.dataset.businessId);else if(a==="collect")collect(b);else if(a==="claim")claim(b,b.dataset.taskId);else if(a==="achievement")claimAchievement(b,b.dataset.id);else if(a==="goal")claimGoal(b,b.dataset.id);else if(a==="event")claimEvent(b);else if(a==="hire")hire(b,b.dataset.businessId,b.dataset.role);else if(a==="expand")expand(b,b.dataset.businessId);else if(a==="invest")invest(b,b.dataset.businessId);else if(a==="boost")boost(b,b.dataset.businessId);else if(a==="shop")shop(b,b.dataset.itemId);else if(a==="daily")daily(b)});
+document.addEventListener("click",e=>{const rank=e.target.closest("[data-rank-tab]");if(rank){currentRankTab=rank.dataset.rankTab;const s=window.__mrGusRankings;if(s)renderRankings(s);return}const admin=e.target.closest("[data-admin-block]");if(admin){(async()=>{try{await api("/api/admin/"+admin.dataset.adminBlock,{method:"POST",body:JSON.stringify({userId:admin.dataset.adminUser,operationId:op("admin")})});await loadSocial();setStatus("Админ-действие выполнено")}catch(err){setStatus(friendlyError(err),true)}})();return}const b=e.target.closest("[data-action]");if(!b||b.disabled)return;const a=b.dataset.action;if(a==="auth")auth();else if(a==="refresh")refresh();else if(a==="buy")buy(b,b.dataset.businessId);else if(a==="upgrade")upgrade(b,b.dataset.businessId);else if(a==="collect")collect(b);else if(a==="claim")claim(b,b.dataset.taskId);else if(a==="achievement")claimAchievement(b,b.dataset.id);else if(a==="goal")claimGoal(b,b.dataset.id);else if(a==="event")claimEvent(b);else if(a==="hire")hire(b,b.dataset.businessId,b.dataset.role);else if(a==="expand")expand(b,b.dataset.businessId);else if(a==="invest")invest(b,b.dataset.businessId);else if(a==="boost")boost(b,b.dataset.businessId);else if(a==="shop")shop(b,b.dataset.itemId);else if(a==="daily")daily(b)});
 window.addEventListener("load",async()=>{if(tg?.initData)await auth();else setStatus(t("status.waitingTelegram"))});
 
 window.addEventListener("mr-gus-language-changed",()=>{const s=window.__mrGusState;if(s)render(s);});
