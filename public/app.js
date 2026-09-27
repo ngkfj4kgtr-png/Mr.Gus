@@ -132,6 +132,14 @@ function openCityPanel(kind,id){
     title="🎁 Ежедневный бонус";const d=s.daily||{};body='<div class="city-panel-stats"><b>Серия: '+(d.streak||0)+'</b><b>+'+money(d.reward||0)+'</b><b>+'+(d.xp||0)+' XP</b></div>'+actionBtn("daily",d.already?"Получено сегодня":"Забрать бонус","",!!d.already);
   }else if(kind==="shop"){
     title="🛒 Магазин";body=(s.shop||[]).map(x=>'<div class="city-list-item"><div><b>'+x.title+'</b><small>'+x.description+'</small><em>'+money(x.cost)+' · получено: '+(x.owned||0)+'</em></div>'+actionBtn("shop","Купить",'data-item-id="'+x.id+'"')+'</div>').join("")||'<div class="city-panel-note">Магазин пока пуст.</div>';
+  }else if(kind==="rankings"){
+    title="🏆 Рейтинг города";
+    const r=window.__mrGusRankings||{};
+    const list=r.overall||r.level||[];
+    body=list.slice(0,8).map((x,i)=>'<div class="city-list-item"><div><b>#'+(i+1)+' '+(x.name||x.username||"Игрок")+'</b><small>Уровень '+(x.level||0)+' · '+money(x.balance||0)+'</small></div><em>'+(x.score||0)+' очков</em></div>').join("")||'<div class="city-panel-note">Рейтинг загружается.</div>';
+  }else if(kind==="territory"){
+    title="🗺️ Территория";
+    body='<div class="city-panel-stats"><b>'+String(id||"Новая территория")+'</b><b>Городская зона</b></div><div class="city-panel-note">Развитие города открывает новые районы и игровые объекты. Территория связана с уровнем города и развивается вместе с ним.</div>';
   }else if(kind==="event"){
     title="⚡ Событие";const ev=s.event||{};body='<div class="city-event"><b>'+String(ev.title||"Событие")+'</b><small>'+String(ev.description||"")+'</small><em>+'+money(ev.reward||0)+' · +'+(ev.xp||0)+' XP</em>'+actionBtn("event",ev.claimed?"Получено":"Забрать награду","",!!ev.claimed)+'</div>';
   }
