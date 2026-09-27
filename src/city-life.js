@@ -127,7 +127,9 @@ export function claimCityOrder(player,orderId,now=Date.now()){
   state.districts[BUSINESS_SPECIALIZATIONS[order.businessId]?.district||'center']=Math.min(100,(state.districts[BUSINESS_SPECIALIZATIONS[order.businessId]?.district||'center']||0)+2);
   return {orderId:order.id,reward,xp:Number(order.xp)||0,balance:player.balance};
 }
-export function consumeVisitOperations(player){const state=ensure(player,Date.now());const out=state.visitOperations.map(v=>({...v}));state.visitOperations=[];return out}\n\nexport function cityAnalytics(player,now=Date.now()){
+export function consumeVisitOperations(player){const state=ensure(player,Date.now());const out=state.visitOperations.map(v=>({...v}));state.visitOperations=[];return out}
+
+export function cityAnalytics(player,now=Date.now()){
   const live=getCityLive(player,now),st=player.stats||{};
   return {live,visitOperations:live.visitOperations,summary:{
     balance:Number(player.balance||0),xp:Number(player.xp||0),level:Number(player.level||1),
