@@ -1418,3 +1418,80 @@ body.map-fullscreen{overflow:hidden}
   body.map-fullscreen .city-map .map-legend{display:none!important}
   body.map-fullscreen .city-map .map-plaza{opacity:.40!important}
 }
+
+/* Mr.Gus UI repair 6 — clean top bar and unobstructed map panels */
+@media(max-width:600px){
+  /* one clean top row: balance + level on left, compass on right */
+  body.map-fullscreen .city-map .map-ui-layer .map-hud{
+    left:10px!important;
+    top:max(10px,env(safe-area-inset-top) + 7px)!important;
+    gap:5px!important;
+    max-width:210px!important;
+    z-index:300!important;
+  }
+  body.map-fullscreen .city-map .map-ui-layer .map-hud span{
+    height:32px!important;
+    padding:7px 10px!important;
+    border-radius:12px!important;
+    font-size:10px!important;
+  }
+  body.map-fullscreen .city-map .map-ui-layer .map-city-status{
+    top:54px!important;
+    left:50%!important;
+    right:auto!important;
+    transform:translateX(-50%)!important;
+    max-width:48%!important;
+    height:30px!important;
+    padding:6px 10px!important;
+    z-index:300!important;
+    font-size:9px!important;
+  }
+  body.map-fullscreen .city-map .map-ui-layer .map-city-status b{
+    font-size:9px!important;
+  }
+
+  body.map-fullscreen .city-map .map-ui-layer .map-compass{
+    top:max(10px,env(safe-area-inset-top) + 7px)!important;
+    right:10px!important;
+    left:auto!important;
+    width:32px!important;height:32px!important;
+    z-index:301!important;
+  }
+
+  /* When a panel opens, the bottom dock disappears instead of covering content. */
+  body.map-fullscreen.map-panel-open .city-map .map-ui-layer .city-service-marker{
+    display:none!important;
+  }
+  body.map-fullscreen.map-panel-open .city-map .map-ui-layer{
+    z-index:280!important;
+  }
+  body.map-fullscreen.map-panel-open .city-map #cityPanel{
+    display:block!important;
+    z-index:420!important;
+    left:10px!important;right:10px!important;
+    bottom:10px!important;
+    max-height:calc(100% - 95px)!important;
+    padding:14px!important;
+    border-radius:20px!important;
+    overflow:hidden!important;
+  }
+  body.map-fullscreen.map-panel-open .city-map #cityPanel .city-panel-scroll{
+    max-height:calc(100% - 56px)!important;
+    overflow-y:auto!important;
+    -webkit-overflow-scrolling:touch!important;
+  }
+
+  /* The home pulse is decorative; remove the oversized ring on the small screen. */
+  body.map-fullscreen .city-map .home-pulse-ring{
+    display:none!important;
+  }
+
+  /* Give the actual map a little more visual life without adding UI clutter. */
+  body.map-fullscreen .city-map .city-houses-layer{opacity:.28!important}
+  body.map-fullscreen .city-map .city-street-life{opacity:.27!important}
+  body.map-fullscreen .city-map .city-traffic,
+  body.map-fullscreen .city-map .city-life,
+  body.map-fullscreen .city-map .city-logistics{opacity:.22!important}
+  body.map-fullscreen .city-map .city-economy-flow{opacity:.16!important}
+  body.map-fullscreen .city-map .city-business-life{opacity:.20!important}
+}
