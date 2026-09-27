@@ -1700,3 +1700,46 @@ body.map-fullscreen{overflow:hidden}
     top:64%!important;
   }
 }
+
+
+/* Mr.Gus UI repair 10 — dock geometry and touch-safe spacing */
+@media(max-width:600px){
+  body.map-fullscreen .city-map{
+    overflow:hidden!important;
+  }
+
+  /* Use the marker as a centered anchor. The previous left-edge percentages
+     pushed the last button partly outside the viewport. */
+  body.map-fullscreen .city-map .map-ui-layer .city-service-marker{
+    transform:translateX(-50%)!important;
+    bottom:calc(env(safe-area-inset-bottom) + 10px)!important;
+    width:44px!important;
+    min-width:44px!important;
+    max-width:44px!important;
+    height:48px!important;
+  }
+  body.map-fullscreen .city-map .service-tasks{left:8.33%!important}
+  body.map-fullscreen .city-map .service-achievements{left:25%!important}
+  body.map-fullscreen .city-map .service-daily{left:41.67%!important}
+  body.map-fullscreen .city-map .service-shop{left:58.33%!important}
+  body.map-fullscreen .city-map .service-event{left:75%!important}
+  body.map-fullscreen .city-map .service-rankings{left:91.67%!important}
+
+  /* Never let a dock label create a wider-than-viewport hit area. */
+  body.map-fullscreen .city-map .map-ui-layer .city-service-marker,
+  body.map-fullscreen .city-map .map-ui-layer .city-service-marker *{
+    box-sizing:border-box!important;
+  }
+
+  /* Panel uses the viewport height, not an inherited percentage height. */
+  body.map-fullscreen.map-panel-open .city-map #cityPanel{
+    top:max(52px,env(safe-area-inset-top) + 48px)!important;
+    bottom:calc(env(safe-area-inset-bottom) + 10px)!important;
+    max-height:none!important;
+    height:auto!important;
+    overflow:hidden!important;
+  }
+  body.map-fullscreen.map-panel-open .city-map #cityPanel .city-panel-scroll{
+    max-height:calc(100dvh - 150px)!important;
+  }
+}
