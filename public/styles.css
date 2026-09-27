@@ -716,3 +716,55 @@ body:has(.city-map-card.page-active) .city-map-card .section-head{left:8px;right
 body:has(.city-map-card.page-active) .map-city-status{top:62px;right:8px}
 body:has(.city-map-card.page-active) .map-center-label{bottom:62px}
 }
+
+/* Living city pass — linked routes, business activity and time of day */
+.city-map.city-time-night{filter:saturate(.9)}
+.city-map.city-time-night:after{content:"";position:absolute;inset:0;z-index:2;pointer-events:none;background:radial-gradient(circle at 70% 22%,rgba(82,112,180,.08),transparent 38%),linear-gradient(rgba(4,8,18,.12),rgba(4,8,18,.28))}
+.city-map.city-time-night .district-residential,
+.city-map.city-time-night .district-business,
+.city-map.city-time-night .district-industry{box-shadow:inset 0 0 32px rgba(80,110,180,.06)}
+.city-map.city-time-night .building-lights{filter:brightness(1.5);opacity:.95}
+.city-map.city-time-night .map-plaza{box-shadow:0 0 42px rgba(255,214,112,.12)}
+.city-traffic,.city-life,.city-logistics,.city-economy-flow,.city-business-life{z-index:5}
+.city-car{will-change:transform}
+.car-0{top:35%;animation-name:carRouteA}
+.car-1{top:61%;animation-name:carRouteB}
+.car-2{top:47%;animation-name:carRouteC}
+.car-3{top:72%;animation-name:carRouteD}
+@keyframes carRouteA{0%{transform:translate(-10vw,0)}45%{transform:translate(48vw,-1.5vh)}100%{transform:translate(118vw,0)}}
+@keyframes carRouteB{0%{transform:translate(118vw,0) rotate(180deg)}48%{transform:translate(42vw,1.5vh) rotate(180deg)}100%{transform:translate(-12vw,0) rotate(180deg)}}
+@keyframes carRouteC{0%{transform:translate(-10vw,0)}38%{transform:translate(36vw,-4vh)}72%{transform:translate(78vw,3vh)}100%{transform:translate(118vw,0)}}
+@keyframes carRouteD{0%{transform:translate(118vw,0) rotate(180deg)}35%{transform:translate(82vw,-3vh) rotate(180deg)}68%{transform:translate(30vw,2vh) rotate(180deg)}100%{transform:translate(-12vw,0) rotate(180deg)}}
+.city-person{left:auto;top:auto;width:7px;height:7px;border-radius:50%;background:rgba(220,226,236,.72);font-size:0;box-shadow:0 0 5px rgba(220,226,236,.2);will-change:transform}
+.person-0{left:18%;top:33%;animation:walkTrade 4.8s ease-in-out infinite alternate}
+.person-1{left:43%;top:25%;animation:walkBusiness 5.2s ease-in-out infinite alternate}
+.person-2{left:67%;top:41%;animation:walkIndustry 5.6s ease-in-out infinite alternate}
+.person-3{left:51%;top:54%;animation:walkCenter 4.5s ease-in-out infinite alternate}
+.person-4{left:24%;top:52%;animation:walkHome 5s ease-in-out infinite alternate}
+@keyframes walkTrade{to{transform:translate(16vw,-3vh)}}@keyframes walkBusiness{to{transform:translate(-9vw,9vh)}}@keyframes walkIndustry{to{transform:translate(8vw,7vh)}}@keyframes walkCenter{to{transform:translate(-13vw,-8vh)}}@keyframes walkHome{to{transform:translate(12vw,2vh)}}
+.city-truck{left:auto;top:auto;will-change:transform}
+.truck-route-workshop{left:64%;top:38%;animation:truckWorkshop 8.5s linear infinite}
+.truck-route-factory{left:77%;top:67%;animation:truckFactory 10s linear infinite}
+@keyframes truckWorkshop{0%,100%{transform:translate(0,0)}45%{transform:translate(-27vw,-13vh)}75%{transform:translate(-48vw,4vh)}}
+@keyframes truckFactory{0%,100%{transform:translate(0,0)}42%{transform:translate(-31vw,-18vh)}72%{transform:translate(-54vw,-11vh)}}
+.city-business-life{position:absolute;inset:0;z-index:6;pointer-events:none;overflow:hidden}
+.business-worker{position:absolute;width:4px;height:4px;border-radius:50%;background:rgba(255,214,112,.85);box-shadow:0 0 7px rgba(255,214,112,.35);animation:workerShift 2.2s ease-in-out infinite alternate}
+.worker-kiosk{animation-delay:calc(var(--n) * -.35s)}.worker-cafe{background:rgba(255,170,110,.9);animation-delay:calc(var(--n) * -.42s)}.worker-workshop{background:rgba(118,180,255,.9);animation-delay:calc(var(--n) * -.5s)}.worker-factory{background:rgba(114,227,154,.9);animation-delay:calc(var(--n) * -.58s)}
+@keyframes workerShift{from{transform:translate(-3px,2px);opacity:.35}to{transform:translate(9px,-5px);opacity:1}}
+.money-flow{left:var(--x);top:var(--y);will-change:transform}
+.money-kiosk{animation:moneyToHomeKiosk 3.4s ease-in-out infinite}.money-cafe{animation:moneyToHomeCafe 3.8s ease-in-out infinite}.money-workshop{animation:moneyToHomeWorkshop 4.2s ease-in-out infinite}.money-factory{animation:moneyToHomeFactory 4.6s ease-in-out infinite}
+@keyframes moneyToHomeKiosk{0%,100%{transform:translate(0,0);opacity:.08}28%{opacity:.95}72%{transform:translate(30vw,24vh);opacity:.75}90%{transform:translate(24vw,24vh);opacity:0}}
+@keyframes moneyToHomeCafe{0%,100%{transform:translate(0,0);opacity:.08}28%{opacity:.95}72%{transform:translate(5vw,33vh);opacity:.75}90%{transform:translate(5vw,28vh);opacity:0}}
+@keyframes moneyToHomeWorkshop{0%,100%{transform:translate(0,0);opacity:.08}28%{opacity:.95}72%{transform:translate(-18vw,17vh);opacity:.75}90%{transform:translate(-18vw,17vh);opacity:0}}
+@keyframes moneyToHomeFactory{0%,100%{transform:translate(0,0);opacity:.08}28%{opacity:.95}72%{transform:translate(-31vw,-12vh);opacity:.75}90%{transform:translate(-31vw,-12vh);opacity:0}}
+.business-marker.working:after{content:"";position:absolute;inset:-4px;border-radius:18px;border:1px solid rgba(114,227,154,.1);animation:businessPulse 2.8s ease-in-out infinite;pointer-events:none}
+@keyframes businessPulse{0%,100%{opacity:.25;transform:scale(.98)}50%{opacity:.75;transform:scale(1.04)}}
+.city-stage-village .city-business-life{opacity:.75}.city-stage-small .city-business-life{opacity:.9}.city-stage-large .city-business-life,.city-stage-mega .city-business-life{opacity:1}
+@media(prefers-reduced-motion:reduce){
+.city-map.city-time-night:after,.business-marker.working:after{animation:none}
+.city-car,.city-person,.city-truck,.money-flow,.business-worker{animation:none!important}
+.city-person{opacity:.5}.money-flow{opacity:.35}
+}
+@media(max-width:500px){
+.city-car{font-size:9px}.city-truck{font-size:10px}.business-worker{width:3px;height:3px}
+}
