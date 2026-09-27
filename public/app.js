@@ -88,6 +88,18 @@ function initCityMapControls(){
   let scale=1,tx=0,ty=0,startX=0,startY=0,startTx=0,startTy=0,drag=false,moved=false,pinchStart=0,pinchScale=1;
   const clamp=()=>{scale=Math.max(.85,Math.min(2.4,scale));tx=Math.max(-map.clientWidth*(scale-1)*.55,Math.min(map.clientWidth*(scale-1)*.55,tx));ty=Math.max(-map.clientHeight*(scale-1)*.55,Math.min(map.clientHeight*(scale-1)*.55,ty));};
   const apply=()=>{clamp();world.style.transform='translate3d('+tx+'px,'+ty+'px,0) scale('+scale+')';};
+  let pointers=new Map(),pinchDistance=0,pinchScale=1;
+  map.addEventListener("pointerdown",e=>{
+    if(e.target.closest("button,.city-panel"))return;
+    pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
+    if(pointers.size===2){const p=[...pointers.values()];pinchDistance=Math.hypot(p[0].x-p[1].x,p[0].y-p[1].y);pinchScale=scale;drag=false;}
+  });
+  map.addEventListener("pointermove",e=>{
+    if(!pointers.has(e.pointerId))return;pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
+    if(pointers.size===2){const p=[...pointers.values()],d=Math.hypot(p[0].x-p[1].x,p[0].y-p[1].y);if(pinchDistance){scale=pinchScale*d/pinchDistance;apply();}}
+  });
+  map.addEventListener("pointerup",e=>pointers.delete(e.pointerId));
+  map.addEventListener("pointercancel",e=>pointers.delete(e.pointerId));
   map.addEventListener("pointerdown",e=>{
     if(e.target.closest("button,.city-panel"))return;
     drag=true;moved=false;startX=e.clientX;startY=e.clientY;startTx=tx;startTy=ty;
