@@ -66,7 +66,7 @@ function render(s){
     if(owned)return `<div class="mini-card"><div class="row"><div><b>${b.name} · ур. ${owned.level}</b><p class="muted">${b.description}</p></div><strong>${money(owned.profitPerHour)}/ч</strong></div><div class="row"><span class="muted">${t("nextLevel")}</span>${button("upgrade",t("upgrade"),`data-business-id="${b.id}"`)}</div><div class="advanced-grid"><div><span class="muted">👤 Кассиры: ${owned.employees?.cashier||0}</span> ${button("hire",t("hire")+" 2k",`data-business-id="${b.id}" data-role="cashier"`)}</div><div><span class="muted">👔 Управляющие: ${owned.employees?.manager||0}</span> ${button("hire",t("hire")+" 10k",`data-business-id="${b.id}" data-role="manager"`)}</div><div><span class="muted">📊 Бухгалтеры: ${owned.employees?.accountant||0}</span> ${button("hire",t("hire")+" 25k",`data-business-id="${b.id}" data-role="accountant"`)}</div><div><span class="muted">🏗️ Расширение: ${owned.expansionLevel||0}/5</span> ${button("expand",t("expand"),`data-business-id="${b.id}"`)}</div><div><span class="muted">💼 Инвестиции: ${money(owned.investment||0)}</span> ${button("invest",t("invest")+" 5k",`data-business-id="${b.id}"`)}</div><div>${button("boost",t("boost"),`data-business-id="${b.id}"`)}</div></div></div>`;
     return `<div class="mini-card"><div class="row"><div><b>${b.name}</b><p class="muted">${b.description}</p></div><strong>${money(b.cost)}</strong></div><p class="muted">${t("business.unlock",{level:b.unlockLevel})}</p>${button("buy",t("open"),`data-business-id="${b.id}"`,!b.unlocked)}</div>`;
   }).join("");
-  document.querySelector("#incomeAction").innerHTML=button("collect","💰 Забрать накопленный доход");
+  renderEmpireVisual(s);\n  document.querySelector("#incomeAction").innerHTML=button("collect","💰 Забрать накопленный доход");
   document.querySelector("#tasks").innerHTML=(s.tasks||[]).map(task=>`<div class="mini-card"><b>${task.title}</b><p class="muted">${task.description}</p><span class="reward">+${money(task.reward)} · +${task.xp} XP</span><br>${button("claim",t("claim"),`data-task-id="${String(task.id).replaceAll("'","&#39;")}"`,task.claimed||task.locked)}</div>`).join("");
   document.querySelector("#achievements").innerHTML=(s.achievements||[]).map(a=>`<div class="mini-card"><div class="row"><div><b>${a.title}</b><p class="muted">${a.description}</p></div><span class="reward">+${money(a.reward)}<br>+${a.xp} XP</span></div>${button("achievement",a.claimed?t("received"):a.unlocked?t("claim"):"🔒",`data-id="${a.id}"`,a.claimed||!a.unlocked)}</div>`).join("");
   document.querySelector("#goals").innerHTML=(s.goals||[]).map(g=>`<div class="mini-card"><div class="row"><div><b>${g.title}</b><p class="muted">${g.description}</p></div><span class="reward">+${money(g.reward)}<br>+${g.xp} XP</span></div>${button("goal",g.claimed?t("received"):g.unlocked?t("claim"):"🔒",`data-id="${g.id}"`,g.claimed||!g.unlocked)}</div>`).join("");
@@ -78,6 +78,20 @@ function render(s){
 async function loadSocial(){
   try{const r=await api("/api/rankings"),p=await api("/api/profile");renderProfile(p);window.__mrGusRankings=r;renderRankings(r);if(window.__mrGusState?.isAdmin){const a=await api("/api/admin");renderAdmin(a)}}
   catch(e){if(!String(e.message).includes("Forbidden"))console.warn("social load",e.message)}
+}
+function renderEmpireVisual(s){
+  const el=document.querySelector("#empireVisual"); if(!el)return;
+  const businesses=s.businesses||[];
+  const catalog=s.businessCatalog||[];
+  const total=Math.max(1,businesses.reduce((n,b)=>n+(Number(b.profitPerHour)||0),0));
+  const bars=catalog.slice(0,8).map(b=>{
+    const owned=businesses.find(x=>x.id===b.id);
+    const income=Number(owned?.profitPerHour)||0;
+    const pct=Math.min(100,Math.max(0,income/total*100));
+    return '<div class="visual-row"><div class="visual-label"><span>'+b.name+'</span><b>'+money(income)+'/ч</b></div><div class="visual-track"><i style="width:'+pct+'%"></i></div></div>';
+  }).join("");
+  const level=Math.max(1,Number(s.level)||1), xp=Number(s.xp)||0, xpP=s.xpProgress?.percent||0;
+  el.innerHTML='<div class="visual-summary"><div><span>Уровень</span><b>'+level+'</b></div><div><span>XP</span><b>'+xp.toLocaleString('ru-RU')+'</b></div><div><span>Доход/ч</span><b>'+money(total)+'</b></div></div><div class="visual-xp"><div class="visual-label"><span>Прогресс уровня</span><b>'+xpP+'%</b></div><div class="visual-track"><i style="width:'+xpP+'%"></i></div></div><div class="visual-bars">'+(bars||'<div class="muted">Открой первый бизнес — здесь появится график твоей империи.</div>')+'</div>';
 }
 function renderProfile(p){
   const el=document.querySelector("#profile");if(!el)return;
