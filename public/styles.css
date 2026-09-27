@@ -633,3 +633,13 @@ body{
 .service-tasks{left:28%}.service-achievements{left:18%}.service-daily{left:67%}.service-shop{left:83%}.service-event{left:86%}
 .map-legend span{cursor:default}.map-center-label{font-weight:900}
 @media(max-width:500px){.city-service-marker{min-width:48px;padding:4px 5px 3px}.city-service-marker span{font-size:18px}.city-service-marker small{font-size:7px}.city-service-marker em{font-size:6px}}
+
+/* Mr.Gus UI pass 14 — city-first gameplay */
+.city-map-card .section-head{margin-bottom:8px}.city-map-card{background:linear-gradient(180deg,rgba(15,22,32,.98),rgba(9,14,21,.98))}
+.city-service-marker{background:rgba(12,18,27,.96);border-color:rgba(159,169,187,.24);min-width:62px;min-height:58px}
+.city-service-marker:before{content:"";position:absolute;inset:-4px;border:1px solid rgba(118,108,255,.05);border-radius:17px;pointer-events:none}
+.city-service-marker:active{transform:translate(-50%,-50%) scale(.94)}
+.city-service-marker span{font-size:21px}.city-service-marker small{font-weight:900}.city-service-marker em{color:#8490a4}
+.service-tasks{box-shadow:0 8px 20px rgba(0,0,0,.35),0 0 18px rgba(118,108,255,.07)}
+.service-shop{border-color:rgba(255,190,100,.28)}.service-event{border-color:rgba(114,227,154,.24)}.service-daily{border-color:rgba(255,214,112,.25)}
+@media(max-width:500px){.city-service-marker{min-width:50px;min-height:50px}.city-service-marker span{font-size:18px}.city-service-marker small{font-size:7px}.city-service-marker em{font-size:6px}}
