@@ -41,7 +41,7 @@ async function api(path,opt={}){
 async function auth(){
   try{
     if(!tg?.initData)throw Error("Откройте Mr.Gus через Telegram.");
-    setStatus("Авторизация через Telegram…");
+    setStatus(lang()==="en"?"Logging in with Telegram…":"Авторизация через Telegram…");
     await api("/api/auth/telegram",{method:"POST"});await refresh(true);
   }catch(e){setStatus(friendlyError(e),true)}
 }
@@ -51,6 +51,7 @@ async function refresh(fromAuth=false){
 }
 function button(action,label,extra="",disabled=false){return `<button class="btn" data-action="${action}" ${extra} ${disabled?"disabled":""}>${label}</button>`}
 function render(s){
+  window.__mrGusState=s;
   document.querySelector("#balance").textContent=money(s.balance);
   document.querySelector("#level").textContent=s.level;
   const totalIncome=(s.businesses||[]).reduce((sum,b)=>sum+(Number(b.profitPerHour)||0),0);
@@ -62,18 +63,17 @@ function render(s){
   const current=level<=thresholds.length?thresholds[level-1]:thresholds.at(-1);
   const nextXp=level<thresholds.length?thresholds[level]:null;
   if(nextXp===null){document.querySelector("#xpBar").style.width="100%";document.querySelector("#xpHint").textContent="Прогресс продолжается с повышением уровня."}
-  else{document.querySelector("#xpBar").style.width=Math.max(0,Math.min(100,((xp-current)/(nextXp-current))*100))+"%";document.querySelector("#xpHint").textContent="t("xp.next",{level:level+1,xp:Math.max(0,nextXp-xp)})"}
-  const ownedIds=new Set((s.businesses||[]).map(b=>b.id));
-  document.querySelector("#businesses").innerHTML=(s.businessCatalog||[]).map(b=>{
+  else{ document.querySelector("#xpBar").style.width=Math.max(0,Math.min(100,((xp-current)/(nextXp-current))*100))+"%";document.querySelector("#xpHint").textContent=t("xp.next",{level:level+1,xp:Math.max(0,nextXp-xp)})}
+    document.querySelector("#businesses").innerHTML=(s.businessCatalog||[]).map(b=>{
     const owned=s.businesses?.find(x=>x.id===b.id);
-    if(owned)return `<div class="mini-card"><div class="row"><div><b>${b.name} · ур. ${owned.level}</b><p class="muted">${b.description}</p></div><strong>${money(owned.profitPerHour)}/ч</strong></div><div class="row"><span class="muted" data-i18n="nextLevel">Следующий уровень</span>${button("upgrade","Улучшить",`data-business-id="${b.id}"`)}</div></div>`;
-    return `<div class="mini-card"><div class="row"><div><b>${b.name}</b><p class="muted">${b.description}</p></div><strong>${money(b.cost)}</strong></div><p class="muted">Открывается с уровня ${b.unlockLevel}</p>${button("buy","Открыть",`data-business-id="${b.id}"`,!b.unlocked)}</div>`;
+    if(owned)return `<div class="mini-card"><div class="row"><div><b>${b.name} · ур. ${owned.level}</b><p class="muted">${b.description}</p></div><strong>${money(owned.profitPerHour)}/ч</strong></div><div class="row"><span class="muted" data-i18n="nextLevel">${t("nextLevel")}</span>${button("upgrade",t("upgrade"),`data-business-id="${b.id}"`)}</div></div>`;
+    return `<div class="mini-card"><div class="row"><div><b>${b.name}</b><p class="muted">${b.description}</p></div><strong>${money(b.cost)}</strong></div><p class="muted">${t("business.unlock",{level:b.unlockLevel})}</p>${button("buy",t("open"),`data-business-id="${b.id}"`,!b.unlocked)}</div>`;
   }).join("");
   document.querySelector("#incomeAction").innerHTML=button("collect","💰 Забрать накопленный доход");
-  document.querySelector("#tasks").innerHTML=(s.tasks||[]).map(t=>`<div class="mini-card"><b>${t.title}</b><p class="muted">${t.description}</p><span class="reward">+${money(t.reward)} · +${t.xp} XP</span><br>${button("claim","Забрать",`data-task-id="${String(t.id).replaceAll("'","&#39;")}"`,t.claimed||t.locked)}</div>`).join("");
-  document.querySelector("#achievements").innerHTML=(s.achievements||[]).map(a=>`<div class="mini-card"><div class="row"><div><b>${a.title}</b><p class="muted">${a.description}</p></div><span class="reward">+${money(a.reward)}<br>+${a.xp} XP</span></div>${button("achievement",a.claimed?"Получено":a.unlocked?"Забрать":"🔒",`data-id="${a.id}"`,a.claimed||!a.unlocked)}</div>`).join("");
-  document.querySelector("#goals").innerHTML=(s.goals||[]).map(g=>`<div class="mini-card"><div class="row"><div><b>${g.title}</b><p class="muted">${g.description}</p></div><span class="reward">+${money(g.reward)}<br>+${g.xp} XP</span></div>${button("goal",g.claimed?"Получено":g.unlocked?"Забрать":"🔒",`data-id="${g.id}"`,g.claimed||!g.unlocked)}</div>`).join("");
-  const e=s.event||{};document.querySelector("#event").innerHTML=`<div class="event-card"><b>${e.title||"Событие"}</b><p class="muted">${e.description||""}</p><span class="reward">+${money(e.reward||0)} · +${e.xp||0} XP</span><div>${button("event",e.claimed?"Получено":"Забрать бонус")}</div></div>`;if(e.claimed)document.querySelector("#event button").disabled=true;
+  document.querySelector("#tasks").innerHTML=(s.tasks||[]).map(t=>`<div class="mini-card"><b>${t.title}</b><p class="muted">${t.description}</p><span class="reward">+${money(t.reward)} · +${t.xp} XP</span><br>${button("claim",t("claim"),`data-task-id="${String(t.id).replaceAll("'","&#39;")}"`,t.claimed||t.locked)}</div>`).join("");
+  document.querySelector("#achievements").innerHTML=(s.achievements||[]).map(a=>`<div class="mini-card"><div class="row"><div><b>${a.title}</b><p class="muted">${a.description}</p></div><span class="reward">+${money(a.reward)}<br>+${a.xp} XP</span></div>${button("achievement",a.claimed?t("received"):a.unlocked?t("claim"):"🔒",`data-id="${a.id}"`,a.claimed||!a.unlocked)}</div>`).join("");
+  document.querySelector("#goals").innerHTML=(s.goals||[]).map(g=>`<div class="mini-card"><div class="row"><div><b>${g.title}</b><p class="muted">${g.description}</p></div><span class="reward">+${money(g.reward)}<br>+${g.xp} XP</span></div>${button("goal",g.claimed?t("received"):g.unlocked?t("claim"):"🔒",`data-id="${g.id}"`,g.claimed||!g.unlocked)}</div>`).join("");
+  const e=s.event||{};document.querySelector("#event").innerHTML=`<div class="event-card"><b>${e.title||"Событие"}</b><p class="muted">${e.description||""}</p><span class="reward">+${money(e.reward||0)} · +${e.xp||0} XP</span><div>${button("event",e.claimed?t("received"):t("claimBonus"))}</div></div>`;if(e.claimed)document.querySelector("#event button").disabled=true;
   const st=s.stats||{};document.querySelector("#stats").innerHTML=`<div><span>Заданий</span><b>${st.tasksCompleted||0}</b></div><div><span>Бизнесов</span><b>${st.businessesOwned||0}</b></div><div><span>Улучшений</span><b>${st.businessUpgrades||0}</b></div><div><span>Доход получен</span><b>${money(st.totalIncome||0)}</b></div><div><span>Всего заработано</span><b>${money(st.totalEarned||0)}</b></div>`;
 }
 async function action(button,fn){if(!button||button.disabled)return;button.disabled=true;try{const state=await fn();render(state);setStatus(t("status.done"))}catch(e){setStatus(friendlyError(e),true)}finally{button.disabled=false}}
