@@ -86,20 +86,40 @@ function renderCityMap(s){
   const businesses=s.businesses||[],catalog=s.businessCatalog||[];
   const meta={kiosk:{icon:"🏪",spot:[18,31]},cafe:{icon:"☕",spot:[43,22]},workshop:{icon:"🔧",spot:[66,38]},factory:{icon:"🏭",spot:[79,67]}};
   const markers=catalog.filter(b=>meta[b.id]).map(b=>{
-    const owned=businesses.find(x=>x.id===b.id);if(!owned)return "";
-    const m=meta[b.id],level=Number(owned.level)||1,profit=Number(owned.profitPerHour)||0;
-    const size=level>=10?"building-xl":level>=5?"building-lg":"";
-    const title=String(b.name).replaceAll('"','&quot;');
-    return '<button class="map-marker business-marker '+size+'" style="left:'+m.spot[0]+'%;top:'+m.spot[1]+'%" data-map-title="'+title+' · ур. '+level+' · '+money(profit)+'/ч" aria-label="'+title+' · уровень '+level+' · доход '+money(profit)+' в час"><span>'+m.icon+'</span><small>'+title+'</small><em>ур. '+level+' · '+money(profit)+'/ч</em></button>';
+    const owned=businesses.find(x=>x.id===b.id),m=meta[b.id];
+    if(!owned)return '<button type="button" class="map-marker business-marker locked-business" style="left:'+m.spot[0]+'%;top:'+m.spot[1]+'%" data-city-open="business" data-business-id="'+b.id+'" aria-label="Открыть '+String(b.name).replaceAll('"','&quot;')+'"><span>🔒</span><small>'+b.name+'</small><em>Купить · '+money(b.baseCost)+'</em></button>';
+    const level=Number(owned.level)||1,profit=Number(owned.profitPerHour)||0,size=level>=10?"building-xl":level>=5?"building-lg":"";
+    return '<button type="button" class="map-marker business-marker '+size+'" style="left:'+m.spot[0]+'%;top:'+m.spot[1]+'%" data-city-open="business" data-business-id="'+b.id+'" aria-label="'+b.name+' · уровень '+level+' · доход '+money(profit)+' в час"><span>'+m.icon+'</span><small>'+b.name+'</small><em>ур. '+level+' · '+money(profit)+'/ч</em></button>';
   }).join("");
   const points=[
-    ["🎯","Задания","tasks",28,69],["🏆","Достижения","achievements",18,79],["🎁","Бонус","daily",67,17],
-    ["🛒","Магазин","shop",83,28],["⚡","Событие","event",86,48]
-  ].map(x=>'<button type="button" class="map-marker city-service-marker service-'+x[2]+'" style="left:'+x[3]+'%;top:'+x[4]+'%" data-page-nav="'+x[2]+'" data-map-title="'+x[1]+'" aria-label="'+x[1]+'"><span>'+x[0]+'</span><small>'+x[1]+'</small><em>Открыть</em></button>').join("");
+    ["🎯","Задания","tasks",28,69],["🏆","Достижения","achievements",18,79],["🎁","Бонус","daily",67,17],["🛒","Магазин","shop",83,28],["⚡","Событие","event",86,48]
+  ].map(x=>'<button type="button" class="map-marker city-service-marker service-'+x[2]+'" style="left:'+x[3]+'%;top:'+x[4]+'%" data-city-open="'+x[2]+'" aria-label="'+x[1]+'"><span>'+x[0]+'</span><small>'+x[1]+'</small><em>Открыть здесь</em></button>').join("");
   const ownedCount=businesses.length,income=businesses.reduce((n,b)=>n+(Number(b.profitPerHour)||0),0);
-  const empty=ownedCount===0?'<div class="map-empty"><span>🪿</span><b>Город ещё пуст</b><small>Открой первый бизнес — он появится здесь.</small></div>':"";
-  el.innerHTML='<div class="city-map"><div class="map-district district-trade"><span>ТОРГОВЛЯ</span></div><div class="map-district district-center"><span>ЦЕНТР</span></div><div class="map-district district-industry"><span>ПРОМЗОНА</span></div><div class="map-road road-a"></div><div class="map-road road-b"></div><div class="map-road road-c"></div><div class="map-road road-d"></div><div class="map-water"></div><div class="map-route route-home-trade"></div><div class="map-route route-home-center"></div><div class="map-route route-home-industry"></div><div class="map-marker home-marker" style="left:48%;top:55%" data-map-title="Мой дом" aria-label="Мой дом"><span>🏠</span><small>Мой дом</small><em>База</em></div>'+markers+points+empty+'<div class="map-center-label">Мой город · вся игра здесь</div></div><div class="map-legend"><span>🏠 База</span><span>🏪 Бизнес</span><span>🎯 Игровая точка</span><b>'+ownedCount+' объектов · '+money(income)+'/ч</b></div>';
+  const empty=ownedCount===0?'<div class="map-empty"><span>🪿</span><b>Город готов к развитию</b><small>Нажми на 🔒 и открой первый бизнес.</small></div>':"";
+  el.innerHTML='<div class="city-map"><div class="map-district district-trade"><span>ТОРГОВЛЯ</span></div><div class="map-district district-center"><span>ЦЕНТР</span></div><div class="map-district district-industry"><span>ПРОМЗОНА</span></div><div class="map-road road-a"></div><div class="map-road road-b"></div><div class="map-road road-c"></div><div class="map-road road-d"></div><div class="map-water"></div><div class="map-route route-home-trade"></div><div class="map-route route-home-center"></div><div class="map-route route-home-industry"></div><button type="button" class="map-marker home-marker" style="left:48%;top:55%" data-city-open="home" aria-label="Мой дом"><span>🏠</span><small>Мой дом</small><em>База</em></button>'+markers+points+empty+'<div class="map-center-label">Мой город · вся игра здесь</div><div id="cityPanel" class="city-panel" hidden></div></div><div class="map-legend"><span>🏠 База</span><span>🏪 Бизнес</span><span>🎯 Игровая точка</span><b>'+ownedCount+' объектов · '+money(income)+'/ч</b></div>';
 }
+function openCityPanel(kind,id){
+  const panel=document.querySelector("#cityPanel");if(!panel)return;
+  const s=window.__mrGusState||window.__mrGusLastState||null;
+  if(!s){setStatus("Данные города ещё загружаются");return}
+  let title="Город",body="";
+  if(kind==="business"){
+    const b=(s.businesses||[]).find(x=>x.id===id),c=(s.businessCatalog||[]).find(x=>x.id===id);
+    if(!c)return;
+    title=c.name;
+    body=b?'<div class="city-panel-stats"><b>Уровень '+(b.level||1)+'</b><b>'+money(b.profitPerHour||0)+'/ч</b></div><button class="btn primary" data-action="upgrade" data-business-id="'+id+'">⬆️ Улучшить</button><button class="btn secondary" data-action="collect">💰 Забрать доход</button><div class="city-panel-note">'+c.description+'</div>':'<div class="city-panel-note">'+c.description+'</div><button class="btn primary" data-action="buy" data-business-id="'+id+'">🏗️ Купить за '+money(c.baseCost)+'</button>';
+  }else if(kind==="home"){
+    title="Мой дом";body='<div class="city-panel-stats"><b>💰 '+money(s.balance||0)+'</b><b>⭐ Уровень '+(s.level||1)+'</b></div><div class="city-panel-note">Твоя база управления городом. Доход, XP и развитие — здесь.</div><button class="btn secondary" data-action="collect">💰 Забрать весь доход</button>';
+  }else{
+    const labels={tasks:"🎯 Задания",achievements:"🏆 Достижения",daily:"🎁 Ежедневный бонус",shop:"🛒 Магазин",event:"⚡ Событие"};
+    title=labels[kind]||"Город";
+    body='<div class="city-panel-note">Раздел открыт прямо на карте. Здесь будут доступны действия города.</div><button class="btn secondary" data-city-close>Закрыть</button>';
+  }
+  panel.innerHTML='<button type="button" class="city-panel-close" data-city-close aria-label="Закрыть">×</button><div class="city-panel-title">'+title+'</div>'+body;
+  panel.hidden=false;
+}
+function closeCityPanel(){const p=document.querySelector("#cityPanel");if(p)p.hidden=true}
+
 function renderEmpireVisual(s){
   const el=document.querySelector("#empireVisual"); if(!el)return;
   const businesses=s.businesses||[];
