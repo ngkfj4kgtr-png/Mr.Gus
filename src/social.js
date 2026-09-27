@@ -35,28 +35,30 @@ function playerRow(r){
   return {id:String(r.telegram_id),name:rowName(r),username:r.username||null,photoUrl:r.photo_url||null,level:Number(r.level),xp:Number(r.xp),balance:Number(r.balance),businesses:Object.keys(businesses).length,achievements:achievements.length,stats,createdAt:r.created_at};
 }
 function sortRows(rows,key){return rows.sort((a,b)=>Number(b[key]||0)-Number(a[key]||0)||String(a.name).localeCompare(String(b.name)));}
-export async function getRankings(limit=50){
+export async function getRankings(limit=50,currentTelegramId=null){
   const p=await getPool(),safe=Math.max(1,Math.min(100,Number(limit)||50));
   const users=(await p.query('SELECT id,telegram_id,username,first_name,last_name,photo_url,balance,xp,level,businesses,claimed_achievements,stats,created_at FROM users WHERE blocked=false')).rows.map(playerRow);
-  const overall=sortRows(users.map(r=>({...r,score:r.level*1000000+r.balance+r.achievements*10000+r.businesses*5000})), 'score').slice(0,safe);
-  const level=sortRows([...users], 'level').slice(0,safe);
-  const capital=sortRows([...users], 'balance').slice(0,safe);
-  const businesses=sortRows([...users], 'businesses').slice(0,safe);
-  const achievements=sortRows([...users], 'achievements').slice(0,safe);
+  const addPositions=(rows,key)=>rows.map((r,i)=>({...r,position:i+1,isMe:String(r.id)===String(currentTelegramId)}));
+  const overall=sortRows(users.map(r=>({...r,score:r.level*1000000+r.balance+r.achievements*10000+r.businesses*5000})), 'score');
+  const level=sortRows([...users], 'level');
+  const capital=sortRows([...users], 'balance');
+  const businesses=sortRows([...users], 'businesses');
+  const achievements=sortRows([...users], 'achievements');
   const weekly=(await p.query(`SELECT u.telegram_id,u.username,u.first_name,u.last_name,u.photo_url,COALESCE(SUM(o.reward_amount),0)::bigint AS points,COUNT(o.id)::bigint AS operations
-    FROM users u LEFT JOIN economy_operations o ON o.user_id=u.id AND o.created_at>=NOW()-INTERVAL '7 days'
+    FROM users u LEFT JOIN economy_operations o ON o.user_id=u.id AND o.created_at>=date_trunc('week',NOW())
     WHERE u.blocked=false GROUP BY u.id ORDER BY points DESC,operations DESC,u.id ASC LIMIT $1`,[safe])).rows.map(r=>({...playerRow({...r,balance:0,xp:0,level:0,businesses:{},claimed_achievements:[],stats:{},created_at:null}),points:Number(r.points),operations:Number(r.operations)}));
   const season=(await p.query(`SELECT u.telegram_id,u.username,u.first_name,u.last_name,u.photo_url,COALESCE(SUM(o.reward_amount),0)::bigint AS points,COUNT(o.id)::bigint AS operations
     FROM users u LEFT JOIN economy_operations o ON o.user_id=u.id AND o.created_at>=date_trunc('month',NOW())
     WHERE u.blocked=false GROUP BY u.id ORDER BY points DESC,operations DESC,u.id ASC LIMIT $1`,[safe])).rows.map(r=>({...playerRow({...r,balance:0,xp:0,level:0,businesses:{},claimed_achievements:[],stats:{},created_at:null}),points:Number(r.points),operations:Number(r.operations)}));
-  return {overall,level,capital,businesses,achievements,weekly,season,seasonKey:new Date().toISOString().slice(0,7)};
+  return {overall:addPositions(overall,'score'),level:addPositions(level,'level'),capital:addPositions(capital,'balance'),businesses:addPositions(businesses,'businesses'),achievements:addPositions(achievements,'achievements'),weekly:addPositions(weekly,'points'),season:addPositions(season,'points'),seasonKey:new Date().toISOString().slice(0,7)};
 }
 export async function getProfile(telegramId){
-  const r=(await (await getPool()).query('SELECT * FROM users WHERE telegram_id=$1',[String(telegramId)])).rows[0];
+  const r=(await (await getPool()).query('SELECT * FROM users WHERE telegram_id=$1 AND blocked=false',[String(telegramId)])).rows[0];
   if(!r)return null;
-  const p=playerRow(r);
-  const businesses=r.businesses||{};
-  return {...p,ownedBusinesses:Object.values(businesses).map(b=>({id:b.id,level:b.level,expansionLevel:b.expansionLevel||0,investment:b.investment||0,employees:b.employees||{}})),progress:{xp:p.xp,level:p.level}};
+  const p=playerRow(r),businesses=r.businesses||{};
+  const xpCurrent=typeof p.xp==='number'?p.xp:0;
+  const xpNext=Math.max(xpCurrent+1,Math.floor(xpCurrent/1000+1)*1000);
+  return {...p,telegramId:p.id,ownedBusinesses:Object.entries(businesses).map(([id,b])=>({id,level:b.level,expansionLevel:b.expansionLevel||0,investment:b.investment||0,employees:b.employees||{},profitPerHour:Number(b.profitPerHour)||0})),daily:{streak:Number(r.daily_state?.streak)||0,lastClaimDate:r.daily_state?.lastClaimDate||null},progress:{xp:xpCurrent,level:p.level,current:xpCurrent,next:xpNext,percent:Math.min(100,Math.max(0,Math.round(((xpCurrent-(xpNext-1000))/1000)*100)))},stats:{...p.stats}};
 }
 export async function getAdminSnapshot(){
   const p=await getPool();
