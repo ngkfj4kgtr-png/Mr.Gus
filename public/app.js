@@ -199,16 +199,15 @@ function openCityPanel(kind,id){
       body='<div class="city-panel-stats"><b>Уровень '+(biz.level||1)+'</b><b>'+money(biz.profitPerHour||0)+'/ч</b><b>Доход '+money(biz.pendingIncome||0)+'</b></div><div class="city-panel-actions">'+actionBtn("upgrade","⬆️ Улучшить",'data-business-id="'+id+'"')+actionBtn("collect","💰 Забрать доход")+actionBtn("hire","👷 Нанять кассира",'data-business-id="'+id+'" data-role="cashier"')+actionBtn("hire","👔 Нанять управляющего",'data-business-id="'+id+'" data-role="manager"')+actionBtn("expand","🏗️ Расширить",'data-business-id="'+id+'"')+actionBtn("invest","💼 Инвестировать 5k",'data-business-id="'+id+'"')+actionBtn("boost","⚡ Ускорить",'data-business-id="'+id+'"')+'</div><div class="city-panel-note">Кассиры: '+(emp.cashier||0)+' · Управляющие: '+(emp.manager||0)+' · Расширение: '+(biz.expansionLevel||0)+'/5 · Инвестиции: '+money(biz.investment||0)+'</div>';
     }else body='<div class="city-panel-note">'+cat.description+'</div>'+actionBtn("buy","🏗️ Купить за "+money(cat.baseCost),'data-business-id="'+id+'"',cat.unlocked===false);
   }else if(kind==="home"){
-    title="🏠 Мой дом";body='<div class="city-panel-stats"><b>💰 '+money(s.balance||0)+'</b><b>⭐ Уровень '+(s.level||1)+'</b><b>⭐ '+(s.xp||0)+' XP</b></div>'+actionBtn("collect","💰 Забрать весь доход")+'<div class="city-panel-note">База города. Здесь управление развитием империи.</div>';
-  }else if(kind==="home"){
-    title="📊 Аналитика города";
+    title="🏠 Мой дом · аналитика";
+    const homeStats='<div class="city-panel-stats"><b>💰 '+money(s.balance||0)+'</b><b>⭐ Уровень '+(s.level||1)+'</b><b>⭐ '+(s.xp||0)+' XP</b></div>';
     const bs=(s.businesses||[]).slice(0,6);
     const maxIncome=Math.max(1,...bs.map(b=>Number(b.profitPerHour)||0));
     const maxLevel=Math.max(1,...bs.map(b=>Number(b.level)||1));
     const incomeBars=bs.length?bs.map(b=>{const v=Number(b.profitPerHour)||0;return '<div class="city-chart-row"><span>'+((s.businessCatalog||[]).find(x=>x.id===b.id)?.name||b.id)+'</span><div class="city-chart-track"><i style="width:'+Math.max(5,Math.round(v/maxIncome*100))+'%"></i></div><b>'+money(v)+'/ч</b></div>'}).join(""):'<div class="city-panel-note">Купи первый бизнес — здесь появится статистика.</div>';
     const levelBars=bs.length?bs.map(b=>{const lv=Number(b.level)||1;return '<div class="city-level-card"><b>'+((s.businessCatalog||[]).find(x=>x.id===b.id)?.name||b.id)+'</b><span>ур. '+lv+'</span><div class="city-level-track"><i style="width:'+Math.max(6,Math.round(lv/maxLevel*100))+'%"></i></div></div>'}).join(""):"";
     body='<div class="city-chart-title">Доход объектов</div><div class="city-chart">'+incomeBars+'</div><div class="city-chart-title">Развитие бизнеса</div><div class="city-level-grid">'+levelBars+'</div><div class="city-panel-stats"><b>'+money(bs.reduce((n,b)=>n+(Number(b.profitPerHour)||0),0))+'/ч</b><b>'+bs.length+'/4 объектов</b><b>Ур. '+(s.level||1)+'</b></div>';
-  }else if(kind==="tasks"){
+33088  }else if(kind==="tasks"){
     title="🎯 Задания";const rows=(s.tasks||[]).filter(x=>!x.claimed);
     body=rows.length?rows.map(x=>'<div class="city-list-item"><div><b>'+x.title+'</b><small>'+x.description+'</small><em>+'+money(x.reward)+' · +'+x.xp+' XP</em></div>'+actionBtn("claim",x.locked?"🔒":"Забрать",'data-task-id="'+String(x.id).replaceAll('"','&quot;')+'"',!!x.locked)+'</div>').join(""):'<div class="city-panel-note">Все доступные задания выполнены.</div>';
   }else if(kind==="achievements"){
