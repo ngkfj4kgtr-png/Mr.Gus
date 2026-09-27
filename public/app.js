@@ -96,7 +96,7 @@ function initCityMapControls(){
   const apply=()=>{clamp();world.style.transform='translate3d('+tx+'px,'+ty+'px,0) scale('+scale+')';};
   const dist=()=>{const p=[...pointers.values()];return p.length<2?0:Math.hypot(p[0].x-p[1].x,p[0].y-p[1].y)};
   const down=e=>{
-    if(e.target.closest("button,.city-panel,.map-zoom-controls"))return;
+    if(e.target.closest("button,.city-panel,.map-zoom-controls,[data-city-open]"))return;
     pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
     try{map.setPointerCapture(e.pointerId)}catch{}
     if(pointers.size===2){pinchDistance=dist();pinchScale=scale;dragId=null}
