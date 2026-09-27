@@ -40,7 +40,7 @@ export async function getRankings(limit=50,currentTelegramId=null){
   const users=(await p.query('SELECT id,telegram_id,username,first_name,last_name,photo_url,balance,xp,level,businesses,claimed_achievements,stats,created_at FROM users WHERE blocked=false')).rows.map(playerRow);
   const addPositions=(rows,key)=>rows.map((r,i)=>({...r,position:i+1,isMe:String(r.id)===String(currentTelegramId)}));
   const trimWithMe=(rows)=>{const ranked=addPositions(rows);const top=ranked.slice(0,safe);const me=ranked.find(r=>r.isMe);return me&&!top.some(r=>r.isMe)?[...top,me]:top;};
-  const overall=sortRows(users.map(r=>({...r,score:r.level*1000000+r.balance+r.achievements*10000+r.businesses*5000})), 'score');
+  const overall=sortRows(users.map(r=>({...r,score:Math.round(r.level*1000000+r.balance+r.xp*10+r.achievements*10000+r.businesses*5000+Number(r.stats?.orderRevenue||0)*2)})), 'score');
   const level=sortRows([...users], 'level');
   const capital=sortRows([...users], 'balance');
   const businesses=sortRows([...users], 'businesses');
