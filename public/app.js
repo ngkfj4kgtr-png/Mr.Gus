@@ -146,7 +146,7 @@ function renderCityMap(s){
   const traffic=Math.min(14,Math.max(1,Math.ceil(liveTraffic/8)+(owned*1.2)+(level/6)));
   const people=Math.min(14,Math.max(2,Math.ceil(liveVisitors/8)+(owned?1:0)));
   const hour=new Date().getHours(),night=hour>=20||hour<7;
-  const houses=Array.from({length:cityStage==="mega"?18:cityStage==="large"?15:cityStage==="small"?12:cityStage==="town"?9:6},(_,i)=>{const x=8+(i%6)*16,y=18+(Math.floor(i/6)%3)*17,type=i%4;return '<i class="arch-house house-'+type+'" style="position:absolute;left:'+x+'%;top:'+y+'%"><span class="house-lawn"></span><span class="house-body"></span><span class="house-roof"></span><span class="house-window"></span><span class="house-door"></span><span class="house-chimney"></span></i>';}).join("");
+  const houseSlots=[[8,12],[24,12],[40,12],[70,12],[86,12],[8,27],[24,27],[40,27],[70,27],[86,27],[8,40],[24,40],[40,40],[70,40],[86,40],[24,36],[70,36],[86,36]];const houseCount=cityStage==="mega"?18:cityStage==="large"?15:cityStage==="small"?12:cityStage==="town"?9:6;const houses=houseSlots.slice(0,houseCount).map((p,i)=>{const x=p[0],y=p[1],type=i%4;return '<i class="arch-house house-'+type+'" style="position:absolute;left:'+x+'%;top:'+y+'%"><span class="house-lawn"></span><span class="house-body"></span><span class="house-roof"></span><span class="house-window"></span><span class="house-door"></span><span class="house-chimney"></span></i>';}).join("");
   const businessTargets=businesses.map(b=>({id:b.id,m:meta[b.id]})).filter(x=>x.m);
   const cars=Array.from({length:traffic},(_,i)=>{
     const lane=i%4, y=[53,56,59,62][lane], dur=12+(i%5)*2, delay=-(i*1.7);
