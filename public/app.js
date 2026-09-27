@@ -46,7 +46,7 @@ async function auth(){
   }catch(e){setStatus(friendlyError(e),true)}
 }
 async function refresh(fromAuth=false){
-  try{const s=await api("/api/state");render(s);setStatus(fromAuth?t("status.loggedIn"):t("status.connected"));return s}
+  try{const s=await api("/api/state");render(s);await loadSocial();setStatus(fromAuth?t("status.loggedIn"):t("status.connected"));return s}
   catch(e){setStatus(friendlyError(e),true);return null}
 }
 function button(action,label,extra="",disabled=false){return `<button class="btn" data-action="${action}" ${extra} ${disabled?"disabled":""}>${label}</button>`}
@@ -75,6 +75,27 @@ function render(s){
   const e=s.event||{};document.querySelector("#event").innerHTML=`<div class="event-card"><b>${e.title||"Событие"}</b><p class="muted">${e.description||""}</p><span class="reward">+${money(e.reward||0)} · +${e.xp||0} XP</span><div>${button("event",e.claimed?t("received"):t("claimBonus"))}</div></div>`;if(e.claimed)document.querySelector("#event button").disabled=true;
   const st=s.stats||{};document.querySelector("#stats").innerHTML=`<div><span>Заданий</span><b>${st.tasksCompleted||0}</b></div><div><span>Бизнесов</span><b>${st.businessesOwned||0}</b></div><div><span>Улучшений</span><b>${st.businessUpgrades||0}</b></div><div><span>Доход получен</span><b>${money(st.totalIncome||0)}</b></div><div><span>Всего заработано</span><b>${money(st.totalEarned||0)}</b></div>`;
 }
+async function loadSocial(){
+  try{const r=await api("/api/rankings"),p=await api("/api/profile");renderProfile(p);renderRankings(r);if(window.__mrGusState?.isAdmin){const a=await api("/api/admin");renderAdmin(a)}}
+  catch(e){if(!String(e.message).includes("Forbidden"))console.warn("social load",e.message)}
+}
+function renderProfile(p){
+  const el=document.querySelector("#profile");if(!el)return;
+  const avatar=p.photoUrl?("<img class=\"avatar\" src=\"" + p.photoUrl + "\" alt=\"\">"):"<div class=\"avatar placeholder\">🪿</div>";
+  el.innerHTML="<div class=\"profile-head\">"+avatar+"<div><b>"+p.name+"</b><div class=\"muted\">"+(p.username?("@"+p.username):"Mr.Gus")+"</div></div></div><div class=\"profile-grid\"><div><span>Уровень</span><b>"+p.level+"</b></div><div><span>XP</span><b>"+p.xp+"</b></div><div><span>Капитал</span><b>"+money(p.balance)+"</b></div><div><span>Бизнесы</span><b>"+p.businesses+"</b></div><div><span>Достижения</span><b>"+p.achievements+"</b></div><div><span>Начало</span><b>"+(p.createdAt?new Date(p.createdAt).toLocaleDateString():"—")+"</b></div></div>";
+}
+function rankList(title,rows,key){
+  const html=rows.slice(0,10).map((r,i)=>"<div class=\"rank-row\"><span>#"+(i+1)+" "+r.name+"</span><b>"+(key==="balance"?money(r[key]):(r[key]??0))+"</b></div>").join("");
+  return "<div class=\"rank-block\"><b>"+title+"</b>"+(html||"<div class=\"muted\">Пока нет игроков</div>")+"</div>";
+}
+function renderRankings(r){
+  const el=document.querySelector("#rankings");if(!el)return;
+  el.innerHTML=rankList("Общий рейтинг",r.overall,"score")+rankList("По уровню",r.level,"level")+rankList("По капиталу",r.capital,"balance")+rankList("По бизнесам",r.businesses,"businesses")+rankList("По достижениям",r.achievements,"achievements")+rankList("Неделя",r.weekly,"points")+rankList("Сезон "+r.seasonKey,r.season,"points");
+}
+function renderAdmin(a){
+  const panel=document.querySelector("#adminPanel"),el=document.querySelector("#admin");if(!panel||!el)return;panel.hidden=false;
+  el.innerHTML="<div class=\"stats-grid\"><div><span>Пользователи</span><b>"+a.metrics.users+"</b></div><div><span>Операции</span><b>"+a.metrics.operations+"</b></div><div><span>Ошибки</span><b>"+a.metrics.errors+"</b></div></div><div class=\"admin-list\">"+a.users.slice(0,30).map(u=>"<div class=\"mini-card\"><div class=\"row\"><div><b>"+u.name+"</b><p class=\"muted\">LVL "+u.level+" · "+money(u.balance)+"</p></div><button class=\"btn "+(u.blocked?"secondary":"")+" data-admin-user=\""+u.dbId+"\" data-admin-block=\""+(u.blocked?"unblock":"block")+"\">"+(u.blocked?"Разблокировать":"Заблокировать")+"</button></div></div>").join("")+"</div><details><summary>Последние операции</summary><pre class=\"admin-pre\">"+JSON.stringify(a.operations.slice(0,20),null,2)+"</pre></details><details><summary>Последние ошибки</summary><pre class=\"admin-pre\">"+JSON.stringify(a.errors.slice(0,20),null,2)+"</pre></details>";
+}
 async function action(button,fn){if(!button||button.disabled)return;button.disabled=true;try{const state=await fn();render(state);setStatus(t("status.done"))}catch(e){setStatus(friendlyError(e),true)}finally{button.disabled=false}}
 async function buy(button,id){await action(button,()=>api("/api/business/buy",{method:"POST",body:JSON.stringify({businessId:id,operationId:op("buy")})}))}
 async function upgrade(button,id){await action(button,()=>api("/api/business/upgrade",{method:"POST",body:JSON.stringify({businessId:id,operationId:op("upgrade")})}))}
@@ -89,7 +110,7 @@ async function invest(button,id){await action(button,()=>api("/api/business/inve
 async function boost(button,id){await action(button,()=>api("/api/business/boost",{method:"POST",body:JSON.stringify({businessId:id,operationId:op("boost")})}))}
 async function shop(button,id){await action(button,()=>api("/api/shop/buy",{method:"POST",body:JSON.stringify({itemId:id,operationId:op("shop")})}))}
 async function daily(button){await action(button,()=>api("/api/daily/claim",{method:"POST",body:JSON.stringify({operationId:op("daily")})}))}
-document.addEventListener("click",e=>{const b=e.target.closest("[data-action]");if(!b||b.disabled)return;const a=b.dataset.action;if(a==="auth")auth();else if(a==="refresh")refresh();else if(a==="buy")buy(b,b.dataset.businessId);else if(a==="upgrade")upgrade(b,b.dataset.businessId);else if(a==="collect")collect(b);else if(a==="claim")claim(b,b.dataset.taskId);else if(a==="achievement")claimAchievement(b,b.dataset.id);else if(a==="goal")claimGoal(b,b.dataset.id);else if(a==="event")claimEvent(b);else if(a==="hire")hire(b,b.dataset.businessId,b.dataset.role);else if(a==="expand")expand(b,b.dataset.businessId);else if(a==="invest")invest(b,b.dataset.businessId);else if(a==="boost")boost(b,b.dataset.businessId);else if(a==="shop")shop(b,b.dataset.itemId);else if(a==="daily")daily(b)});
+document.addEventListener("click",e=>{const admin=e.target.closest("[data-admin-block]");if(admin){(async()=>{try{await api("/api/admin/"+admin.dataset.adminBlock,{method:"POST",body:JSON.stringify({userId:admin.dataset.adminUser,operationId:op("admin")})});await loadSocial();setStatus("Админ-действие выполнено")}catch(err){setStatus(friendlyError(err),true)}})();return}const b=e.target.closest("[data-action]");if(!b||b.disabled)return;const a=b.dataset.action;if(a==="auth")auth();else if(a==="refresh")refresh();else if(a==="buy")buy(b,b.dataset.businessId);else if(a==="upgrade")upgrade(b,b.dataset.businessId);else if(a==="collect")collect(b);else if(a==="claim")claim(b,b.dataset.taskId);else if(a==="achievement")claimAchievement(b,b.dataset.id);else if(a==="goal")claimGoal(b,b.dataset.id);else if(a==="event")claimEvent(b);else if(a==="hire")hire(b,b.dataset.businessId,b.dataset.role);else if(a==="expand")expand(b,b.dataset.businessId);else if(a==="invest")invest(b,b.dataset.businessId);else if(a==="boost")boost(b,b.dataset.businessId);else if(a==="shop")shop(b,b.dataset.itemId);else if(a==="daily")daily(b)});
 window.addEventListener("load",async()=>{if(tg?.initData)await auth();else setStatus(t("status.waitingTelegram"))});
 
 window.addEventListener("mr-gus-language-changed",()=>{const s=window.__mrGusState;if(s)render(s);});
