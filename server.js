@@ -7,7 +7,7 @@ import { initDb,migrate,upsertTelegramUser,createSession,getUserBySession,delete
 import { validateOperationId, OPERATION_TYPES } from './src/operations.js';
 import { createPlayer,claimTask,buyBusiness,upgradeBusiness,collectOfflineIncome,hourlyProfit,availableTasks,availableAchievements,availableGoals,claimAchievement,claimGoal,currentEvent,claimEvent,BUSINESS,canBuyBusiness,businessUnlockLevel,xpForLevel,hireEmployee,expandBusiness,addInvestment,activateBusinessBoost,availableShop,buyShopItem,dailyActivity,claimDailyActivity } from './src/economy.js';
 import { checkRateLimit,validateSameOrigin,validateFetchMetadata,securityHeaders,clearRateLimitBuckets } from './src/http-security.js';
-import { getRankings,getProfile,isAdminTelegramId,getAdminSnapshot,setBlocked,writeAudit,writeError } from './src/social.js';
+import { getRankings,getProfile,isAdminTelegramId,getAdminSnapshot,searchAdminUsers,setBlocked,writeAudit,writeError } from './src/social.js';
 
 const root=join(fileURLToPath(new URL('.',import.meta.url)),'public');
 const port=Number(process.env.PORT||3000),botToken=process.env.TELEGRAM_BOT_TOKEN,demoMode=process.env.DEMO_MODE==='true';
@@ -58,6 +58,7 @@ if(url.pathname.startsWith('/api/')){
 const a=await auth(req,res);if(!a)return;
 if(a.demo){const player=a.player;if(req.method==='GET'&&url.pathname==='/api/rankings'){const a=await auth(req,res);if(!a)return;return sendJson(res,200,await getRankings(url.searchParams.get('limit'),a.user.telegram_id))}
 if(req.method==='GET'&&url.pathname==='/api/profile'){const a=await auth(req,res);if(!a)return;return sendJson(res,200,await getProfile(a.user.telegram_id))}
+if(req.method==='GET'&&url.pathname==='/api/admin/users'){const a=await auth(req,res);if(!a)return;if(!isAdminTelegramId(a.user.telegram_id)){writeAudit({userId:a.user.id,telegramId:a.user.telegram_id,action:'admin_forbidden',details:{path:url.pathname}});return sendJson(res,403,{error:'Forbidden'})}return sendJson(res,200,{users:await searchAdminUsers(url.searchParams.get('q'),url.searchParams.get('limit'))})}
 if(req.method==='GET'&&url.pathname==='/api/admin'){const a=await auth(req,res);if(!a)return;if(!isAdminTelegramId(a.user.telegram_id)){writeAudit({userId:a.user.id,telegramId:a.user.telegram_id,action:'admin_forbidden',details:{path:url.pathname}});return sendJson(res,403,{error:'Forbidden'})}return sendJson(res,200,await getAdminSnapshot())}
 if(req.method==='GET'&&url.pathname==='/api/state'){{const now=Date.now();collectOfflineIncome(player,now,currentEvent(now).incomeMultiplier);return sendJson(res,200,serialize(player,a.user))}}
 if(req.method==='POST'){const body=await readJson(req),operationId=String(body.operationId||'');validateOperationId(operationId);if(demoOperations.has(`demo-user:${operationId}`))throw new Error('Operation already processed');let action;
@@ -110,4 +111,6 @@ return sendJson(res,405,{error:'Method not allowed'})}
 const requested=url.pathname==='/'?'/index.html':url.pathname,safe=normalize(requested).replace(/^\.\.(\/|\\)+/,'');const file=join(root,safe),data=await readFile(file);res.writeHead(200,{...securityHeaders(),'Content-Type':({'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8'})[extname(file)]||'application/octet-stream','Cache-Control':'no-store'});res.end(data);
 }catch(e){const msg=e?.message||'Server error';if(e?.code?.startsWith('08')||e?.code==='25P02')runtimeMetrics.dbErrors++;if(req.url?.startsWith('/api/')){runtimeMetrics.apiErrors++;console.error(JSON.stringify({type:'api_error',path:req.url,message:msg,code:e?.code||null}));writeError({path:req.url,message:msg,details:{code:e?.code||null}});return sendJson(res,errorStatus(msg),{error:publicError(msg)})}res.writeHead(500,{'Content-Type':'text/plain; charset=utf-8'});res.end('Server error')}});
 if(!demoMode){setInterval(()=>cleanupExpiredSessions().catch(()=>{}),15*60*1000).unref()}
+process.on('uncaughtException',e=>{runtimeMetrics.apiErrors++;console.error(JSON.stringify({type:'uncaught_exception',message:e?.message||'unknown'}));writeError({path:'process',message:e?.message||'uncaught exception',severity:'critical'}).catch(()=>{})});
+process.on('unhandledRejection',e=>{runtimeMetrics.apiErrors++;console.error(JSON.stringify({type:'unhandled_rejection',message:e?.message||String(e)}));writeError({path:'process',message:e?.message||String(e),severity:'critical'}).catch(()=>{})});
 server.listen(port,'0.0.0.0',()=>console.log(`Mr.Gus — stage 9 progression: http://localhost:${port}`));
