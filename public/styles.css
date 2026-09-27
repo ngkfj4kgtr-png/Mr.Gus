@@ -791,3 +791,8 @@ body:has(.city-map-card.page-active) .map-center-label{bottom:62px}
 .route-workshop{border-color:rgba(118,180,255,.2);background:linear-gradient(90deg,rgba(118,180,255,.2),rgba(118,180,255,.04))}
 .route-factory{border-color:rgba(114,227,154,.2)}
 .city-stage-village .business-route{opacity:.18}.city-stage-town .business-route{opacity:.3}.city-stage-small .business-route{opacity:.42}.city-stage-large .business-route,.city-stage-mega .business-route{opacity:.55}
+
+.income-pulse{position:absolute;z-index:8;left:var(--sx);top:var(--sy);font-style:normal;font-size:8px;font-weight:950;color:rgba(114,227,154,.95);text-shadow:0 2px 8px rgba(0,0,0,.8);pointer-events:none;animation:incomePulseToCenter 3.8s cubic-bezier(.4,0,.2,1) infinite;animation-delay:var(--delay)}
+@keyframes incomePulseToCenter{0%{opacity:0;transform:translate(-50%,-50%) scale(.55)}12%{opacity:1}68%{opacity:.9;transform:translate(170%,-170%) scale(1)}88%,100%{opacity:0;transform:translate(300%,-300%) scale(.35)}}
+.pulse-kiosk,.pulse-cafe{color:rgba(255,214,112,.95)}.pulse-workshop{color:rgba(118,180,255,.95)}.pulse-factory{color:rgba(114,227,154,.95)}
+@media(prefers-reduced-motion:reduce){.income-pulse{animation:none!important;display:none}}
