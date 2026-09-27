@@ -100,24 +100,34 @@ function renderCityMap(s){
 }
 function openCityPanel(kind,id){
   const panel=document.querySelector("#cityPanel");if(!panel)return;
-  const s=window.__mrGusState||window.__mrGusLastState||null;
-  if(!s){setStatus("Данные города ещё загружаются");return}
+  const s=window.__mrGusState;if(!s){setStatus("Данные города ещё загружаются");return}
+  const actionBtn=(action,label,extra="",disabled=false)=>button(action,label,extra,disabled);
   let title="Город",body="";
   if(kind==="business"){
-    const b=(s.businesses||[]).find(x=>x.id===id),c=(s.businessCatalog||[]).find(x=>x.id===id);
-    if(!c)return;
-    title=c.name;
-    body=b?'<div class="city-panel-stats"><b>Уровень '+(b.level||1)+'</b><b>'+money(b.profitPerHour||0)+'/ч</b></div><button class="btn primary" data-action="upgrade" data-business-id="'+id+'">⬆️ Улучшить</button><button class="btn secondary" data-action="collect">💰 Забрать доход</button><div class="city-panel-note">'+c.description+'</div>':'<div class="city-panel-note">'+c.description+'</div><button class="btn primary" data-action="buy" data-business-id="'+id+'">🏗️ Купить за '+money(c.baseCost)+'</button>';
+    const biz=(s.businesses||[]).find(x=>x.id===id),cat=(s.businessCatalog||[]).find(x=>x.id===id);if(!cat)return;
+    title=(biz?"🏙️ ":"🔒 ")+cat.name;
+    if(biz){
+      const emp=biz.employees||{};
+      body='<div class="city-panel-stats"><b>Уровень '+(biz.level||1)+'</b><b>'+money(biz.profitPerHour||0)+'/ч</b><b>Доход '+money(biz.pendingIncome||0)+'</b></div><div class="city-panel-actions">'+actionBtn("upgrade","⬆️ Улучшить",'data-business-id="'+id+'"')+actionBtn("collect","💰 Забрать доход")+actionBtn("hire","👷 Нанять кассира",'data-business-id="'+id+'" data-role="cashier"')+actionBtn("hire","👔 Нанять управляющего",'data-business-id="'+id+'" data-role="manager"')+actionBtn("expand","🏗️ Расширить",'data-business-id="'+id+'"')+actionBtn("invest","💼 Инвестировать 5k",'data-business-id="'+id+'"')+actionBtn("boost","⚡ Ускорить",'data-business-id="'+id+'"')+'</div><div class="city-panel-note">Кассиры: '+(emp.cashier||0)+' · Управляющие: '+(emp.manager||0)+' · Расширение: '+(biz.expansionLevel||0)+'/5 · Инвестиции: '+money(biz.investment||0)+'</div>';
+    }else body='<div class="city-panel-note">'+cat.description+'</div>'+actionBtn("buy","🏗️ Купить за "+money(cat.baseCost),'data-business-id="'+id+'"',cat.unlocked===false);
   }else if(kind==="home"){
-    title="Мой дом";body='<div class="city-panel-stats"><b>💰 '+money(s.balance||0)+'</b><b>⭐ Уровень '+(s.level||1)+'</b></div><div class="city-panel-note">Твоя база управления городом. Доход, XP и развитие — здесь.</div><button class="btn secondary" data-action="collect">💰 Забрать весь доход</button>';
-  }else{
-    const labels={tasks:"🎯 Задания",achievements:"🏆 Достижения",daily:"🎁 Ежедневный бонус",shop:"🛒 Магазин",event:"⚡ Событие"};
-    title=labels[kind]||"Город";
-    body='<div class="city-panel-note">Раздел открыт прямо на карте. Здесь будут доступны действия города.</div><button class="btn secondary" data-city-close>Закрыть</button>';
+    title="🏠 Мой дом";body='<div class="city-panel-stats"><b>💰 '+money(s.balance||0)+'</b><b>⭐ Уровень '+(s.level||1)+'</b><b>⭐ '+(s.xp||0)+' XP</b></div>'+actionBtn("collect","💰 Забрать весь доход")+'<div class="city-panel-note">База города. Здесь управление развитием империи.</div>';
+  }else if(kind==="tasks"){
+    title="🎯 Задания";const rows=(s.tasks||[]).filter(x=>!x.claimed);
+    body=rows.length?rows.map(x=>'<div class="city-list-item"><div><b>'+x.title+'</b><small>'+x.description+'</small><em>+'+money(x.reward)+' · +'+x.xp+' XP</em></div>'+actionBtn("claim",x.locked?"🔒":"Забрать",'data-task-id="'+String(x.id).replaceAll('"','&quot;')+'"',!!x.locked)+'</div>').join(""):'<div class="city-panel-note">Все доступные задания выполнены.</div>';
+  }else if(kind==="achievements"){
+    title="🏆 Достижения";const rows=(s.achievements||[]).filter(x=>!x.claimed);
+    body=rows.length?rows.map(x=>'<div class="city-list-item"><div><b>'+x.title+'</b><small>'+x.description+'</small><em>+'+money(x.reward)+' · +'+x.xp+' XP</em></div>'+actionBtn("achievement",x.unlocked?"Забрать":"🔒",'data-id="'+x.id+'"',!x.unlocked)+'</div>').join(""):'<div class="city-panel-note">Все доступные достижения получены.</div>';
+  }else if(kind==="daily"){
+    title="🎁 Ежедневный бонус";const d=s.daily||{};body='<div class="city-panel-stats"><b>Серия: '+(d.streak||0)+'</b><b>+'+money(d.reward||0)+'</b><b>+'+(d.xp||0)+' XP</b></div>'+actionBtn("daily",d.already?"Получено сегодня":"Забрать бонус","",!!d.already);
+  }else if(kind==="shop"){
+    title="🛒 Магазин";body=(s.shop||[]).map(x=>'<div class="city-list-item"><div><b>'+x.title+'</b><small>'+x.description+'</small><em>'+money(x.cost)+' · получено: '+(x.owned||0)+'</em></div>'+actionBtn("shop","Купить",'data-item-id="'+x.id+'"')+'</div>').join("")||'<div class="city-panel-note">Магазин пока пуст.</div>';
+  }else if(kind==="event"){
+    title="⚡ Событие";const ev=s.event||{};body='<div class="city-event"><b>'+String(ev.title||"Событие")+'</b><small>'+String(ev.description||"")+'</small><em>+'+money(ev.reward||0)+' · +'+(ev.xp||0)+' XP</em>'+actionBtn("event",ev.claimed?"Получено":"Забрать награду","",!!ev.claimed)+'</div>';
   }
-  panel.innerHTML='<button type="button" class="city-panel-close" data-city-close aria-label="Закрыть">×</button><div class="city-panel-title">'+title+'</div>'+body;
-  panel.hidden=false;
+  panel.innerHTML='<button type="button" class="city-panel-close" data-city-close aria-label="Закрыть">×</button><div class="city-panel-title">'+title+'</div><div class="city-panel-scroll">'+body+'</div>';panel.hidden=false;
 }
+
 function closeCityPanel(){const p=document.querySelector("#cityPanel");if(p)p.hidden=true}
 
 function renderEmpireVisual(s){
