@@ -40,13 +40,13 @@ export async function migrate(){
     CREATE TABLE IF NOT EXISTS city_history(
       id BIGSERIAL PRIMARY KEY,user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
       balance BIGINT NOT NULL DEFAULT 0,xp BIGINT NOT NULL DEFAULT 0,level INTEGER NOT NULL DEFAULT 1,
-      income_per_hour BIGINT NOT NULL DEFAULT 0,orders_completed INTEGER NOT NULL DEFAULT 0,order_revenue BIGINT NOT NULL DEFAULT 0,
+      income_per_hour BIGINT NOT NULL DEFAULT 0,orders_completed INTEGER NOT NULL DEFAULT 0,order_revenue BIGINT NOT NULL DEFAULT 0,visits_completed INTEGER NOT NULL DEFAULT 0,visit_revenue BIGINT NOT NULL DEFAULT 0,
       businesses INTEGER NOT NULL DEFAULT 0,districts JSONB NOT NULL DEFAULT '{}'::jsonb,created_at TIMESTAMPTZ NOT NULL DEFAULT NOW());
     CREATE INDEX IF NOT EXISTS city_history_user_created_idx ON city_history(user_id,created_at DESC);
     ALTER TABLE users ADD COLUMN IF NOT EXISTS claimed_goals JSONB NOT NULL DEFAULT '[]'::jsonb;
     ALTER TABLE users ADD COLUMN IF NOT EXISTS event_claims JSONB NOT NULL DEFAULT '{}'::jsonb;
     ALTER TABLE users ADD COLUMN IF NOT EXISTS stats JSONB NOT NULL DEFAULT '{}'::jsonb;
-    ALTER TABLE users ADD COLUMN IF NOT EXISTS blocked BOOLEAN NOT NULL DEFAULT FALSE;
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS blocked BOOLEAN NOT NULL DEFAULT FALSE;\n    ALTER TABLE city_history ADD COLUMN IF NOT EXISTS visits_completed INTEGER NOT NULL DEFAULT 0;\n    ALTER TABLE city_history ADD COLUMN IF NOT EXISTS visit_revenue BIGINT NOT NULL DEFAULT 0;
     CREATE TABLE IF NOT EXISTS audit_logs(
       id BIGSERIAL PRIMARY KEY,user_id BIGINT REFERENCES users(id) ON DELETE SET NULL,
       telegram_id TEXT,action TEXT NOT NULL,details JSONB NOT NULL DEFAULT '{}'::jsonb,
@@ -160,11 +160,11 @@ export async function withPlayerTransaction(userId,fn){
 export async function recordCitySnapshot(client,userId,player,live){
   const last=await client.query('SELECT created_at FROM city_history WHERE user_id=$1 ORDER BY created_at DESC LIMIT 1',[userId]);
   if(last.rowCount && Date.now()-new Date(last.rows[0].created_at).getTime()<15*60*1000)return false;
-  await client.query('INSERT INTO city_history(user_id,balance,xp,level,income_per_hour,orders_completed,order_revenue,businesses,districts) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9::jsonb)',[userId,player.balance,player.xp,player.level,Math.round(live.totalIncomePerHour||0),Number(player.stats?.ordersCompleted||0),Number(player.stats?.orderRevenue||0),Object.keys(player.businesses||{}).length,JSON.stringify(live.districts||{})]);
+  await client.query('INSERT INTO city_history(user_id,balance,xp,level,income_per_hour,orders_completed,order_revenue,visits_completed,visit_revenue,businesses,districts) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11::jsonb)',[userId,player.balance,player.xp,player.level,Math.round(live.totalIncomePerHour||0),Number(player.stats?.ordersCompleted||0),Number(player.stats?.orderRevenue||0),Number(player.stats?.visitsCompleted||0),Number(player.stats?.visitRevenue||0),Object.keys(player.businesses||{}).length,JSON.stringify(live.districts||{})]);
   return true;
 }
 export async function getCityHistory(userId,range='24h'){
   const hours=range==='30d'?720:range==='7d'?168:24;
-  const r=await (await getPool()).query('SELECT created_at,balance,xp,level,income_per_hour,orders_completed,order_revenue,businesses,districts FROM city_history WHERE user_id=$1 AND created_at>=NOW()-($2 * INTERVAL \'1 hour\') ORDER BY created_at ASC',[userId,hours]);
+  const r=await (await getPool()).query('SELECT created_at,balance,xp,level,income_per_hour,orders_completed,order_revenue,visits_completed,visit_revenue,businesses,districts FROM city_history WHERE user_id=$1 AND created_at>=NOW()-($2 * INTERVAL \'1 hour\') ORDER BY created_at ASC',[userId,hours]);
   return r.rows;
 }
