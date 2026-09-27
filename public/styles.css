@@ -864,3 +864,20 @@ body:has(.city-map-card) .city-map-card{position:fixed;inset:0;z-index:1;margin:
 body:has(.city-map-card) .city-map{height:100dvh;min-height:100dvh;border-radius:0}
 body:has(.city-map-card) .wrap{max-width:none;padding:0}
 body:has(.city-map-card) .page-screen[data-page]:not(.city-map-card){display:none!important}
+
+/* Map object layer: readable, tappable, and stable on touch screens */
+.city-map{touch-action:none;user-select:none;-webkit-user-select:none}
+.map-world{will-change:transform;transform-origin:center center}
+.city-map button{touch-action:manipulation}
+.city-map .map-object,.city-map [data-city-open]{-webkit-tap-highlight-color:transparent}
+.city-map .map-object{cursor:pointer;transition:transform .16s ease,filter .16s ease}
+.city-map .map-object:active{transform:scale(.96)}
+.city-panel{z-index:120}
+.map-zoom-controls{z-index:110;position:absolute}
+.map-zoom-controls button{width:42px;height:42px;min-width:42px;border-radius:14px}
+@media (max-width:600px){
+  body:has(.city-map-card) .stats{top:calc(env(safe-area-inset-top) + 8px);left:8px;right:8px}
+  body:has(.city-map-card) .stats .stat{padding:7px 9px;border-radius:13px}
+  body:has(.city-map-card) .stats small{font-size:10px}
+  body:has(.city-map-card) .stats .v{font-size:14px}
+}
