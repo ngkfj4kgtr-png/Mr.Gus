@@ -15,13 +15,23 @@ export const BUSINESS = Object.freeze({
 });
 
 export const XP_REWARDS = Object.freeze({businessPurchase:100,businessUpgrade:50});
-const LEVEL_XP=Object.freeze([0,500,1_200,2_100,3_300]);
+const LEVEL_XP=Object.freeze([
+  0,500,1_200,2_100,3_300,4_800,6_600,8_700,11_200,14_200,
+  17_700,21_700,26_200,31_200,36_700,42_700,49_200,56_200,63_700,71_700,
+  80_200,89_200,98_700,108_700,119_200,130_200,141_700,153_700,166_200,179_200,
+  192_700,206_700,221_200,236_200,251_700,267_700,284_200,301_200,318_700,336_700,
+  355_200,374_200,393_700,413_700,433_200,452_700,472_200,492_200,512_700,533_700
+]);
 
 export const TASKS=Object.freeze({
   first_order:Object.freeze({id:'first_order',title:'Выполнить первый заказ',description:'Сделай первый заказ и получи стартовый капитал.',reward:250,xp:50,unlockAfter:0}),
   second_order:Object.freeze({id:'second_order',title:'Выполнить второй заказ',description:'Продолжай выполнять заказы и увеличивай капитал.',reward:350,xp:75,unlockAfter:1}),
   third_order:Object.freeze({id:'third_order',title:'Выполнить третий заказ',description:'Три заказа — первый серьёзный шаг к бизнесу.',reward:500,xp:100,unlockAfter:2}),
-  busy_day:Object.freeze({id:'busy_day',title:'Выполнить 4 задания',description:'Выполни все четыре задания и получи крупный бонус.',reward:900,xp:200,unlockAfter:3})
+  busy_day:Object.freeze({id:'busy_day',title:'Выполнить 4 задания',description:'Выполни все четыре задания и получи крупный бонус.',reward:900,xp:200,unlockAfter:3}),
+  level_10_order:Object.freeze({id:'level_10_order',title:'Заказ на уровне 10',description:'Достигни 10 уровня и выполни особое задание.',reward:2_500,xp:450,unlockLevel:10}),
+  level_20_order:Object.freeze({id:'level_20_order',title:'Большой контракт',description:'Достигни 20 уровня и выполни особое задание.',reward:6_000,xp:900,unlockLevel:20}),
+  level_30_order:Object.freeze({id:'level_30_order',title:'Крупный клиент',description:'Достигни 30 уровня и выполни особое задание.',reward:15_000,xp:1_500,unlockLevel:30}),
+  level_50_order:Object.freeze({id:'level_50_order',title:'Легендарный заказ',description:'Достигни 50 уровня и выполни особое задание.',reward:50_000,xp:3_000,unlockLevel:50})
 });
 
 export const ACHIEVEMENTS=Object.freeze({
@@ -29,14 +39,22 @@ export const ACHIEVEMENTS=Object.freeze({
   business_owner:Object.freeze({id:'business_owner',title:'Предприниматель',description:'Владей двумя разными бизнесами.',reward:1_000,xp:200}),
   business_tycoon:Object.freeze({id:'business_tycoon',title:'Империя',description:'Владей четырьмя разными бизнесами.',reward:5_000,xp:500}),
   level_five:Object.freeze({id:'level_five',title:'Пятый уровень',description:'Достигни 5 уровня игрока.',reward:2_000,xp:300}),
-  millionaire:Object.freeze({id:'millionaire',title:'Крупный капитал',description:'Получи 1 000 000 ₽ суммарного дохода за всё время.',reward:10_000,xp:1_000})
+  millionaire:Object.freeze({id:'millionaire',title:'Крупный капитал',description:'Получи 1 000 000 ₽ суммарного дохода за всё время.',reward:10_000,xp:1_000}),
+  level_ten:Object.freeze({id:'level_ten',title:'Десятый уровень',description:'Достигни 10 уровня.',reward:3_000,xp:500}),
+  level_twentyfive:Object.freeze({id:'level_twentyfive',title:'Опытный предприниматель',description:'Достигни 25 уровня.',reward:10_000,xp:1_200}),
+  level_fifty:Object.freeze({id:'level_fifty',title:'Легенда Mr.Gus',description:'Достигни 50 уровня.',reward:50_000,xp:3_000}),
+  upgrade_ten:Object.freeze({id:'upgrade_ten',title:'Мастер развития',description:'Сделай 10 улучшений бизнеса.',reward:5_000,xp:700}),
+  task_master:Object.freeze({id:'task_master',title:'Серия заданий',description:'Выполни 8 разных заданий.',reward:7_500,xp:900})
 });
 
 export const GOALS=Object.freeze({
   start_business:Object.freeze({id:'start_business',title:'Старт бизнеса',description:'Открой первый бизнес.',reward:500,xp:150}),
   upgrade_three:Object.freeze({id:'upgrade_three',title:'Развитие',description:'Сделай 3 улучшения бизнеса.',reward:2_000,xp:300}),
   earn_10k:Object.freeze({id:'earn_10k',title:'Первые 10 тысяч',description:'Получи 10 000 ₽ дохода от бизнеса.',reward:1_500,xp:250}),
-  reach_level_5:Object.freeze({id:'reach_level_5',title:'Новая высота',description:'Достигни 5 уровня.',reward:3_000,xp:400})
+  reach_level_5:Object.freeze({id:'reach_level_5',title:'Новая высота',description:'Достигни 5 уровня.',reward:3_000,xp:400}),
+  reach_level_25:Object.freeze({id:'reach_level_25',title:'Большая цель',description:'Достигни 25 уровня.',reward:12_000,xp:1_500}),
+  reach_level_50:Object.freeze({id:'reach_level_50',title:'Путь легенды',description:'Достигни 50 уровня.',reward:50_000,xp:4_000}),
+  upgrade_ten:Object.freeze({id:'upgrade_ten',title:'Десять улучшений',description:'Сделай 10 улучшений бизнеса.',reward:7_500,xp:900})
 });
 
 export const EVENTS=Object.freeze([
@@ -105,12 +123,12 @@ function addBalance(player,amount,earned=true){
 function addXp(player,xp){player.xp=assertMoneyAmount(player.xp+xp,'XP');player.level=levelFromXp(player.xp)}
 export function availableTasks(player){
   assertPlayer(player);const count=player.claimedTasks.size;
-  return Object.values(TASKS).map(task=>({...task,claimed:player.claimedTasks.has(task.id),locked:!player.claimedTasks.has(task.id)&&count<task.unlockAfter}));
+  return Object.values(TASKS).map(task=>({...task,claimed:player.claimedTasks.has(task.id),locked:!player.claimedTasks.has(task.id)&&(task.unlockLevel?player.level<task.unlockLevel:count<task.unlockAfter)}));
 }
 export function claimTask(player,taskId){
   assertPlayer(player);const task=TASKS[taskId];
   if(!task)throw new Error('Task not found');if(player.claimedTasks.has(taskId))throw new Error('Task reward already claimed');
-  if(player.claimedTasks.size<task.unlockAfter)throw new Error('Task is locked');
+  if(task.unlockLevel?player.level<task.unlockLevel:player.claimedTasks.size<task.unlockAfter)throw new Error('Task is locked');
   addBalance(player,task.reward);addXp(player,task.xp);player.claimedTasks.add(taskId);player.stats.tasksCompleted+=1;
   return {reward:task.reward,xp:task.xp,balance:player.balance,level:player.level};
 }
@@ -122,12 +140,20 @@ function progressionUnlocked(player,kind,id){
     if(id==='business_tycoon')return Object.keys(player.businesses).length>=4;
     if(id==='level_five')return player.level>=5;
     if(id==='millionaire')return (player.stats.totalEarned||0)>=1_000_000;
+    if(id==='level_ten')return player.level>=10;
+    if(id==='level_twentyfive')return player.level>=25;
+    if(id==='level_fifty')return player.level>=50;
+    if(id==='upgrade_ten')return a.businessUpgrades>=10;
+    if(id==='task_master')return a.tasksCompleted>=8;
   }
   if(kind==='goal'){
     if(id==='start_business')return Object.keys(player.businesses).length>=1;
     if(id==='upgrade_three')return a.businessUpgrades>=3;
     if(id==='earn_10k')return a.totalIncome>=10_000;
     if(id==='reach_level_5')return player.level>=5;
+    if(id==='reach_level_25')return player.level>=25;
+    if(id==='reach_level_50')return player.level>=50;
+    if(id==='upgrade_ten')return a.businessUpgrades>=10;
   }
   return false;
 }
