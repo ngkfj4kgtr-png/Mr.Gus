@@ -815,3 +815,6 @@ body:has(.city-map-card.page-active) .map-center-label{bottom:62px}
 .map-world{position:absolute;inset:0;transform-origin:50% 50%;touch-action:none;will-change:transform}
 .city-map{touch-action:none;cursor:grab}
 .city-map:active{cursor:grabbing}
+
+.city-map,.map-world{user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+.map-world{overflow:visible}
