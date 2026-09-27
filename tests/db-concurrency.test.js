@@ -28,8 +28,8 @@ test('PostgreSQL concurrency: offline income is paid once',{skip:!enabled},async
  const user=await freshUser(); try{ const pool=await getPool();
   await pool.query('UPDATE users SET balance=0,businesses=$1::jsonb,last_income_at=$2 WHERE id=$3',[JSON.stringify({kiosk:{id:'kiosk',level:1,purchasedAt:1000}}),1000,user.id]);
   const results=await runTransactions(10,()=>withPlayerTransaction(user.id,async(player)=>collectOfflineIncome(player,1000+3600*1000)));
-  const incomes=results.filter(r=>r.status==='fulfilled').map(r=>r.value.result.income); assert.equal(incomes.filter(x=>x===100).length,1); assert.equal(incomes.filter(x=>x===0).length,9);
-  const row=(await pool.query('SELECT balance,last_income_at FROM users WHERE id=$1',[user.id])).rows[0]; assert.equal(Number(row.balance),100); assert.equal(Number(row.last_income_at),3601000);
+  const incomes=results.filter(r=>r.status==='fulfilled').map(r=>r.value.result.income); assert.equal(incomes.filter(x=>x===500).length,1); assert.equal(incomes.filter(x=>x===0).length,9);
+  const row=(await pool.query('SELECT balance,last_income_at FROM users WHERE id=$1',[user.id])).rows[0]; assert.equal(Number(row.balance),500); assert.equal(Number(row.last_income_at),3601000);
  }finally{await cleanup(user.id);} });
 
 test('PostgreSQL transaction rollback preserves progress',{skip:!enabled},async()=>{
