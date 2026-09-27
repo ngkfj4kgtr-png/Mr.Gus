@@ -143,3 +143,10 @@
   .traffic-car{transform-origin:center}
   .customer-person{transform-origin:bottom center}
 }
+
+.business-demand-badge{position:absolute;z-index:18;transform:translate(-50%,-50%);padding:3px 7px;border-radius:9px;background:rgba(16,21,25,.82);border:1px solid rgba(232,209,139,.22);font-size:9px;line-height:1.1;color:#eee4c8;white-space:nowrap;pointer-events:none;box-shadow:0 3px 9px rgba(0,0,0,.3)}
+.npc-student::after{background:linear-gradient(#7b5d89,#30283b)}
+.npc-worker::after{background:linear-gradient(#7b7650,#34331f)}
+.npc-family::after{background:linear-gradient(#607d91,#2b3d49)}
+.npc-courier::after{background:linear-gradient(#8b704d,#3b2d1e)}
+.npc-queue{filter:drop-shadow(0 0 5px rgba(232,209,139,.25))}
