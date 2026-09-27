@@ -818,3 +818,7 @@ body:has(.city-map-card.page-active) .map-center-label{bottom:62px}
 
 .city-map,.map-world{user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
 .map-world{overflow:visible}
+
+.map-hud{position:absolute;z-index:65;left:12px;top:62px;display:flex;gap:6px;flex-wrap:wrap;max-width:calc(100% - 80px);pointer-events:none}
+.map-hud span{padding:7px 9px;border:1px solid rgba(120,140,170,.25);border-radius:11px;background:rgba(7,11,18,.76);color:#e9eef7;font-size:9px;font-weight:900;backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px);box-shadow:0 6px 16px rgba(0,0,0,.24)}
+@media(max-width:500px){.map-hud{left:8px;top:62px;gap:4px}.map-hud span{padding:6px 7px;font-size:8px}}
