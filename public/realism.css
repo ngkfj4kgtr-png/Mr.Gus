@@ -1,0 +1,111 @@
+
+/* Mr.Gus — Full Realism visual layer */
+.city-map{
+  --real-ground:#596451;--real-asphalt:#34383a;--real-road:#404447;
+  position:relative;overflow:hidden;isolation:isolate;
+  background:
+    radial-gradient(ellipse at 50% 18%,rgba(255,255,255,.08),transparent 36%),
+    linear-gradient(155deg,#64715d 0%,#4f5b50 48%,#3f4943 100%);
+}
+.city-map::before{
+  content:"";position:absolute;inset:0;z-index:0;pointer-events:none;opacity:.42;
+  background:
+    radial-gradient(circle at 12% 20%,rgba(255,255,255,.09) 0 1px,transparent 1.5px),
+    radial-gradient(circle at 76% 63%,rgba(0,0,0,.12) 0 1px,transparent 1.5px);
+  background-size:19px 19px,23px 23px;
+}
+.map-world{transform-origin:center;will-change:transform}
+.map-road{
+  background:linear-gradient(180deg,#4a4e50,#303436 55%,#24282a);
+  border:1px solid rgba(255,255,255,.08);
+  box-shadow:0 5px 14px rgba(0,0,0,.28),inset 0 1px rgba(255,255,255,.08),inset 0 -2px rgba(0,0,0,.22);
+}
+.map-road::after{
+  content:"";position:absolute;inset:0;opacity:.25;
+  background:repeating-linear-gradient(90deg,transparent 0 28px,rgba(255,255,255,.06) 29px 30px);
+}
+.map-water{
+  background:
+    repeating-linear-gradient(165deg,rgba(255,255,255,.13) 0 2px,transparent 2px 13px),
+    linear-gradient(145deg,#547c89,#315966 72%,#263f48);
+  box-shadow:inset 0 0 35px rgba(0,0,0,.28),0 5px 15px rgba(0,0,0,.2);
+}
+.city-zone{border-color:rgba(255,255,255,.08);box-shadow:inset 0 0 55px rgba(0,0,0,.12)}
+.arch-sidewalk{
+  background:repeating-linear-gradient(90deg,#a7a49a 0 13px,#8d8a82 13px 14px);
+  border:1px solid rgba(255,255,255,.2);
+  box-shadow:0 2px 6px rgba(0,0,0,.28),inset 0 1px rgba(255,255,255,.35);
+}
+.arch-crosswalk{background:repeating-linear-gradient(90deg,#e5e1d5 0 8px,transparent 8px 15px);filter:drop-shadow(0 2px 2px rgba(0,0,0,.25))}
+.arch-road-mark{height:2px;background:rgba(250,230,158,.72);box-shadow:0 0 4px rgba(255,230,140,.2)}
+.arch-park{background:
+  radial-gradient(circle at 50% 50%,rgba(101,151,82,.78),rgba(52,91,58,.42) 63%,rgba(34,59,42,.08) 72%),
+  repeating-radial-gradient(circle,rgba(255,255,255,.04) 0 2px,transparent 2px 9px);
+  box-shadow:inset 0 0 15px rgba(0,0,0,.22),0 5px 10px rgba(0,0,0,.18);
+}
+.arch-fountain{background:
+  radial-gradient(circle,#f5ffff 0 8%,#8bd0df 9% 22%,#4b8ba0 23% 34%,#334c54 35% 100%);
+  box-shadow:0 0 0 5px rgba(185,230,238,.12),0 5px 10px rgba(0,0,0,.3),inset 0 0 7px rgba(255,255,255,.4);
+}
+.arch-tree,.city-tree{font-size:0!important;filter:drop-shadow(0 5px 4px rgba(0,0,0,.32))}
+.arch-tree::before,.city-tree::before{
+  content:"";position:absolute;width:20px;height:25px;border-radius:48% 52% 45% 55%;
+  background:radial-gradient(circle at 35% 25%,#a9c77b 0 8%,#567a48 34%,#29482f 78%);
+  box-shadow:9px 4px 0 -3px #3f663d,-7px 7px 0 -4px #365b38;
+}
+.arch-tree::after,.city-tree::after{
+  content:"";position:absolute;width:5px;height:11px;left:8px;top:22px;background:linear-gradient(#76533a,#3d2a21);
+}
+.city-person{font-size:0!important;width:9px;height:18px}
+.city-person::before{content:"";position:absolute;left:2px;top:0;width:5px;height:5px;border-radius:50%;background:#d9b08a;box-shadow:0 7px 0 1px #26333a}
+.city-person::after{content:"";position:absolute;left:1px;top:7px;width:7px;height:10px;border-radius:4px 4px 2px 2px;background:#4b6572}
+.city-car{font-size:0!important;width:27px;height:13px;border-radius:6px 8px 3px 3px;
+  background:linear-gradient(#d7dadd 0 35%,#59636a 36% 100%);
+  border:1px solid rgba(0,0,0,.5);box-shadow:0 3px 4px rgba(0,0,0,.35);
+}
+.city-car::before{content:"";position:absolute;left:6px;top:-4px;width:13px;height:7px;border-radius:5px 5px 1px 1px;background:linear-gradient(90deg,#536b79,#a9d1de,#536b79);border:1px solid rgba(0,0,0,.35)}
+.city-car::after{content:"";position:absolute;left:3px;bottom:-3px;width:5px;height:5px;border-radius:50%;background:#151719;box-shadow:16px 0 #151719}
+.city-truck{font-size:0!important;width:34px;height:16px;border-radius:2px;background:linear-gradient(#d8d4c4 0 48%,#6e6558 49%);border:1px solid rgba(0,0,0,.5);box-shadow:0 4px 5px rgba(0,0,0,.35)}
+.city-truck::after{content:"";position:absolute;left:5px;bottom:-4px;width:6px;height:6px;border-radius:50%;background:#151719;box-shadow:18px 0 #151719}
+.arch-house{filter:drop-shadow(0 8px 6px rgba(0,0,0,.38))}
+.arch-house .house-body{
+  background:linear-gradient(90deg,var(--wall-dark) 0,var(--wall) 18%,#f0d4ad 48%,var(--wall) 80%,var(--wall-dark) 100%);
+  box-shadow:inset 0 1px rgba(255,255,255,.3),inset 0 -5px rgba(0,0,0,.08);
+}
+.arch-house .house-roof{
+  background:linear-gradient(135deg,var(--roof-light),var(--roof) 52%,var(--roof-dark));
+  box-shadow:inset 0 1px rgba(255,255,255,.2);
+}
+.arch-house .house-window{
+  background:linear-gradient(135deg,#eafcff,#7aaabd 48%,#344e59);
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.35),0 0 7px rgba(255,216,120,.4);
+}
+.arch-house .house-door{background:linear-gradient(90deg,#39271f,#76513b,#39271f);box-shadow:inset 1px 0 rgba(255,255,255,.15)}
+.building-art{filter:drop-shadow(0 9px 7px rgba(0,0,0,.42))}
+.building-art .b-body{
+  background:linear-gradient(90deg,var(--b-dark),var(--b-main) 28%,#d9b77f 50%,var(--b-main) 72%,var(--b-dark));
+  box-shadow:inset 0 1px rgba(255,255,255,.28),inset 0 -5px rgba(0,0,0,.13);
+}
+.building-art .b-roof{background:linear-gradient(135deg,var(--b-roof),#262f33);box-shadow:inset 0 1px rgba(255,255,255,.22)}
+.building-art .b-window{background:linear-gradient(135deg,#efffff,#8bc5d5 45%,#344c56);box-shadow:inset 0 0 0 1px rgba(255,255,255,.35),0 0 8px rgba(255,219,125,.4)}
+.building-art .b-sign{background:linear-gradient(#fff0b9,#c8954c);box-shadow:0 1px 3px rgba(0,0,0,.35)}
+.building-factory .b-smokestack{box-shadow:inset 2px 0 rgba(255,255,255,.12)}
+.building-factory .b-smoke{animation:realSmoke 4s ease-in-out infinite}
+@keyframes realSmoke{0%,100%{transform:translate(0,0) scale(.7);opacity:.2}50%{transform:translate(6px,-7px) scale(1.25);opacity:.5}}
+.building-lights{position:absolute!important;inset:auto 8px 12px 8px!important;height:4px!important;border-radius:50%;background:rgba(255,205,99,.75);box-shadow:0 0 9px 3px rgba(255,192,76,.18);opacity:.15}
+.building-stage-developed .building-lights,.building-stage-large .building-lights,.building-stage-landmark .building-lights{opacity:.8}
+.city-time-night .map-world{filter:saturate(.78) brightness(.72)}
+.city-time-night .building-lights{opacity:1!important;box-shadow:0 0 12px 4px rgba(255,191,76,.28)}
+.city-time-night .arch-lamp-post,.city-time-night .city-lamp{filter:drop-shadow(0 0 7px rgba(255,210,110,.75))}
+.map-plaza{background:radial-gradient(circle at 50% 50%,#b8a57a,#766c52 58%,#45473f);box-shadow:inset 0 0 18px rgba(0,0,0,.28),0 5px 12px rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.14)}
+.map-plaza small{letter-spacing:.16em;text-shadow:0 2px 3px #222}
+.map-marker{transition:transform .18s ease,filter .18s ease}
+.map-marker:hover{transform:translate(-50%,-4px) scale(1.05);filter:brightness(1.08)}
+.city-zone-label{background:rgba(25,30,27,.35);padding:3px 6px;border-radius:5px;backdrop-filter:blur(3px)}
+.map-hud,.map-city-status,.map-legend{backdrop-filter:blur(8px);background:rgba(18,22,21,.58);border:1px solid rgba(255,255,255,.12);box-shadow:0 5px 16px rgba(0,0,0,.28)}
+@media(max-width:600px){
+ .city-car{transform:scale(.78)}.city-truck{transform:scale(.78)}
+ .arch-tree::before,.city-tree::before{transform:scale(.82);transform-origin:bottom}
+ .arch-tree::after,.city-tree::after{transform:scale(.82);transform-origin:bottom}
+ .city-zone-label{font-size:7px}
+}
