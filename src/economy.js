@@ -82,7 +82,7 @@ export function levelFromXp(xp){
 }
 export function createPlayer(id){
   if(!id||typeof id!=='string')throw new Error('Invalid player id');
-  return {id,balance:0,xp:0,level:1,businesses:{},claimedTasks:new Set(),claimedAchievements:new Set(),claimedGoals:new Set(),eventClaims:{},stats:{tasksCompleted:0,businessesOwned:0,businessUpgrades:0,totalIncome:0,totalEarned:0},lastIncomeAt:null,inventory:{},activeBonuses:{},createdAt:new Date().toISOString()};
+  return {id,balance:0,xp:0,level:1,businesses:{},claimedTasks:new Set(),claimedAchievements:new Set(),claimedGoals:new Set(),eventClaims:{},stats:{tasksCompleted:0,businessesOwned:0,businessUpgrades:0,totalIncome:0,totalEarned:0},lastIncomeAt:null,inventory:{},activeBonuses:{},dailyState:{lastClaimDate:null,streak:0,weekStart:null,weekRewardClaimed:false},createdAt:new Date().toISOString()};
 }
 function assertPlayer(player){
   if(!player||typeof player!=='object')throw new Error('Player not found');
@@ -103,6 +103,7 @@ function assertPlayer(player){
   }
   if(!player.inventory||typeof player.inventory!=='object'||Array.isArray(player.inventory))throw new Error('Invalid inventory');
   if(!player.activeBonuses||typeof player.activeBonuses!=='object'||Array.isArray(player.activeBonuses))throw new Error('Invalid active bonuses');
+  if(!player.dailyState||typeof player.dailyState!=='object'||Array.isArray(player.dailyState))throw new Error('Invalid daily state');
   if(!(player.claimedTasks instanceof Set)||!(player.claimedAchievements instanceof Set)||!(player.claimedGoals instanceof Set))throw new Error('Invalid progression state');
   const validTaskIds=new Set(Object.keys(TASKS));
   const validAchievementIds=new Set(Object.keys(ACHIEVEMENTS));
@@ -292,4 +293,23 @@ export function buyShopItem(player,itemId,now=Date.now()){
   else if(item.type==='instant_pack'){addBalance(player,10_000);addXp(player,1_000);}
   player.inventory[item.id]=Number(player.inventory[item.id]||0)+1;
   return {itemId,price:item.cost,inventoryCount:player.inventory[item.id],balance:player.balance,level:player.level};
+}
+
+export function dailyActivity(player,now=Date.now()){
+  assertPlayer(player);if(!Number.isSafeInteger(now)||now<0)throw new Error('Invalid timestamp');
+  const date=new Date(now).toISOString().slice(0,10),state=player.dailyState;
+  const previous=state.lastClaimDate;
+  const previousTime=previous?Date.parse(previous+'T00:00:00Z'):NaN;
+  const diff=Number.isFinite(previousTime)?Math.floor((Date.parse(date+'T00:00:00Z')-previousTime)/86400000):null;
+  const already=previous===date;
+  const streak=already?Math.max(1,Number(state.streak)||1):(diff===1?Math.min(30,(Number(state.streak)||0)+1):1);
+  const reward=250*streak;
+  return {date,already,streak,reward,xp:50+streak*10,weekReady:streak>=7&&!state.weekRewardClaimed};
+}
+export function claimDailyActivity(player,now=Date.now()){
+  const d=dailyActivity(player,now);if(d.already)throw new Error('Daily bonus already claimed');
+  addBalance(player,d.reward);addXp(player,d.xp);
+  player.dailyState.lastClaimDate=d.date;player.dailyState.streak=d.streak;
+  if(d.streak>=7&&!player.dailyState.weekRewardClaimed){addBalance(player,5_000);addXp(player,500);player.dailyState.weekRewardClaimed=true;}
+  return {reward:d.reward,xp:d.xp,streak:d.streak,weeklyReward:d.streak>=7?5_000:0,level:player.level};
 }
