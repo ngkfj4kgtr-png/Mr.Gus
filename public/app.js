@@ -118,4 +118,5 @@ document.addEventListener("click",e=>{const search=e.target.closest("#adminSearc
 window.addEventListener("load",async()=>{if(tg?.initData)await auth();else setStatus(t("status.waitingTelegram"))});
 
 window.addEventListener("mr-gus-language-changed",()=>{const s=window.__mrGusState;if(s)render(s);});
-\nlet adminSearchTimer;document.addEventListener("input",e=>{if(e.target.id!=="adminSearch")return;clearTimeout(adminSearchTimer);adminSearchTimer=setTimeout(async()=>{try{const r=await api("/api/admin/users?q="+encodeURIComponent(e.target.value));const a=await api("/api/admin");a.users=r.users;renderAdmin(a)}catch(err){setStatus(friendlyError(err),true)}},250)});\n
+
+let adminSearchTimer;document.addEventListener("input",e=>{if(e.target.id!=="adminSearch")return;clearTimeout(adminSearchTimer);adminSearchTimer=setTimeout(async()=>{try{const r=await api("/api/admin/users?q="+encodeURIComponent(e.target.value));const a=await api("/api/admin");a.users=r.users;renderAdmin(a)}catch(err){setStatus(friendlyError(err),true)}},250)});
