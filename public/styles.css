@@ -322,3 +322,82 @@ body{
   .profile-head strong{font-size:16px}
   .rank-tabs{margin-left:-2px;margin-right:-2px}
 }
+
+/* Mr.Gus UI pass 5 — main game screen */
+[data-page="home"] .visual-card{
+  min-height:235px;
+  padding:18px;
+  border-radius:22px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  overflow:hidden;
+}
+[data-page="home"] .visual-card h2{
+  font-size:22px;
+  font-weight:950;
+  letter-spacing:-.03em;
+}
+[data-page="home"] .visual-card .muted{
+  font-size:12px;
+}
+[data-page="home"] .progress-card{
+  position:relative;
+  overflow:hidden;
+  border-radius:20px;
+}
+[data-page="home"] .progress-card:before{
+  content:"";
+  position:absolute;
+  left:0;top:0;bottom:0;width:3px;
+  background:linear-gradient(180deg,#9a92ff,#655bf0);
+  opacity:.9;
+}
+[data-page="home"] .progress-card .section-head{
+  margin-bottom:3px;
+}
+[data-page="home"] .mini-card{
+  min-height:78px;
+}
+[data-page="home"] .mini-card strong{
+  font-size:15px;
+  font-weight:900;
+}
+[data-page="home"] .mini-card .muted{
+  font-size:11px;
+}
+[data-page="home"] .mini-card .btn{
+  min-width:105px;
+}
+[data-page="home"] .actions{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+}
+[data-page="home"] .actions .btn{
+  width:100%;
+}
+.hero{
+  box-shadow:0 8px 24px rgba(0,0,0,.12);
+}
+.hero-actions{
+  gap:6px;
+}
+.status{
+  color:#aeb8ca;
+}
+@media(max-width:500px){
+  [data-page="home"] .visual-card{
+    min-height:205px;
+    padding:15px;
+  }
+  [data-page="home"] .visual-card h2{
+    font-size:19px;
+  }
+  [data-page="home"] .mini-card{
+    min-height:72px;
+  }
+  [data-page="home"] .actions{
+    grid-template-columns:1fr 1fr;
+  }
+}
