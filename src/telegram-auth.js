@@ -1,6 +1,6 @@
 import { createHash, createHmac, timingSafeEqual } from 'node:crypto';
 
-export function validateTelegramInitData(initData,botToken,{maxAgeSeconds=86400,now=Math.floor(Date.now()/1000)}={}) {
+export function validateTelegramInitData(initData,botToken,{maxAgeSeconds=600,now=Math.floor(Date.now()/1000)}={}) {
   if(typeof initData!=='string'||!initData) throw new Error('Telegram initData is required');
   if(typeof botToken!=='string'||!botToken) throw new Error('Telegram bot token is not configured');
   const params=new URLSearchParams(initData),receivedHash=params.get('hash');
