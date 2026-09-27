@@ -10,7 +10,7 @@ import { checkRateLimit,validateSameOrigin,validateFetchMetadata,securityHeaders
 import { getRankings,getProfile,isAdminTelegramId,getAdminSnapshot,searchAdminUsers,setBlocked,writeAudit,writeError } from './src/social.js';
 
 const root=join(fileURLToPath(new URL('.',import.meta.url)),'public');
-const port=Number(process.env.PORT||3000),botToken=process.env.TELEGRAM_BOT_TOKEN,demoMode=process.env.DEMO_MODE==='true';
+const port=Number(process.env.PORT||8080),botToken=process.env.TELEGRAM_BOT_TOKEN,demoMode=process.env.DEMO_MODE==='true';
 const runtimeMetrics={requests:0,apiErrors:0,rateLimited:0,dbErrors:0,activeUsers:0};
 if(!botToken&&!demoMode)throw new Error('TELEGRAM_BOT_TOKEN is required');
 if(!process.env.DATABASE_URL&&!demoMode)throw new Error('DATABASE_URL is required');
