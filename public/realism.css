@@ -229,3 +229,50 @@
  .map-city-status{max-width:calc(100% - 16px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
  .map-zoom-controls{right:8px;top:116px}.map-zoom-controls button{width:38px;height:38px;min-width:38px}
 }
+
+
+/* Mr.Gus city rebuild 20260927 — physical map hierarchy */
+.city-architecture-layer{z-index:1}
+.city-houses-layer{z-index:3}
+.city-sidewalks{position:absolute;inset:0;z-index:4;pointer-events:none}
+.sidewalk-block{position:absolute;display:block;border-radius:5px;background:linear-gradient(180deg,#b9b4a7,#88847b);border:1px solid rgba(255,255,255,.22);box-shadow:0 2px 5px rgba(0,0,0,.28),inset 0 1px rgba(255,255,255,.3)}
+.sb1{left:11%;top:40%;width:27%;height:4%}
+.sb2{left:61%;top:40%;width:28%;height:4%}
+.sb3{left:61%;top:63%;width:28%;height:4%}
+.sb4{left:11%;top:80%;width:25%;height:3%}
+.city-parking{position:absolute;inset:0;z-index:5;pointer-events:none}
+.city-parking-slot{position:absolute;width:4.8%;height:2.2%;border:1px solid rgba(245,238,205,.55);border-radius:2px;background:rgba(44,48,48,.52);box-shadow:inset 0 0 0 1px rgba(0,0,0,.18)}
+.city-parking-slot::after{content:"";position:absolute;left:10%;right:10%;top:18%;height:2px;background:rgba(255,255,255,.2)}
+.map-road{z-index:2}
+.map-road::after{background:repeating-linear-gradient(90deg,transparent 0 24px,rgba(255,255,255,.035) 25px 27px,transparent 28px 54px)}
+.road-a,.road-b,.road-c,.road-d{box-shadow:0 7px 16px rgba(0,0,0,.32),inset 0 1px rgba(255,255,255,.09),inset 0 -2px rgba(0,0,0,.25)}
+.road-a{height:18%!important}
+.road-b{width:10%!important}
+.road-c{height:8%!important}
+.road-d{height:4.5%!important}
+.arch-crosswalk{z-index:5}
+.c1{left:45%!important;top:48%!important;width:12%!important;height:3%!important}
+.c2{left:67%!important;top:68%!important;width:10%!important;height:3%!important}
+.arch-road-mark{z-index:5}
+.r1{left:18%!important;top:52%!important;width:23%!important;transform:rotate(0)!important}
+.r2{left:58%!important;top:75%!important;width:24%!important;transform:rotate(0)!important}
+.map-plaza{z-index:5}
+.business-marker{z-index:20}
+.business-marker{box-shadow:0 8px 18px rgba(0,0,0,.4),0 0 0 1px rgba(255,255,255,.06)}
+.business-marker::after{content:"";position:absolute;inset:auto 8px -6px;height:7px;border-radius:50%;background:rgba(0,0,0,.28);filter:blur(2px);z-index:-1}
+.city-life{z-index:9}
+.city-traffic{z-index:8}
+.city-logistics{z-index:8}
+.city-traffic-light{z-index:12}
+.city-person.npc-queue{margin-top:2px}
+.city-parking-slot{transform:rotate(-8deg)}
+.city-time-night .city-parking-slot{box-shadow:inset 0 0 0 1px rgba(255,255,255,.12),0 0 8px rgba(255,205,110,.08)}
+.city-time-night .business-marker{box-shadow:0 8px 20px rgba(0,0,0,.5),0 0 16px rgba(255,206,110,.08)}
+.city-time-night .arch-crosswalk{opacity:.88}
+@media(max-width:600px){
+ .sidewalk-block{opacity:.82}
+ .city-parking-slot{width:5.2%;height:2.4%}
+ .sb1,.sb2,.sb3,.sb4{transform:scale(.94);transform-origin:center}
+ .arch-crosswalk{opacity:.78}
+ .business-marker{filter:brightness(.98)}
+}
