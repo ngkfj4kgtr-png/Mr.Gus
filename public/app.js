@@ -150,7 +150,7 @@ function renderCityMap(s){
     if(!pending)return "";
     const m=meta[b.id];if(!m)return "";
     const pulses=Math.min(3,Math.max(1,Math.ceil(pending/Math.max(1,Number(b.profitPerHour||1))*3)));
-    return Array.from({length:pulses},(_,i)=>'<i class="income-pulse pulse-'+b.id+'" style="--sx:'+m.spot[0]+'%;--sy:'+m.spot[1]+'%;--delay:'+(i*.7)+'s">₽</i>').join("");
+    return Array.from({length:pulses},(_,i)=>'<i class="income-pulse pulse-'+b.id+'" style="--sx:'+m.spot[0]+'%;--sy:'+m.spot[1]+'%;--dx:'+((48-m.spot[0]))+'vw;--dy:'+((55-m.spot[1]))+'vh;--delay:'+(i*.7)+'s">₽</i>').join("");
   }).join("");
   const routeLines=businesses.map(b=>{
     const m=meta[b.id];if(!m)return "";
@@ -159,7 +159,7 @@ function renderCityMap(s){
   }).join("");
   const businessFlows=businesses.map((b,i)=>{
     const m=meta[b.id];if(!m)return "";
-    return '<i class="business-flow flow-'+b.id+'" style="--sx:'+m.spot[0]+'%;--sy:'+m.spot[1]+'%;--tx:48%;--ty:55%;--delay:'+(i*.8)+'s"></i>';
+    return '<i class="business-flow flow-'+b.id+'" style="--sx:'+m.spot[0]+'%;--sy:'+m.spot[1]+'%;--dx:'+((48-m.spot[0]))+'vw;--dy:'+((55-m.spot[1]))+'vh;--delay:'+(i*.8)+'s"></i>';
   }).join("");
   const homePulse='<div class="home-pulse-ring"></div>';
   const cityLabels='<div class="map-compass">N</div><div class="map-scale-label">МАСШТАБ · ГОРОД</div>';
