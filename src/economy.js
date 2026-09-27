@@ -222,7 +222,7 @@ export function hourlyProfit(player,businessId){
   assertPlayer(player);const d=BUSINESS[businessId],owned=player.businesses[businessId];
   if(!d||!owned)throw new Error('Business not owned');if(!Number.isSafeInteger(owned.level)||owned.level<1||owned.level>d.maxLevel)throw new Error('Invalid business level');
   const scale=d.upgradeMultiplier**(owned.level-1);
-  const expansion=(owned.expansionLevel||0)*EXPANSION.multiplierPerLevel;
+  const expansion=1+(owned.expansionLevel||0)*(EXPANSION.multiplierPerLevel-1);
   const employeeMultiplier=Object.entries(owned.employees||{}).reduce((m,[role,count])=>m*(EMPLOYEE_ROLES[role]?.incomeMultiplier||1)**count,1);
   const investmentMultiplier=1+Math.min(0.25,(owned.investment||0)/100_000*INVESTMENT.profitPer100k);
   const boost=(owned.boostUntil&&owned.boostUntil>Date.now()?owned.boostMultiplier||1:1);
