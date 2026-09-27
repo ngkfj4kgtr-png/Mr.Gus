@@ -66,7 +66,7 @@ function render(s){
     if(owned)return `<div class="mini-card"><div class="row"><div><b>${b.name} · ур. ${owned.level}</b><p class="muted">${b.description}</p></div><strong>${money(owned.profitPerHour)}/ч</strong></div><div class="row"><span class="muted">${t("nextLevel")}</span>${button("upgrade",t("upgrade"),`data-business-id="${b.id}"`)}</div><div class="advanced-grid"><div><span class="muted">👤 Кассиры: ${owned.employees?.cashier||0}</span> ${button("hire",t("hire")+" 2k",`data-business-id="${b.id}" data-role="cashier"`)}</div><div><span class="muted">👔 Управляющие: ${owned.employees?.manager||0}</span> ${button("hire",t("hire")+" 10k",`data-business-id="${b.id}" data-role="manager"`)}</div><div><span class="muted">📊 Бухгалтеры: ${owned.employees?.accountant||0}</span> ${button("hire",t("hire")+" 25k",`data-business-id="${b.id}" data-role="accountant"`)}</div><div><span class="muted">🏗️ Расширение: ${owned.expansionLevel||0}/5</span> ${button("expand",t("expand"),`data-business-id="${b.id}"`)}</div><div><span class="muted">💼 Инвестиции: ${money(owned.investment||0)}</span> ${button("invest",t("invest")+" 5k",`data-business-id="${b.id}"`)}</div><div>${button("boost",t("boost"),`data-business-id="${b.id}"`)}</div></div></div>`;
     return `<div class="mini-card"><div class="row"><div><b>${b.name}</b><p class="muted">${b.description}</p></div><strong>${money(b.cost)}</strong></div><p class="muted">${t("business.unlock",{level:b.unlockLevel})}</p>${button("buy",t("open"),`data-business-id="${b.id}"`,!b.unlocked)}</div>`;
   }).join("");
-  renderEmpireVisual(s);
+  renderEmpireVisual(s);\n  renderCityMap(s);
   document.querySelector("#incomeAction").innerHTML=button("collect","💰 Забрать накопленный доход");
   document.querySelector("#tasks").innerHTML=(s.tasks||[]).filter(task=>!task.claimed).map(task=>`<div class="mini-card"><b>${task.title}</b><p class="muted">${task.description}</p><span class="reward">+${money(task.reward)} · +${task.xp} XP</span><br>${button("claim",t("claim"),`data-task-id="${String(task.id).replaceAll("'","&#39;")}"`,task.claimed||task.locked)}</div>`).join("");
   document.querySelector("#achievements").innerHTML=(s.achievements||[]).filter(a=>!a.claimed).map(a=>`<div class="mini-card"><div class="row"><div><b>${a.title}</b><p class="muted">${a.description}</p></div><span class="reward">+${money(a.reward)}<br>+${a.xp} XP</span></div>${button("achievement",a.claimed?t("received"):a.unlocked?t("claim"):"🔒",`data-id="${a.id}"`,a.claimed||!a.unlocked)}</div>`).join("");
@@ -79,6 +79,18 @@ function render(s){
 async function loadSocial(){
   try{const r=await api("/api/rankings"),p=await api("/api/profile");renderProfile(p);window.__mrGusRankings=r;renderRankings(r);if(window.__mrGusState?.isAdmin){const a=await api("/api/admin");renderAdmin(a)}}
   catch(e){if(!String(e.message).includes("Forbidden"))console.warn("social load",e.message)}
+}
+function renderCityMap(s){
+  const el=document.querySelector("#cityMap");if(!el)return;
+  const businesses=s.businesses||[], catalog=s.businessCatalog||[];
+  const palette=["🏪","☕","🔧","🏭","🏬","🏢"];
+  const spots=[[16,30],[37,19],[61,30],[78,18],[27,67],[53,76],[76,62],[87,78]];
+  const markers=catalog.slice(0,8).map((b,i)=>{
+    const owned=businesses.find(x=>x.id===b.id);if(!owned)return "";
+    const p=spots[i%spots.length];
+    return '<button class="map-marker business-marker" style="left:'+p[0]+'%;top:'+p[1]+'%" data-map-title="'+String(b.name).replaceAll('"','&quot;')+'" aria-label="'+String(b.name).replaceAll('"','&quot;')+'"><span>'+palette[i%palette.length]+'</span><small>'+b.name+'</small></button>';
+  }).join("");
+  el.innerHTML='<div class="city-map"><div class="map-road road-a"></div><div class="map-road road-b"></div><div class="map-road road-c"></div><div class="map-water"></div><div class="map-zone zone-1"></div><div class="map-zone zone-2"></div><div class="map-zone zone-3"></div><div class="map-marker home-marker" style="left:50%;top:46%" data-map-title="Мой дом" aria-label="Мой дом"><span>🏠</span><small>Мой дом</small></div>'+markers+'<div class="map-label">Твоя территория</div></div><div class="map-legend"><span>🏠 Дом</span><span>🏪 Бизнес</span><span>💰 Доход</span><b>'+businesses.length+' объектов</b></div>';
 }
 function renderEmpireVisual(s){
   const el=document.querySelector("#empireVisual"); if(!el)return;
@@ -129,7 +141,10 @@ async function invest(button,id){await action(button,()=>api("/api/business/inve
 async function boost(button,id){await action(button,()=>api("/api/business/boost",{method:"POST",body:JSON.stringify({businessId:id,operationId:op("boost")})}))}
 async function shop(button,id){await action(button,()=>api("/api/shop/buy",{method:"POST",body:JSON.stringify({itemId:id,operationId:op("shop")})}))}
 async function daily(button){await action(button,()=>api("/api/daily/claim",{method:"POST",body:JSON.stringify({operationId:op("daily")})}))}
-document.addEventListener("click",e=>{const search=e.target.closest("#adminSearch");if(search)return;const rank=e.target.closest("[data-rank-tab]");if(rank){currentRankTab=rank.dataset.rankTab;const s=window.__mrGusRankings;if(s)renderRankings(s);return}const admin=e.target.closest("[data-admin-block]");if(admin){(async()=>{try{await api("/api/admin/"+admin.dataset.adminBlock,{method:"POST",body:JSON.stringify({userId:admin.dataset.adminUser,operationId:op("admin")})});await loadSocial();setStatus("Админ-действие выполнено")}catch(err){setStatus(friendlyError(err),true)}})();return}const b=e.target.closest("[data-action]");if(!b||b.disabled)return;const a=b.dataset.action;if(a==="auth")auth();else if(a==="refresh")refresh();else if(a==="buy")buy(b,b.dataset.businessId);else if(a==="upgrade")upgrade(b,b.dataset.businessId);else if(a==="collect")collect(b);else if(a==="claim")claim(b,b.dataset.taskId);else if(a==="achievement")claimAchievement(b,b.dataset.id);else if(a==="goal")claimGoal(b,b.dataset.id);else if(a==="event")claimEvent(b);else if(a==="hire")hire(b,b.dataset.businessId,b.dataset.role);else if(a==="expand")expand(b,b.dataset.businessId);else if(a==="invest")invest(b,b.dataset.businessId);else if(a==="boost")boost(b,b.dataset.businessId);else if(a==="shop")shop(b,b.dataset.itemId);else if(a==="daily")daily(b)});
+document.addEventListener("click",e=>{
+  const marker=e.target.closest("[data-map-title]");
+  if(marker){setStatus(marker.dataset.mapTitle);return}
+const search=e.target.closest("#adminSearch");if(search)return;const rank=e.target.closest("[data-rank-tab]");if(rank){currentRankTab=rank.dataset.rankTab;const s=window.__mrGusRankings;if(s)renderRankings(s);return}const admin=e.target.closest("[data-admin-block]");if(admin){(async()=>{try{await api("/api/admin/"+admin.dataset.adminBlock,{method:"POST",body:JSON.stringify({userId:admin.dataset.adminUser,operationId:op("admin")})});await loadSocial();setStatus("Админ-действие выполнено")}catch(err){setStatus(friendlyError(err),true)}})();return}const b=e.target.closest("[data-action]");if(!b||b.disabled)return;const a=b.dataset.action;if(a==="auth")auth();else if(a==="refresh")refresh();else if(a==="buy")buy(b,b.dataset.businessId);else if(a==="upgrade")upgrade(b,b.dataset.businessId);else if(a==="collect")collect(b);else if(a==="claim")claim(b,b.dataset.taskId);else if(a==="achievement")claimAchievement(b,b.dataset.id);else if(a==="goal")claimGoal(b,b.dataset.id);else if(a==="event")claimEvent(b);else if(a==="hire")hire(b,b.dataset.businessId,b.dataset.role);else if(a==="expand")expand(b,b.dataset.businessId);else if(a==="invest")invest(b,b.dataset.businessId);else if(a==="boost")boost(b,b.dataset.businessId);else if(a==="shop")shop(b,b.dataset.itemId);else if(a==="daily")daily(b)});
 let currentPage="home";
 function showPage(page){
   const allowed=["home","tasks","achievements","daily","shop","event"];
