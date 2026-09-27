@@ -83,15 +83,22 @@ async function loadSocial(){
 }
 function renderCityMap(s){
   const el=document.querySelector("#cityMap");if(!el)return;
-  const businesses=s.businesses||[], catalog=s.businessCatalog||[];
-  const palette=["🏪","☕","🔧","🏭","🏬","🏢"];
-  const spots=[[16,30],[37,19],[61,30],[78,18],[27,67],[53,76],[76,62],[87,78]];
-  const markers=catalog.slice(0,8).map((b,i)=>{
+  const businesses=s.businesses||[],catalog=s.businessCatalog||[];
+  const meta={
+    kiosk:{icon:"🏪",zone:"Торговый квартал",spot:[18,31]},
+    cafe:{icon:"☕",zone:"Центр города",spot:[43,22]},
+    workshop:{icon:"🔧",zone:"Промзона",spot:[66,38]},
+    factory:{icon:"🏭",zone:"Промзона",spot:[79,67]}
+  };
+  const markers=catalog.filter(b=>meta[b.id]).map(b=>{
     const owned=businesses.find(x=>x.id===b.id);if(!owned)return "";
-    const p=spots[i%spots.length];
-    return '<button class="map-marker business-marker" style="left:'+p[0]+'%;top:'+p[1]+'%" data-map-title="'+String(b.name).replaceAll('"','&quot;')+'" aria-label="'+String(b.name).replaceAll('"','&quot;')+'"><span>'+palette[i%palette.length]+'</span><small>'+b.name+'</small></button>';
+    const m=meta[b.id],level=Number(owned.level)||1;
+    const size=level>=10?"building-xl":level>=5?"building-lg":"";
+    return '<button class="map-marker business-marker '+size+'" style="left:'+m.spot[0]+'%;top:'+m.spot[1]+'%" data-map-title="'+String(b.name).replaceAll('"','&quot;')+' · ур. '+level+'" aria-label="'+String(b.name).replaceAll('"','&quot;')+' · уровень '+level+'"><span>'+m.icon+'</span><small>'+b.name+'</small><em>ур. '+level+'</em></button>';
   }).join("");
-  el.innerHTML='<div class="city-map"><div class="map-road road-a"></div><div class="map-road road-b"></div><div class="map-road road-c"></div><div class="map-water"></div><div class="map-zone zone-1"></div><div class="map-zone zone-2"></div><div class="map-zone zone-3"></div><div class="map-marker home-marker" style="left:50%;top:46%" data-map-title="Мой дом" aria-label="Мой дом"><span>🏠</span><small>Мой дом</small></div>'+markers+'<div class="map-label">Твоя территория</div></div><div class="map-legend"><span>🏠 Дом</span><span>🏪 Бизнес</span><span>💰 Доход</span><b>'+businesses.length+' объектов</b></div>';
+  const ownedCount=businesses.length;
+  const income=businesses.reduce((n,b)=>n+(Number(b.profitPerHour)||0),0);
+  el.innerHTML='<div class="city-map"><div class="map-district district-trade"><span>ТОРГОВЛЯ</span></div><div class="map-district district-center"><span>ЦЕНТР</span></div><div class="map-district district-industry"><span>ПРОМЗОНА</span></div><div class="map-road road-a"></div><div class="map-road road-b"></div><div class="map-road road-c"></div><div class="map-road road-d"></div><div class="map-water"></div><div class="map-marker home-marker" style="left:48%;top:55%" data-map-title="Мой дом" aria-label="Мой дом"><span>🏠</span><small>Мой дом</small><em>База</em></div>'+markers+'<div class="map-center-label">Твоя территория</div></div><div class="map-legend"><span>🏠 Дом</span><span>🏪 Бизнес</span><span>⬆️ Уровень</span><b>'+ownedCount+' объекта · '+money(income)+'/ч</b></div>';
 }
 function renderEmpireVisual(s){
   const el=document.querySelector("#empireVisual"); if(!el)return;
