@@ -14,7 +14,7 @@ export const OPERATION_TYPES = Object.freeze({
   ACHIEVEMENT_REWARD: 'achievement_reward',
   GOAL_REWARD: 'goal_reward',
   EVENT_REWARD: 'event_reward',
-  ORDER_REVENUE: 'order_revenue'
+  ORDER_REVENUE: 'order_revenue',\n  NPC_VISIT_REVENUE: 'npc_visit_revenue'
 });
 
 export function createOperationId(prefix='op') {
