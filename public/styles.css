@@ -604,3 +604,24 @@ body{
 .business-marker.building-lg span{font-size:27px;line-height:28px}
 .business-marker.building-xl span{font-size:31px;line-height:32px}
 @media(max-width:500px){.business-marker em{max-width:76px;font-size:7px}.business-marker.building-lg span{font-size:24px}.business-marker.building-xl span{font-size:28px}.map-route{height:2px}}
+
+/* Mr.Gus UI pass 12 — final city map polish */
+.city-map{min-height:360px;position:relative;overflow:hidden;background:radial-gradient(circle at 50% 52%,rgba(118,108,255,.08),transparent 32%),linear-gradient(145deg,#0b141d,#080f17)}
+.city-map:before{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;background-image:linear-gradient(rgba(255,255,255,.018) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.018) 1px,transparent 1px);background-size:34px 34px;mask-image:linear-gradient(to bottom,transparent,#000 18%,#000 82%,transparent)}
+.map-district{box-shadow:inset 0 0 35px rgba(255,255,255,.012)}
+.district-trade{background:linear-gradient(135deg,rgba(114,160,255,.035),rgba(255,255,255,.008))}
+.district-center{background:radial-gradient(circle at 50% 45%,rgba(118,108,255,.075),rgba(118,108,255,.015) 65%,transparent 100%)}
+.district-industry{background:linear-gradient(135deg,rgba(255,168,94,.025),rgba(255,255,255,.008))}
+.map-water{z-index:1;background:repeating-linear-gradient(165deg,rgba(70,137,174,.06) 0 2px,transparent 2px 12px);opacity:.9}
+.map-road{z-index:2;background:rgba(150,160,178,.075);box-shadow:inset 0 0 0 1px rgba(255,255,255,.018),0 0 12px rgba(0,0,0,.08)}
+.map-road:after{content:"";position:absolute;inset:42% 0;height:1px;background:repeating-linear-gradient(90deg,rgba(205,211,221,.16) 0 10px,transparent 10px 19px);opacity:.5}
+.map-route{z-index:3;height:2px;background:linear-gradient(90deg,transparent,rgba(118,108,255,.34),transparent);box-shadow:0 0 12px rgba(118,108,255,.14);opacity:.9}
+.map-marker{z-index:6;border-radius:14px;box-shadow:0 8px 20px rgba(0,0,0,.38),0 0 0 1px rgba(255,255,255,.025)}
+.home-marker{z-index:7;border-color:rgba(118,108,255,.8);box-shadow:0 9px 24px rgba(0,0,0,.45),0 0 0 4px rgba(118,108,255,.07),0 0 24px rgba(118,108,255,.12)}
+.business-marker:after{content:"";position:absolute;bottom:-5px;width:22px;height:3px;border-radius:50%;background:rgba(0,0,0,.34);filter:blur(2px);pointer-events:none}
+.business-marker.building-xl{border-color:rgba(114,227,154,.55);box-shadow:0 10px 26px rgba(0,0,0,.45),0 0 0 3px rgba(114,227,154,.06),0 0 18px rgba(114,227,154,.08)}
+.map-center-label{z-index:8;box-shadow:0 6px 16px rgba(0,0,0,.24)}
+.map-empty{z-index:8;top:63%}
+.map-legend{position:relative;z-index:9}
+@media(max-width:500px){.city-map{min-height:320px}.city-map:before{background-size:28px 28px}.map-district{border-radius:21px}.map-center-label{bottom:9px}}
+@media(prefers-reduced-motion:reduce){.business-marker{animation:none!important}}
