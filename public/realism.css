@@ -115,3 +115,31 @@
 .city-history-bar i{display:block;width:100%;min-height:3px;border-radius:3px 3px 1px 1px;background:linear-gradient(180deg,#d7bd72,#7d9a6b);box-shadow:0 0 8px rgba(213,190,114,.18)}
 .city-list-item em{font-style:normal;color:#e8d18b;font-weight:700}
 .city-panel-note{line-height:1.4}
+
+/* Living city simulation */
+.city-life{z-index:8;position:absolute;inset:0;pointer-events:none}
+.city-traffic{z-index:7;position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.traffic-car{position:absolute;left:-7%;top:var(--road-y);animation:trafficDrive var(--car-duration) linear infinite;animation-delay:var(--car-delay);will-change:transform}
+.traffic-car:nth-child(even){animation-name:trafficDriveReverse}
+@keyframes trafficDrive{0%{transform:translate3d(-10vw,-50%,0)}100%{transform:translate3d(120vw,-50%,0)}}
+@keyframes trafficDriveReverse{0%{transform:translate3d(120vw,-50%,0) scaleX(-1)}100%{transform:translate3d(-10vw,-50%,0) scaleX(-1)}}
+.customer-person{z-index:9;animation:customerRoute var(--customer-duration) ease-in-out infinite;animation-delay:var(--customer-delay);will-change:transform}
+@keyframes customerRoute{
+  0%,8%{transform:translate3d(0,0,0) scale(.85);opacity:.2}
+  25%{opacity:1}
+  48%,62%{transform:translate3d(var(--customer-x),var(--customer-y),0) scale(1);opacity:1}
+  70%{opacity:1}
+  92%,100%{transform:translate3d(0,0,0) scale(.85);opacity:.2}
+}
+.customer-person::after{background:linear-gradient(#4d7182,#263943);box-shadow:0 0 6px rgba(255,220,140,.18)}
+.business-worker{z-index:10;position:absolute;width:7px;height:14px;border-radius:5px 5px 2px 2px;background:#496b77;animation:workerBusy 2.4s ease-in-out infinite;animation-delay:calc(var(--n)*-.7s);filter:drop-shadow(0 2px 2px rgba(0,0,0,.45))}
+.business-worker::before{content:"";position:absolute;left:1px;top:-4px;width:5px;height:5px;border-radius:50%;background:#d9b08a}
+@keyframes workerBusy{0%,100%{transform:translate3d(-2px,0,0)}50%{transform:translate3d(5px,-2px,0)}}
+.business-marker.working{filter:drop-shadow(0 0 9px rgba(255,210,100,.24))}
+.business-marker.working::after{content:"";position:absolute;inset:-7px;border-radius:12px;border:1px solid rgba(245,208,117,.16);animation:businessPulse 2s ease-in-out infinite}
+@keyframes businessPulse{50%{transform:scale(1.08);opacity:.35}}
+.map-road{overflow:visible}
+@media(max-width:600px){
+  .traffic-car{transform-origin:center}
+  .customer-person{transform-origin:bottom center}
+}
