@@ -216,10 +216,10 @@ function openCityPanel(kind,id){
   }else if(kind==="event"){
     title="⚡ Событие";const ev=s.event||{};body='<div class="city-event"><b>'+String(ev.title||"Событие")+'</b><small>'+String(ev.description||"")+'</small><em>+'+money(ev.reward||0)+' · +'+(ev.xp||0)+' XP</em>'+actionBtn("event",ev.claimed?"Получено":"Забрать награду","",!!ev.claimed)+'</div>';
   }
-  panel.innerHTML='<button type="button" class="city-panel-close" data-city-close aria-label="Закрыть">×</button><div class="city-panel-title">'+title+'</div><div class="city-panel-scroll">'+body+'</div>';panel.hidden=false;
+  panel.innerHTML='<button type="button" class="city-panel-close" data-city-close aria-label="Закрыть">×</button><div class="city-panel-title">'+title+'</div><div class="city-panel-scroll">'+body+'</div>';panel.hidden=false;document.body.classList.add("map-panel-open");
 }
 
-function closeCityPanel(){const p=document.querySelector("#cityPanel");if(p)p.hidden=true}
+function closeCityPanel(){const p=document.querySelector("#cityPanel");if(p)p.hidden=true;document.body.classList.remove("map-panel-open")}
 
 function renderEmpireVisual(s){
   const el=document.querySelector("#empireVisual"); if(!el)return;
