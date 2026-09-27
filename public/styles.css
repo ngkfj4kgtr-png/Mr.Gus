@@ -895,3 +895,19 @@ body:has(.city-map-card) .page-screen[data-page]:not(.city-map-card){display:non
 .city-time-night .city-lamp{filter:drop-shadow(0 0 8px rgba(255,214,105,.9))}
 @keyframes houseBob{0%,100%{transform:translate(-50%,-50%) translateY(0)}50%{transform:translate(-50%,-50%) translateY(-2px)}}
 @keyframes personWalk{0%{transform:translate(0,0)}25%{transform:translate(7vw,-1.2vh)}50%{transform:translate(14vw,.8vh)}75%{transform:translate(7vw,1.2vh)}100%{transform:translate(0,0)}}
+
+/* Business logistics and construction */
+.city-business-routes{position:absolute;inset:0;z-index:9;pointer-events:none}
+.business-route{position:absolute;left:var(--sx);top:var(--sy);width:var(--len);height:3px;background:linear-gradient(90deg,transparent,rgba(255,214,105,.55),transparent);transform-origin:left center;transform:rotate(var(--angle));opacity:.7}
+.business-flow{position:absolute;left:var(--sx);top:var(--sy);width:10px;height:10px;border-radius:50%;background:currentColor;box-shadow:0 0 10px currentColor;animation:moneyRoute 3.2s linear infinite;animation-delay:var(--delay)}
+.income-pulse{position:absolute;left:var(--sx);top:var(--sy);font-style:normal;font-weight:800;color:#ffd76a;text-shadow:0 2px 5px #000;animation:incomeToCenter 2.8s ease-in-out infinite;animation-delay:var(--delay);pointer-events:none}
+.building-lights{position:absolute;inset:25% 20%;border-radius:30%;background:radial-gradient(circle,rgba(255,224,130,.9) 0 10%,transparent 12%) 0 0/10px 10px;opacity:0;pointer-events:none}
+.building-stage-developed .building-lights,.building-stage-large .building-lights,.building-stage-landmark .building-lights{opacity:.8;animation:lightsPulse 1.8s ease-in-out infinite}
+.building-smoke{position:absolute;width:9px;height:9px;right:10%;top:4%;border-radius:50%;background:rgba(220,220,220,.65);opacity:0;pointer-events:none}
+.building-stage-developed .building-smoke,.building-stage-large .building-smoke,.building-stage-landmark .building-smoke{opacity:.7;animation:smokeRise 3s ease-out infinite}
+.building-stage-large:after,.building-stage-landmark:after{content:"🏗️";position:absolute;right:-8px;top:-14px;font-size:18px;animation:craneMove 2.5s ease-in-out infinite}
+@keyframes moneyRoute{0%{transform:translate(0,0);opacity:0}15%{opacity:1}85%{opacity:1}100%{transform:translate(calc((48 - var(--sx))*1%),calc((55 - var(--sy))*1%));opacity:0}}
+@keyframes incomeToCenter{0%{transform:translate(0,0) scale(.7);opacity:0}20%{opacity:1}100%{transform:translate(calc((48 - var(--sx))*1%),calc((55 - var(--sy))*1%)) scale(1.1);opacity:0}}
+@keyframes lightsPulse{0%,100%{opacity:.45}50%{opacity:1}}
+@keyframes smokeRise{0%{transform:translate(0,0) scale(.5);opacity:.1}50%{opacity:.7}100%{transform:translate(10px,-25px) scale(1.6);opacity:0}}
+@keyframes craneMove{0%,100%{transform:rotate(-4deg)}50%{transform:rotate(5deg)}}
