@@ -81,6 +81,32 @@ async function loadSocial(){
   try{const r=await api("/api/rankings"),p=await api("/api/profile");renderProfile(p);window.__mrGusRankings=r;renderRankings(r);if(window.__mrGusState?.isAdmin){const a=await api("/api/admin");renderAdmin(a)}}
   catch(e){if(!String(e.message).includes("Forbidden"))console.warn("social load",e.message)}
 }
+
+function initCityMapControls(){
+  const map=document.querySelector(".city-map"),world=document.querySelector(".map-world");if(!map||!world||map.dataset.controls==="1")return;
+  map.dataset.controls="1";
+  let scale=1,tx=0,ty=0,startX=0,startY=0,startTx=0,startTy=0,drag=false,moved=false,pinchStart=0,pinchScale=1;
+  const clamp=()=>{scale=Math.max(.85,Math.min(2.4,scale));tx=Math.max(-map.clientWidth*(scale-1)*.55,Math.min(map.clientWidth*(scale-1)*.55,tx));ty=Math.max(-map.clientHeight*(scale-1)*.55,Math.min(map.clientHeight*(scale-1)*.55,ty));};
+  const apply=()=>{clamp();world.style.transform='translate3d('+tx+'px,'+ty+'px,0) scale('+scale+')';};
+  map.addEventListener("pointerdown",e=>{
+    if(e.target.closest("button,.city-panel"))return;
+    drag=true;moved=false;startX=e.clientX;startY=e.clientY;startTx=tx;startTy=ty;
+    try{map.setPointerCapture(e.pointerId)}catch{}
+  });
+  map.addEventListener("pointermove",e=>{if(!drag)return;const dx=e.clientX-startX,dy=e.clientY-startY;if(Math.abs(dx)+Math.abs(dy)>5)moved=true;tx=startTx+dx;ty=startTy+dy;apply();});
+  map.addEventListener("pointerup",e=>{drag=false;try{map.releasePointerCapture(e.pointerId)}catch{}});
+  map.addEventListener("pointercancel",()=>{drag=false});
+  map.addEventListener("wheel",e=>{e.preventDefault();const old=scale,dir=e.deltaY<0?1.12:.89;scale*=dir;const r=map.getBoundingClientRect(),cx=e.clientX-r.left-r.width/2,cy=e.clientY-r.top-r.height/2;tx=cx-(cx-tx)*(scale/old);ty=cy-(cy-ty)*(scale/old);apply()},{passive:false});
+  let lastDist=0;
+  map.addEventListener("touchstart",e=>{if(e.touches.length===2){const a=e.touches[0],b=e.touches[1];lastDist=Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY);pinchStart=scale;}},{passive:true});
+  map.addEventListener("touchmove",e=>{if(e.touches.length===2&&lastDist){const a=e.touches[0],b=e.touches[1],d=Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY);scale=pinchStart*d/lastDist;apply();}},{passive:true});
+  map.addEventListener("touchend",()=>{lastDist=0},{passive:true});
+  const zoom=(d)=>{scale+=d;apply()};
+  const controls=document.createElement("div");controls.className="map-zoom-controls";controls.innerHTML='<button type="button" data-map-zoom="-1" aria-label="Уменьшить">−</button><button type="button" data-map-zoom="1" aria-label="Увеличить">+</button><button type="button" data-map-reset="1" aria-label="Сбросить карту">⌖</button>';
+  map.appendChild(controls);
+  controls.addEventListener("click",e=>{const z=e.target.closest("[data-map-zoom]");if(z){zoom(Number(z.dataset.mapZoom)*.18);return}if(e.target.closest("[data-map-reset]")){scale=1;tx=0;ty=0;apply()}});
+}
+
 function renderCityMap(s){
   const el=document.querySelector("#cityMap");if(!el)return;
   const businesses=s.businesses||[],catalog=s.businessCatalog||[];
@@ -124,7 +150,8 @@ function renderCityMap(s){
   const cityEvents=[["⚡","Спрос +25%","event",59,30],["📦","Заказ","event",72,61],["🎉","Праздник","event",31,52]].slice(0,cityStage==="village"?1:cityStage==="town"?2:3).map(x=>'<button type="button" class="map-marker city-event-marker" style="left:'+x[3]+'%;top:'+x[4]+'%" data-city-open="event"><span>'+x[0]+'</span><small>'+x[1]+'</small><em>Активно</em></button>').join("");
   const points=[["🎯","Задания","tasks",28,69],["🏆","Достижения","achievements",18,79],["🎁","Бонус","daily",67,17],["🛒","Магазин","shop",83,28],["⚡","Событие","event",86,48],["🏆","Рейтинг","rankings",70,79]].map(x=>'<button type="button" class="map-marker city-service-marker service-'+x[2]+'" style="left:'+x[3]+'%;top:'+x[4]+'%" data-city-open="'+x[2]+'"><span>'+x[0]+'</span><small>'+x[1]+'</small><em>Открыть здесь</em></button>').join("")+cityEvents;
   const territoryMarks=[["🌳","Новая территория",18,8,1],["🧭","Северный район",82,10,2],["🏗️","Новый квартал",91,78,3],["🌉","Большая зона",7,88,4]].map(x=>'<button type="button" class="map-marker territory-marker '+(cityProgress>=x[4]?"territory-open":"territory-locked")+'" style="left:'+x[2]+'%;top:'+x[3]+'%" data-city-open="territory" data-territory="'+x[1]+'"><span>'+(cityProgress>=x[4]?x[0]:"🔒")+'</span><small>'+x[1]+'</small><em>'+(cityProgress>=x[4]?"Открыто":"Требуется ур. "+([0,1,7,10,15][x[4]]) )+'</em></button>').join("");
-  el.innerHTML='<div class="city-map city-stage-'+cityStage+(night?" city-time-night":" city-time-day")+'"><div class="map-district district-residential"><span>🏠 ЖИЛОЙ РАЙОН</span></div><div class="map-district district-trade"><span>🛍️ ТОРГОВЛЯ</span></div><div class="map-district district-business"><span>🏢 ДЕЛОВОЙ ЦЕНТР</span></div><div class="map-district district-industry"><span>🏭 ПРОМЗОНА</span></div><div class="map-plaza"><span>⭐</span><small>ЦЕНТРАЛЬНАЯ ПЛОЩАДЬ</small></div><div class="map-city-status"><b>'+cityNames[cityStage]+'</b><span>Город ур. '+level+'</span><span>'+owned+'/4 объектов</span><span>'+money(totalIncome)+'/ч</span></div><div class="map-road road-a"></div><div class="map-road road-b"></div><div class="map-road road-c"></div><div class="map-road road-d"></div><div class="map-water"></div><div class="map-route route-home-trade"></div><div class="map-route route-home-center"></div><div class="map-route route-home-industry"></div><div class="city-traffic">'+cars+'</div><div class="city-life">'+walkers+'</div><div class="city-logistics">'+trucks+'</div><div class="city-economy-flow">'+moneyFlows+'</div><div class="city-business-life">'+activity+'</div><button type="button" class="map-marker home-marker" style="left:48%;top:55%" data-city-open="home"><span>🏠</span><small>Мой дом</small><em>База · ур. '+level+'</em></button>'+markers+points+territoryMarks+'<div class="map-center-label">Мой город · '+cityNames[cityStage].toLowerCase()+' · '+cityProgress+' территории</div><div id="cityPanel" class="city-panel" hidden></div></div><div class="map-legend"><span>🏠 База</span><span>🏪 Бизнес</span><span>🚗 Трафик</span><span>👥 Жизнь</span><b>'+owned+' объектов · '+money(totalIncome)+'/ч</b></div>';
+  el.innerHTML='<div class="city-map city-stage-'+cityStage+(night?" city-time-night":" city-time-day")+'"><div class="map-district district-residential"><span>🏠 ЖИЛОЙ РАЙОН</span></div><div class="map-district district-trade"><span>🛍️ ТОРГОВЛЯ</span></div><div class="map-district district-business"><span>🏢 ДЕЛОВОЙ ЦЕНТР</span></div><div class="map-district district-industry"><span>🏭 ПРОМЗОНА</span></div><div class="map-plaza"><span>⭐</span><small>ЦЕНТРАЛЬНАЯ ПЛОЩАДЬ</small></div><div class="map-city-status"><b>'+cityNames[cityStage]+'</b><span>Город ур. '+level+'</span><span>'+owned+'/4 объектов</span><span>'+money(totalIncome)+'/ч</span></div><div class="map-road road-a"></div><div class="map-road road-b"></div><div class="map-road road-c"></div><div class="map-road road-d"></div><div class="map-water"></div><div class="map-route route-home-trade"></div><div class="map-route route-home-center"></div><div class="map-route route-home-industry"></div><div class="city-traffic">'+cars+'</div><div class="city-life">'+walkers+'</div><div class="city-logistics">'+trucks+'</div><div class="city-economy-flow">'+moneyFlows+'</div><div class="city-business-life">'+activity+'</div><button type="button" class="map-marker home-marker" style="left:48%;top:55%" data-city-open="home"><span>🏠</span><small>Мой дом</small><em>База · ур. '+level+'</em></button>'+markers+points+territoryMarks+'<div class="map-center-label">Мой город · '+cityNames[cityStage].toLowerCase()+' · '+cityProgress+' территории</div></div><div id="cityPanel" class="city-panel" hidden></div><div class="map-legend"><span>🏠 База</span><span>🏪 Бизнес</span><span>🚗 Трафик</span><span>👥 Жизнь</span><b>'+owned+' объектов · '+money(totalIncome)+'/ч</b></div>';
+  initCityMapControls();
 }
 
 function openCityPanel(kind,id){
