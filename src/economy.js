@@ -82,7 +82,7 @@ export function levelFromXp(xp){
 }
 export function createPlayer(id){
   if(!id||typeof id!=='string')throw new Error('Invalid player id');
-  return {id,balance:0,xp:0,level:1,businesses:{},claimedTasks:new Set(),claimedAchievements:new Set(),claimedGoals:new Set(),eventClaims:{},stats:{tasksCompleted:0,businessesOwned:0,businessUpgrades:0,totalIncome:0,totalEarned:0},lastIncomeAt:null,inventory:{},activeBonuses:{},dailyState:{lastClaimDate:null,streak:0,weekStart:null,weekRewardClaimed:false},createdAt:new Date().toISOString()};
+  return {id,balance:0,xp:0,level:1,businesses:{},claimedTasks:new Set(),claimedAchievements:new Set(),claimedGoals:new Set(),eventClaims:{},stats:{tasksCompleted:0,businessesOwned:0,businessUpgrades:0,totalIncome:0,totalEarned:0,visitsCompleted:0,visitRevenue:0},lastIncomeAt:null,inventory:{},activeBonuses:{},dailyState:{lastClaimDate:null,streak:0,weekStart:null,weekRewardClaimed:false},createdAt:new Date().toISOString()};
 }
 function assertPlayer(player){
   if(!player||typeof player!=='object')throw new Error('Player not found');
@@ -120,7 +120,7 @@ function assertPlayer(player){
   }
   if(player.lastIncomeAt!==null&&(!Number.isSafeInteger(player.lastIncomeAt)||player.lastIncomeAt<0))throw new Error('Invalid last income timestamp');
   if(!player.stats||typeof player.stats!=='object')throw new Error('Invalid stats');
-  for(const key of ['tasksCompleted','businessesOwned','businessUpgrades','totalIncome','totalEarned']){
+  for(const key of ['tasksCompleted','businessesOwned','businessUpgrades','totalIncome','totalEarned','visitsCompleted','visitRevenue']){
     if(!Number.isSafeInteger(player.stats[key])||player.stats[key]<0)throw new Error(`Invalid stat: ${key}`);
   }
   if(player.stats.businessesOwned!==Object.keys(player.businesses).length)throw new Error('Invalid businesses owned stat');
