@@ -276,7 +276,7 @@ test('integration: concurrent identical operation is applied exactly once', { sk
   const run = () => withPlayerTransaction(user.id, async (player, client) => {
     await assertOperationNotProcessed(client, { operationId, userId: user.id });
     player.balance += 100;
-    await recordOperation(client, { operationId, type: 'TEST_REWARD', userId: user.id, reward: 100 });
+    await recordOperation(client, { operationId, type: OPERATION_TYPES.TASK_REWARD, userId: user.id, reward: 100 });
     return player.balance;
   });
 
