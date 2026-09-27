@@ -112,7 +112,12 @@ else throw new Error('Endpoint not found');
 const type=url.pathname==='/api/task/claim'?OPERATION_TYPES.TASK_REWARD:url.pathname==='/api/business/buy'?OPERATION_TYPES.BUSINESS_PURCHASE:url.pathname==='/api/business/upgrade'?OPERATION_TYPES.BUSINESS_UPGRADE:url.pathname==='/api/business/employee/hire'?OPERATION_TYPES.EMPLOYEE_HIRE:url.pathname==='/api/business/expand'?OPERATION_TYPES.BUSINESS_EXPANSION:url.pathname==='/api/business/invest'?OPERATION_TYPES.BUSINESS_INVESTMENT:url.pathname==='/api/business/boost'?OPERATION_TYPES.BUSINESS_BOOST:url.pathname==='/api/shop/buy'?OPERATION_TYPES.SHOP_PURCHASE:url.pathname==='/api/daily/claim'?OPERATION_TYPES.DAILY_REWARD:url.pathname==='/api/achievement/claim'?OPERATION_TYPES.ACHIEVEMENT_REWARD:url.pathname==='/api/goal/claim'?OPERATION_TYPES.GOAL_REWARD:url.pathname==='/api/event/claim'?OPERATION_TYPES.EVENT_REWARD:OPERATION_TYPES.INCOME_COLLECTION;
 const reward=Number(out?.reward??out?.income??0);await recordOperation(client,{operationId,type,userId:a.user.id,reward});return {out,type,reward}});
 const auditResult=tx.result;
-await writeAudit({userId:a.user.id,telegramId:a.user.telegram_id,action:auditResult.type,details:{operationId,reward:auditResult.reward,path:url.pathname}});
+try{
+  await writeAudit({userId:a.user.id,telegramId:a.user.telegram_id,action:auditResult.type,details:{operationId,reward:auditResult.reward,path:url.pathname}});
+}catch(auditError){
+  console.error(JSON.stringify({type:'audit_write_error',path:url.pathname,message:auditError?.message||String(auditError)}));
+  writeError({path:url.pathname,message:auditError?.message||String(auditError),severity:'error',details:{type:'audit_write_error',operationId}}).catch(()=>{});
+}
 return sendJson(res,200,{...serialize(tx.player,a.user),action:auditResult.out})}
 return sendJson(res,405,{error:'Method not allowed'})}
 const requested=url.pathname==='/'?'/index.html':url.pathname,safe=normalize(requested).replace(/^\.\.(\/|\\)+/,'');const file=join(root,safe),data=await readFile(file);res.writeHead(200,{...securityHeaders(),'Content-Type':({'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8'})[extname(file)]||'application/octet-stream','Cache-Control':'no-store'});res.end(data);
