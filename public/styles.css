@@ -570,3 +570,19 @@ body{
 @media(prefers-reduced-motion:reduce){
   .home-marker,.business-marker{animation:none}
 }
+
+/* Mr.Gus UI pass 9 — logical city map */
+.city-map{isolation:isolate;background:linear-gradient(145deg,#0b141c,#091019)}
+.map-district{position:absolute;z-index:1;border:1px solid rgba(145,158,178,.09);border-radius:26px;background:rgba(255,255,255,.018);display:flex;align-items:flex-start;justify-content:center;padding-top:9px;box-sizing:border-box}
+.map-district span{font-size:8px;font-weight:900;letter-spacing:.14em;color:rgba(170,181,198,.34)}
+.district-trade{left:4%;top:7%;width:39%;height:39%;transform:rotate(-3deg)}
+.district-center{left:31%;top:33%;width:39%;height:36%;border-color:rgba(118,108,255,.12);background:rgba(118,108,255,.025)}
+.district-industry{right:4%;bottom:6%;width:40%;height:42%;transform:rotate(3deg)}
+.road-d{left:8%;top:53%;width:84%;height:5%;transform:rotate(-26deg)}
+.map-marker{z-index:5}
+.map-marker em{font-style:normal;font-size:8px;color:#8f99aa;font-weight:800}
+.business-marker{min-width:60px}
+.business-marker.building-lg{border-color:rgba(118,108,255,.55);box-shadow:0 10px 26px rgba(0,0,0,.4),0 0 0 3px rgba(118,108,255,.06)}
+.business-marker.building-xl{min-width:68px;border-color:rgba(114,227,154,.45);box-shadow:0 10px 28px rgba(0,0,0,.42),0 0 0 4px rgba(114,227,154,.05)}
+.map-center-label{position:absolute;left:50%;bottom:11px;transform:translateX(-50%);z-index:6;padding:6px 12px;border:1px solid #303d53;border-radius:999px;background:rgba(7,10,16,.8);font-size:10px;font-weight:900;color:#9da8bb;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+@media(max-width:500px){.business-marker{min-width:52px}.business-marker.building-xl{min-width:60px}.map-district span{font-size:7px}.map-center-label{font-size:9px}}
