@@ -176,3 +176,39 @@
   .map-road{box-shadow:inset 0 1px 0 rgba(255,255,255,.035),inset 0 -1px 0 rgba(0,0,0,.14)}
   .business-marker{filter:drop-shadow(0 3px 4px rgba(0,0,0,.28))}
 }
+
+
+/* Final city infrastructure visual pass: roads → buildings → transport → NPC → business → lighting → mobile */
+.map-road::before{content:"";position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(90deg,transparent 0 42px,rgba(246,220,143,.68) 42px 52px,transparent 52px 88px);opacity:.42;mix-blend-mode:screen}
+.road-a::before,.road-c::before{background:repeating-linear-gradient(90deg,transparent 0 34px,rgba(246,220,143,.72) 34px 43px,transparent 43px 74px)}
+.map-road .lane-arrow{position:absolute;opacity:.55;color:#e8d58c;font-size:10px}
+.arch-road-mark{border-radius:2px}
+.city-bus{position:absolute;z-index:8;width:39px;height:15px;border-radius:3px 5px 4px 3px;background:linear-gradient(#d7d9d4 0 34%,#68777b 35% 72%,#3c474b 73%);border:1px solid rgba(0,0,0,.5);box-shadow:0 4px 5px rgba(0,0,0,.3);animation:busDrive 18s linear infinite;animation-delay:var(--bus-delay)}
+.city-bus::before{content:"";position:absolute;left:5px;top:2px;width:24px;height:5px;background:linear-gradient(90deg,#526c78,#b6d9df,#526c78);border-radius:1px}
+.city-bus::after{content:"";position:absolute;left:5px;bottom:-4px;width:6px;height:6px;border-radius:50%;background:#151719;box-shadow:23px 0 #151719}
+@keyframes busDrive{from{transform:translate3d(-12vw,0,0)}to{transform:translate3d(120vw,0,0)}}
+.city-truck{filter:drop-shadow(0 3px 3px rgba(0,0,0,.4))}
+.city-traffic-light{position:absolute;z-index:12;width:7px;height:18px;border-radius:3px;background:#202528;box-shadow:0 0 0 1px rgba(255,255,255,.08),0 3px 4px rgba(0,0,0,.35)}
+.city-traffic-light::before{content:"";position:absolute;left:1px;top:2px;width:5px;height:5px;border-radius:50%;background:#e5b85f;box-shadow:0 7px #56635c,0 14px #56635c}
+.city-traffic-light.active::before{background:#6f8f63;box-shadow:0 7px #e5b85f,0 14px #56635c}
+.building-art{position:relative;transform:translateZ(0);backface-visibility:hidden}
+.building-art .b-window{background-size:100% 100%;position:relative}
+.building-art .b-sign{letter-spacing:.04em;text-shadow:0 1px 2px rgba(0,0,0,.55)}
+.building-stage-landmark .building-art{filter:drop-shadow(0 10px 8px rgba(0,0,0,.45))}
+.building-stage-landmark .b-window{box-shadow:inset 0 0 0 1px rgba(255,255,255,.4),0 0 12px rgba(255,215,130,.55)}
+.business-marker.working .building-lights{animation:businessLight 1.8s ease-in-out infinite}
+@keyframes businessLight{50%{opacity:.65;transform:scaleX(1.08)}}
+.city-person{filter:drop-shadow(0 2px 2px rgba(0,0,0,.38));will-change:transform}
+.npc-travel{opacity:.95}.npc-queue{animation:queueBob 1.4s ease-in-out infinite}.npc-service{filter:drop-shadow(0 0 5px rgba(255,214,120,.3))}
+@keyframes queueBob{50%{translate:0 -2px}}
+.city-lamp{filter:drop-shadow(0 2px 2px rgba(0,0,0,.35))}
+.city-time-night .city-lamp{filter:drop-shadow(0 0 8px rgba(255,211,119,.8))}
+.city-time-night .arch-lamp-post::after,.city-time-night .city-lamp::after{box-shadow:0 0 10px 3px rgba(255,207,110,.48)}
+.map-hud,.map-city-status,.map-legend{min-height:28px}
+@media(max-width:600px){
+ .map-hud{font-size:10px;padding:5px 7px}.map-city-status{font-size:9px;padding:5px 6px}.map-legend{font-size:8px;gap:5px;padding:4px 6px}
+ .business-demand-badge{font-size:8px;padding:2px 5px}.city-traffic-light{transform:scale(.82);transform-origin:bottom center}
+ .city-bus{transform:scale(.78);transform-origin:center}
+ .map-marker small{font-size:8px}.map-marker em{font-size:7px}
+ .arch-sidewalk{opacity:.9}.arch-road-mark{opacity:.65}
+}
