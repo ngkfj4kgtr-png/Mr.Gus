@@ -58,12 +58,9 @@ function render(s){
   document.querySelector("#income").textContent=money(totalIncome)+"/ч";
   document.querySelector("#xpText").textContent=Number(s.xp||0)+" XP";
   const xp=Number(s.xp)||0,level=Number(s.level)||1;
-  const next=s.achievements?.length?null:null;
-  const thresholds=[0,500,1200,2100,3300];
-  const current=level<=thresholds.length?thresholds[level-1]:thresholds.at(-1);
-  const nextXp=level<thresholds.length?thresholds[level]:null;
-  if(nextXp===null){document.querySelector("#xpBar").style.width="100%";document.querySelector("#xpHint").textContent="Прогресс продолжается с повышением уровня."}
-  else{ document.querySelector("#xpBar").style.width=Math.max(0,Math.min(100,((xp-current)/(nextXp-current))*100))+"%";document.querySelector("#xpHint").textContent=t("xp.next",{level:level+1,xp:Math.max(0,nextXp-xp)})}
+  const progress=s.xpProgress||{current:0,next:1,percent:0};
+  document.querySelector("#xpBar").style.width=(progress.percent||0)+"%";
+  document.querySelector("#xpHint").textContent=level>=100?t("xp.max"):t("xp.next",{level:level+1,xp:Math.max(0,(progress.next||0)-xp)});
     document.querySelector("#businesses").innerHTML=(s.businessCatalog||[]).map(b=>{
     const owned=s.businesses?.find(x=>x.id===b.id);
     if(owned)return `<div class="mini-card"><div class="row"><div><b>${b.name} · ур. ${owned.level}</b><p class="muted">${b.description}</p></div><strong>${money(owned.profitPerHour)}/ч</strong></div><div class="row"><span class="muted" data-i18n="nextLevel">${t("nextLevel")}</span>${button("upgrade",t("upgrade"),`data-business-id="${b.id}"`)}</div></div>`;
