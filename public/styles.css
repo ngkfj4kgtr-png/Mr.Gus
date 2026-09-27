@@ -847,3 +847,20 @@ body:has(.city-map-card.page-active) .map-legend,
 body:has(.city-map-card.page-active) .map-center-label{display:none!important}
 body:has(.city-map-card.page-active) .map-city-status{top:62px!important;right:8px}
 body:has(.city-map-card.page-active) .city-panel{bottom:max(12px,env(safe-area-inset-bottom) + 12px)!important}
+
+/* Minimal map-first mobile HUD */
+.city-map-card{margin-top:0}
+.city-map-card>.section-head{display:none}
+.quick-bar{display:none!important}
+.visual-card{display:none!important}
+.progress-card{display:none!important}
+body:has(.city-map-card) .hero{display:none}
+body:has(.city-map-card) .status{position:fixed;top:calc(env(safe-area-inset-top) + 8px);left:50%;transform:translateX(-50%);z-index:80;margin:0;pointer-events:none}
+body:has(.city-map-card) .stats{position:fixed;top:calc(env(safe-area-inset-top) + 10px);left:10px;right:10px;z-index:70;display:flex;gap:8px;margin:0;pointer-events:none}
+body:has(.city-map-card) .stats .stat{min-width:0;flex:1;padding:8px 10px;background:rgba(8,10,15,.72);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+body:has(.city-map-card) .stats .stat:nth-child(3){display:none}
+body:has(.city-map-card) .stats .v{font-size:15px}
+body:has(.city-map-card) .city-map-card{position:fixed;inset:0;z-index:1;margin:0;border-radius:0;padding:0;overflow:hidden}
+body:has(.city-map-card) .city-map{height:100dvh;min-height:100dvh;border-radius:0}
+body:has(.city-map-card) .wrap{max-width:none;padding:0}
+body:has(.city-map-card) .page-screen[data-page]:not(.city-map-card){display:none!important}
