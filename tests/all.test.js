@@ -46,24 +46,24 @@ test('business upgrade awards XP without adding money',()=>{
   buyBusiness(p,'kiosk',1000);
   const before=p.balance;
   upgradeBusiness(p,'kiosk',2000);
-  assert.equal(p.balance,before-1350);
+  assert.equal(p.balance,before-500);
   assert.equal(p.xp,150);
   assert.equal(p.level,1);
 });
 
 test('task chain cannot be skipped',()=>{const p=createPlayer('u');assert.equal(availableTasks(p)[1].locked,true);claimTask(p,'first_order');assert.equal(p.balance,250);assert.throws(()=>claimTask(p,'third_order'),/locked/);});
 test('task reward cannot be claimed twice',()=>{const p=createPlayer('u');claimTask(p,'first_order');assert.throws(()=>claimTask(p,'first_order'),/already claimed/);assert.equal(p.balance,250);});
-test('business profit is server-side',()=>{const p=createPlayer('u');p.balance=1000;buyBusiness(p,'kiosk',1000);assert.equal(hourlyProfit(p,'kiosk'),100);});
-test('offline income is capped at eight hours',()=>{const p=createPlayer('u');p.balance=1000;buyBusiness(p,'kiosk',1000);const r=collectOfflineIncome(p,1000+24*3600*1000);assert.equal(r.seconds,CONFIG.maxOfflineSeconds);assert.equal(r.income,800);});
-test('same collection timestamp pays zero twice',()=>{const p=createPlayer('u');p.balance=1000;buyBusiness(p,'kiosk',1000);const t=1000+2*3600*1000;assert.equal(collectOfflineIncome(p,t).income,200);assert.equal(collectOfflineIncome(p,t).income,0);});
+test('business profit is server-side',()=>{const p=createPlayer('u');p.balance=1000;buyBusiness(p,'kiosk',1000);assert.equal(hourlyProfit(p,'kiosk'),500);});
+test('offline income is capped at eight hours',()=>{const p=createPlayer('u');p.balance=1000;buyBusiness(p,'kiosk',1000);const r=collectOfflineIncome(p,1000+24*3600*1000);assert.equal(r.seconds,CONFIG.maxOfflineSeconds);assert.equal(r.income,4000);});
+test('same collection timestamp pays zero twice',()=>{const p=createPlayer('u');p.balance=1000;buyBusiness(p,'kiosk',1000);const t=1000+2*3600*1000;assert.equal(collectOfflineIncome(p,t).income,1000);assert.equal(collectOfflineIncome(p,t).income,0);});
 test('clock rollback is rejected',()=>{const p=createPlayer('u');p.balance=1000;buyBusiness(p,'kiosk',5000);assert.throws(()=>collectOfflineIncome(p,4999),/Clock moved backwards/);});
-test('upgrade changes profit',()=>{const p=createPlayer('u');p.balance=1000;buyBusiness(p,'kiosk',1000);p.balance=100000;upgradeBusiness(p,'kiosk',2000);assert.equal(hourlyProfit(p,'kiosk'),135);});
+test('upgrade changes profit',()=>{const p=createPlayer('u');p.balance=1000;buyBusiness(p,'kiosk',1000);p.balance=100000;upgradeBusiness(p,'kiosk',2000);assert.equal(hourlyProfit(p,'kiosk'),675);});
 test('operation IDs are validated',()=>{const id=createOperationId('income');assert.match(id,/^income_/);validateOperationId(id);assert.throws(()=>validateOperationId('bad id'),/Invalid operation ID/);});
 
 test('upgrade must not retroactively reprice already elapsed income',()=>{
   const p=createPlayer('u');p.balance=10000;buyBusiness(p,'kiosk',1000);
   const before=1000+3600*1000;
-  assert.equal(collectOfflineIncome(p,before).income,100);
+  assert.equal(collectOfflineIncome(p,before).income,500);
   p.balance+=10000;
   const oldProfit=hourlyProfit(p,'kiosk');
   upgradeBusiness(p,'kiosk',before+1000);
@@ -73,7 +73,7 @@ test('buying another business must preserve accrued income of existing businesse
   const p=createPlayer('u');p.balance=10000;buyBusiness(p,'kiosk',1000);
   const t=1000+2*3600*1000;
   const accrued=collectOfflineIncome(p,t).income;
-  assert.equal(accrued,200);
+  assert.equal(accrued,1000);
   assert.equal(p.lastIncomeAt,t);
 });
 
