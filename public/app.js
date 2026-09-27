@@ -67,7 +67,7 @@ function render(s){
     return `<div class="mini-card"><div class="row"><div><b>${b.name}</b><p class="muted">${b.description}</p></div><strong>${money(b.cost)}</strong></div><p class="muted">${t("business.unlock",{level:b.unlockLevel})}</p>${button("buy",t("open"),`data-business-id="${b.id}"`,!b.unlocked)}</div>`;
   }).join("");
   renderEmpireVisual(s);
-  renderCityMap(s);
+  renderCityMap(s);startCityLifeLoop();
   document.querySelector("#incomeAction").innerHTML=button("collect","💰 Забрать накопленный доход");
   document.querySelector("#tasks").innerHTML=(s.tasks||[]).filter(task=>!task.claimed).map(task=>`<div class="mini-card"><b>${task.title}</b><p class="muted">${task.description}</p><span class="reward">+${money(task.reward)} · +${task.xp} XP</span><br>${button("claim",t("claim"),`data-task-id="${String(task.id).replaceAll("'","&#39;")}"`,task.claimed||task.locked)}</div>`).join("");
   document.querySelector("#achievements").innerHTML=(s.achievements||[]).filter(a=>!a.claimed).map(a=>`<div class="mini-card"><div class="row"><div><b>${a.title}</b><p class="muted">${a.description}</p></div><span class="reward">+${money(a.reward)}<br>+${a.xp} XP</span></div>${button("achievement",a.claimed?t("received"):a.unlocked?t("claim"):"🔒",`data-id="${a.id}"`,a.claimed||!a.unlocked)}</div>`).join("");
@@ -82,6 +82,15 @@ async function loadSocial(){
   catch(e){if(!String(e.message).includes("Forbidden"))console.warn("social load",e.message)}
 }
 
+let __cityLifeTimer=null;
+function startCityLifeLoop(){
+  if(__cityLifeTimer)return;
+  __cityLifeTimer=setInterval(async()=>{
+    const panel=document.querySelector('#cityPanel');
+    if(panel&&!panel.hidden)return;
+    try{const live=await api('/api/city/live');if(!window.__mrGusState)return;window.__mrGusState.cityLive=live;renderCityMap(window.__mrGusState)}catch{}
+  },12000);
+}
 function initCityMapControls(){
   const map=document.querySelector(".city-map"),world=document.querySelector(".map-world");
   if(!map||!world||map.dataset.controls==="1")return;
@@ -132,38 +141,35 @@ function renderCityMap(s){
   const cityStage=level>=25||owned>=4?"mega":level>=15||owned>=3?"large":level>=10||owned>=2?"small":level>=7?"town":"village";
   const cityNames={village:"ДЕРЕВНЯ",town:"ПОСЁЛОК",small:"МАЛЕНЬКИЙ ГОРОД",large:"БОЛЬШОЙ ГОРОД",mega:"МЕГАПОЛИС"};
   const cityProgress={village:1,town:2,small:3,large:4,mega:5}[cityStage];
-  const traffic=Math.min(10,Math.max(1,Math.ceil((owned*1.5)+(level/5))));
-  const people=Math.min(12,Math.max(2,Math.ceil(owned*1.2+(level/4))));
+  const live=s.cityLive||{};
+  const liveTraffic=Math.max(0,Number(live.traffic)||0),liveVisitors=Math.max(0,Number(live.visitors)||0);
+  const traffic=Math.min(14,Math.max(1,Math.ceil(liveTraffic/8)+(owned*1.2)+(level/6)));
+  const people=Math.min(14,Math.max(2,Math.ceil(liveVisitors/8)+(owned?1:0)));
   const hour=new Date().getHours(),night=hour>=20||hour<7;
-  const cars=Array.from({length:traffic},(_,i)=>'<i class="city-car car-'+(i%4)+'" style="--i:'+i+'">🚗</i>').join("");
-  const walkerIcons=["🧍","🚶","🧑","👩","👨"];
-  const walkers=Array.from({length:people},(_,i)=>'<i class="city-person person-'+(i%5)+'" style="--i:'+i+'">'+walkerIcons[i%walkerIcons.length]+'</i>').join("");
-  const houses=[
-    [8,23],[17,16],[27,29],[35,18],[11,39],[22,43],[30,47],
-    [43,27],[50,20],[57,26],[64,18],[72,23],[82,19],
-    [10,60],[19,70],[29,78],[40,73],[51,76],[58,84],[70,74],[82,68],[90,78]
-  ].map((h,i)=>'<i class="city-house arch-house house-'+(i%4)+'" style="left:'+h[0]+'%;top:'+h[1]+'%"><span class="house-lawn"></span><span class="house-roof"></span><span class="house-body"></span><span class="house-window"></span><span class="house-door"></span><span class="house-chimney"></span></i>').join("");
+  const businessTargets=businesses.map(b=>({id:b.id,m:meta[b.id]})).filter(x=>x.m);
+  const cars=Array.from({length:traffic},(_,i)=>{
+    const lane=i%4, y=[53,56,59,62][lane], dur=12+(i%5)*2, delay=-(i*1.7);
+    return '<i class="city-car traffic-car lane-'+lane+'" style="--road-y:'+y+'%;--car-duration:'+dur+'s;--car-delay:'+delay+'s"></i>';
+  }).join("");
+  const walkers=Array.from({length:people},(_,i)=>{
+    const target=businessTargets.length?businessTargets[i%businessTargets.length]:{m:{spot:[50,67]}};
+    const sx=50+(i%3-1)*2,sy=67+(i%2)*2,tx=target.m.spot[0]-sx,ty=target.m.spot[1]-sy;
+    const dur=7+(i%4)*2,delay=-(i*1.1);
+    return '<i class="city-person customer-person" style="left:'+sx+'%;top:'+sy+'%;--customer-x:'+tx+'%;--customer-y:'+ty+'%;--customer-duration:'+dur+'s;--customer-delay:'+delay+'s" title="Посетитель '+(target.id||'города')+'"></i>';
+  }).join("");
   const streetLife='<i class="city-tree tree-1">🌳</i><i class="city-tree tree-2">🌲</i><i class="city-tree tree-3">🌳</i><i class="city-lamp lamp-1">💡</i><i class="city-lamp lamp-2">💡</i>';
   const activeBusinesses=businesses.filter(b=>Number(b.level||1)>=5);
-  const trucks=activeBusinesses.filter(b=>b.id==="workshop"||b.id==="factory").slice(0,4).map((b,i)=>'<i class="city-truck truck-route-'+b.id+'" style="--i:'+i+'">🚚</i>').join("");
+  const trucks=activeBusinesses.filter(b=>b.id==="workshop"||b.id==="factory").slice(0,4).map((b,i)=>'<i class="city-truck truck-route-'+b.id+'" style="--i:'+i+'"></i>').join("");
   const moneyFlows=businesses.slice(0,4).map((b,i)=>{const m=meta[b.id]||{spot:[50,68]};return '<i class="money-flow money-'+b.id+'" style="--x:'+m.spot[0]+';--y:'+m.spot[1]+';--i:'+i+'">+'+Math.max(1,Math.round(Number(b.profitPerHour||0)))+'</i>'}).join("");
   const activity=businesses.map(b=>{const m=meta[b.id];if(!m)return "";const count=Math.min(3,Math.max(1,Math.floor((Number(b.level)||1)/5)));return Array.from({length:count},(_,i)=>'<i class="business-worker worker-'+b.id+'" style="--n:'+i+';left:'+m.spot[0]+'%;top:'+(m.spot[1]+5+i*2)+'%"></i>').join("")}).join("");
   const pendingByBusiness=businesses.map(b=>{
-    const pending=Math.max(0,Number(b.pendingIncome||b.pending||0));
-    if(!pending)return "";
+    const pending=Math.max(0,Number(b.pendingIncome||b.pending||0)); if(!pending)return "";
     const m=meta[b.id];if(!m)return "";
     const pulses=Math.min(3,Math.max(1,Math.ceil(pending/Math.max(1,Number(b.profitPerHour||1))*3)));
     return Array.from({length:pulses},(_,i)=>'<i class="income-pulse pulse-'+b.id+'" style="--sx:'+m.spot[0]+'%;--sy:'+m.spot[1]+'%;--dx:'+((48-m.spot[0]))+'vw;--dy:'+((55-m.spot[1]))+'vh;--delay:'+(i*.7)+'s">₽</i>').join("");
   }).join("");
-  const routeLines=businesses.map(b=>{
-    const m=meta[b.id];if(!m)return "";
-    const dx=48-m.spot[0],dy=55-m.spot[1],len=Math.sqrt(dx*dx+dy*dy);
-    return '<i class="business-route route-'+b.id+'" style="--sx:'+m.spot[0]+'%;--sy:'+m.spot[1]+'%;--len:'+len+'%;--angle:'+Math.atan2(dy,dx)*180/Math.PI+'deg"></i>';
-  }).join("");
-  const businessFlows=businesses.map((b,i)=>{
-    const m=meta[b.id];if(!m)return "";
-    return '<i class="business-flow flow-'+b.id+'" style="--sx:'+m.spot[0]+'%;--sy:'+m.spot[1]+'%;--dx:'+((48-m.spot[0]))+'vw;--dy:'+((55-m.spot[1]))+'vh;--delay:'+(i*.8)+'s"></i>';
-  }).join("");
+  const routeLines=businesses.map(b=>{const m=meta[b.id];if(!m)return "";const dx=48-m.spot[0],dy=55-m.spot[1],len=Math.sqrt(dx*dx+dy*dy);return '<i class="business-route route-'+b.id+'" style="--sx:'+m.spot[0]+'%;--sy:'+m.spot[1]+'%;--len:'+len+'%;--angle:'+Math.atan2(dy,dx)*180/Math.PI+'deg"></i>';}).join("");
+  const businessFlows=businesses.map((b,i)=>{const m=meta[b.id];if(!m)return "";return '<i class="business-flow flow-'+b.id+'" style="--sx:'+m.spot[0]+'%;--sy:'+m.spot[1]+'%;--dx:'+((48-m.spot[0]))+'vw;--dy:'+((55-m.spot[1]))+'vh;--delay:'+(i*.8)+'s"></i>';}).join("");
   const homePulse='<div class="home-pulse-ring"></div>';
   const cityLabels='<div class="map-compass">N</div><div class="map-scale-label">МАСШТАБ · ГОРОД</div>';
   const markers=catalog.filter(b=>meta[b.id]).map(cat=>{
