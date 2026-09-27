@@ -586,3 +586,10 @@ body{
 .business-marker.building-xl{min-width:68px;border-color:rgba(114,227,154,.45);box-shadow:0 10px 28px rgba(0,0,0,.42),0 0 0 4px rgba(114,227,154,.05)}
 .map-center-label{position:absolute;left:50%;bottom:11px;transform:translateX(-50%);z-index:6;padding:6px 12px;border:1px solid #303d53;border-radius:999px;background:rgba(7,10,16,.8);font-size:10px;font-weight:900;color:#9da8bb;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
 @media(max-width:500px){.business-marker{min-width:52px}.business-marker.building-xl{min-width:60px}.map-district span{font-size:7px}.map-center-label{font-size:9px}}
+
+/* Mr.Gus UI pass 10 — map readability */
+.map-empty{position:absolute;z-index:4;left:50%;top:72%;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 14px;border:1px solid #29364b;border-radius:14px;background:rgba(8,12,18,.82);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);text-align:center;pointer-events:none;min-width:170px}
+.map-empty span{font-size:24px}.map-empty b{font-size:11px;color:#dfe4ee}.map-empty small{font-size:9px;color:#8f99aa}
+.home-marker{box-shadow:0 8px 22px rgba(0,0,0,.4),0 0 0 3px rgba(118,108,255,.08)}
+.city-map:after{content:"";position:absolute;inset:0;z-index:2;pointer-events:none;background:linear-gradient(180deg,rgba(255,255,255,.018),transparent 30%,rgba(0,0,0,.08));border-radius:inherit}
+.map-marker{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
