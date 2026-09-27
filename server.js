@@ -113,5 +113,4 @@ const requested=url.pathname==='/'?'/index.html':url.pathname,safe=normalize(req
 if(!demoMode){setInterval(()=>cleanupExpiredSessions().catch(()=>{}),15*60*1000).unref()}
 process.on('uncaughtException',e=>{runtimeMetrics.apiErrors++;console.error(JSON.stringify({type:'uncaught_exception',message:e?.message||'unknown'}));writeError({path:'process',message:e?.message||'uncaught exception',severity:'critical'}).catch(()=>{})});
 process.on('unhandledRejection',e=>{runtimeMetrics.apiErrors++;console.error(JSON.stringify({type:'unhandled_rejection',message:e?.message||String(e)}));writeError({path:'process',message:e?.message||String(e),severity:'critical'}).catch(()=>{})});
-}
 server.listen(port,'0.0.0.0',()=>console.log(`Mr.Gus — stage 9 progression: http://localhost:${port}`));
