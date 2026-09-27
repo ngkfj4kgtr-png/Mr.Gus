@@ -90,12 +90,12 @@ await assertOperationNotProcessed(client,{operationId,userId:a.user.id});
 if(url.pathname==='/api/task/claim')out=claimTask(player,String(body.taskId||''));
 else if(url.pathname==='/api/business/buy'){
   const before=player.lastIncomeAt; const income=collectOfflineIncome(player,now,currentEvent(now).incomeMultiplier);
-  if(income.income>0&&before!==null) await recordOperation(client,{operationId:`income_auto_${before}_${player.lastIncomeAt}`,type:OPERATION_TYPES.INCOME_COLLECTION,userId:a.user.id,reward:income.income,at:now});
+  if(income.income>0&&before!==null) await recordOperation(client,{operationId:`sys_income_${before}_${player.lastIncomeAt}`,type:OPERATION_TYPES.INCOME_COLLECTION,userId:a.user.id,reward:income.income,at:now});
   out=buyBusiness(player,String(body.businessId||''),now);
 }
 else if(url.pathname==='/api/business/upgrade'){
   const before=player.lastIncomeAt; const income=collectOfflineIncome(player,now,currentEvent(now).incomeMultiplier);
-  if(income.income>0&&before!==null) await recordOperation(client,{operationId:`income_auto_${before}_${player.lastIncomeAt}`,type:OPERATION_TYPES.INCOME_COLLECTION,userId:a.user.id,reward:income.income,at:now});
+  if(income.income>0&&before!==null) await recordOperation(client,{operationId:`sys_income_${before}_${player.lastIncomeAt}`,type:OPERATION_TYPES.INCOME_COLLECTION,userId:a.user.id,reward:income.income,at:now});
   out=upgradeBusiness(player,String(body.businessId||''),now);
 }
 else if(url.pathname==='/api/income/collect')out=collectOfflineIncome(player,now,currentEvent(now).incomeMultiplier);
