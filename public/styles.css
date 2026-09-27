@@ -937,3 +937,21 @@ body:has(.city-map-card) .page-screen[data-page]:not(.city-map-card){display:non
   .city-map .city-house{animation:none!important}
   .city-map .city-person{animation:none!important}
 }
+
+/* Final visual stability: no layout shift from decorative animation. */
+.city-map .map-marker,
+.city-map .map-city-status,
+.city-map .map-plaza,
+.city-map .map-district{backface-visibility:hidden;-webkit-backface-visibility:hidden}
+.city-map .business-marker{animation:none!important}
+.city-map .business-marker .building-lights,
+.city-map .business-marker .building-smoke,
+.city-map .business-marker:after{pointer-events:none}
+.city-map .city-panel{max-height:min(72dvh,560px);overflow:hidden}
+.city-map .city-panel-scroll{max-height:min(54dvh,420px);overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+@media(max-width:600px){
+ .city-map .city-panel{left:7px;right:7px;bottom:max(7px,env(safe-area-inset-bottom) + 7px);padding:12px;border-radius:16px}
+ .city-map .city-panel-actions{grid-template-columns:1fr 1fr}
+ .city-map .map-zoom-controls{right:8px;bottom:76px}
+ .city-map .map-zoom-controls button{width:40px;height:40px;min-width:40px}
+}
