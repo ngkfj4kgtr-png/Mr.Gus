@@ -131,3 +131,58 @@ body{
   .quick-bar button small{font-size:9px}
 }
 
+
+/* Mr.Gus UI pass 2 — visual polish only */
+.wrap{max-width:760px}
+.hero{padding-top:11px;padding-bottom:11px}
+.hero h1{font-size:30px;font-weight:900}
+.stats{grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
+.stat{
+  position:relative;overflow:hidden;min-height:74px;
+  display:flex;flex-direction:column;justify-content:center;
+  border-radius:16px;
+}
+.stat:after{
+  content:"";position:absolute;inset:auto -18px -28px auto;width:72px;height:72px;
+  border-radius:50%;background:rgba(118,108,255,.08);pointer-events:none
+}
+.stat .v{font-size:22px;font-weight:900;margin-top:3px}
+.card{border-radius:19px}
+.visual-card{
+  min-height:210px;display:flex;flex-direction:column;justify-content:center;
+  border-color:#313c53
+}
+.visual-card:before{
+  content:"";position:absolute;inset:0;pointer-events:none;border-radius:inherit;
+  background:linear-gradient(135deg,rgba(255,255,255,.025),transparent 42%)
+}
+.progress-card{padding:16px}
+.progress-card .progress{margin-top:10px}
+.section-head{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.section-head h2{font-size:19px;font-weight:900}
+.mini-card{
+  border-radius:16px;min-height:70px;
+  display:flex;flex-direction:column;justify-content:center;
+  transition:transform .15s ease,border-color .15s ease
+}
+.mini-card:active{transform:scale(.985)}
+.card .grid,.card .list{gap:9px}
+.btn{
+  min-height:44px;border-radius:13px;font-weight:850;
+  letter-spacing:.01em
+}
+.btn:active{transform:scale(.97)}
+/* Make reward/action emphasis clearer without changing buttons */
+.reward,.reward-value,.xp,.money{font-weight:900}
+.badge,.pill{border-radius:999px}
+.page-screen[hidden]{display:none!important}
+.quick-bar{backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}
+@media(max-width:500px){
+  .wrap{padding-left:9px;padding-right:9px}
+  .hero{margin-left:-9px;margin-right:-9px}
+  .stats{gap:6px}
+  .stat{min-height:70px;padding:9px 7px}
+  .stat .v{font-size:15px}
+  .card{padding:14px}
+  .visual-card{min-height:190px}
+}
