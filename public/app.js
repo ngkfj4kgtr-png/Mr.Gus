@@ -96,7 +96,7 @@ function renderCityMap(s){
   const walkers=Array.from({length:people},(_,i)=>'<i class="city-person person-'+(i%5)+'" style="--i:'+i+'">●</i>').join("");
   const activeBusinesses=businesses.filter(b=>Number(b.level||1)>=5);
   const trucks=activeBusinesses.filter(b=>b.id==="workshop"||b.id==="factory").slice(0,4).map((b,i)=>'<i class="city-truck truck-route-'+b.id+'" style="--i:'+i+'">🚚</i>').join("");
-  const moneyFlows=businesses.slice(0,4).map((b,i)=>{const m=meta[b.id]||{spot:[48,55]};return '<i class="money-flow money-'+b.id+'" style="--x:'+m.spot[0]+';--y:'+m.spot[1]+';--i:'+i+'+">+'+Math.max(1,Math.round(Number(b.profitPerHour||0)))+'</i>'}).join("");
+  const moneyFlows=businesses.slice(0,4).map((b,i)=>{const m=meta[b.id]||{spot:[48,55]};return '<i class="money-flow money-'+b.id+'" style="--x:'+m.spot[0]+';--y:'+m.spot[1]+';--i:'+i+'">+'+Math.max(1,Math.round(Number(b.profitPerHour||0)))+'</i>'}).join("");
   const activity=businesses.map(b=>{const m=meta[b.id];if(!m)return "";const count=Math.min(3,Math.max(1,Math.floor((Number(b.level)||1)/5)));return Array.from({length:count},(_,i)=>'<i class="business-worker worker-'+b.id+'" style="--n:'+i+';left:'+m.spot[0]+'%;top:'+(m.spot[1]+5+i*2)+'%"></i>').join("")}).join("");
   const markers=catalog.filter(b=>meta[b.id]).map(cat=>{
     const m=meta[cat.id],biz=businesses.find(x=>x.id===cat.id);
