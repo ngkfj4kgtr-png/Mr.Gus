@@ -625,3 +625,11 @@ body{
 .map-legend{position:relative;z-index:9}
 @media(max-width:500px){.city-map{min-height:320px}.city-map:before{background-size:28px 28px}.map-district{border-radius:21px}.map-center-label{bottom:9px}}
 @media(prefers-reduced-motion:reduce){.business-marker{animation:none!important}}
+
+/* Mr.Gus UI pass 13 — map as gameplay hub */
+.city-service-marker{z-index:7;min-width:58px;padding:5px 6px 4px;background:rgba(17,24,35,.94);border-color:rgba(145,158,178,.28);cursor:pointer}
+.city-service-marker span{font-size:20px;line-height:21px}.city-service-marker small{font-size:8px;color:#d2d8e3}.city-service-marker em{font-size:7px;color:#778397;font-style:normal;font-weight:800}
+.city-service-marker:hover{border-color:rgba(118,108,255,.65);box-shadow:0 10px 24px rgba(0,0,0,.42),0 0 0 3px rgba(118,108,255,.08)}
+.service-tasks{left:28%}.service-achievements{left:18%}.service-daily{left:67%}.service-shop{left:83%}.service-event{left:86%}
+.map-legend span{cursor:default}.map-center-label{font-weight:900}
+@media(max-width:500px){.city-service-marker{min-width:48px;padding:4px 5px 3px}.city-service-marker span{font-size:18px}.city-service-marker small{font-size:7px}.city-service-marker em{font-size:6px}}
