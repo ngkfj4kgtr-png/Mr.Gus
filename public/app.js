@@ -114,6 +114,8 @@ function initCityMapControls(){
   map.addEventListener("touchmove",e=>{if(e.touches.length===2&&lastDist){const a=e.touches[0],b=e.touches[1],d=Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY);scale=pinchStart*d/lastDist;apply();}},{passive:true});
   map.addEventListener("touchend",()=>{lastDist=0},{passive:true});
   const zoom=(d)=>{scale+=d;apply()};
+  const hud=document.createElement("div");hud.className="map-hud";hud.innerHTML='<span>🗺️ '+cityNames[cityStage]+'</span><span>Ур. '+level+'</span><span>🏢 '+owned+'/4</span><span>💰 '+money(totalIncome)+'/ч</span>';
+  map.appendChild(hud);
   const controls=document.createElement("div");controls.className="map-zoom-controls";controls.innerHTML='<button type="button" data-map-zoom="-1" aria-label="Уменьшить">−</button><button type="button" data-map-zoom="1" aria-label="Увеличить">+</button><button type="button" data-map-reset="1" aria-label="Сбросить карту">⌖</button>';
   map.appendChild(controls);
   controls.addEventListener("click",e=>{const z=e.target.closest("[data-map-zoom]");if(z){zoom(Number(z.dataset.mapZoom)*.18);return}if(e.target.closest("[data-map-reset]")){scale=1;tx=0;ty=0;apply()}});
