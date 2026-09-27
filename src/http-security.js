@@ -1,3 +1,5 @@
+import { createHash } from 'node:crypto';
+
 const buckets=new Map();
 const WINDOW_MS=60_000;
 const MAX_REQUESTS=120;
@@ -16,7 +18,7 @@ function sessionToken(req){
 function bucketKey(req,kind,scope='ip'){
   if(scope==='session'){
     const session=sessionToken(req);
-    if(session)return `${kind}:session:${session}`;
+    if(session)return `${kind}:session:${createHash('sha256').update(session).digest('hex')}`;
   }
   return `${kind}:ip:${clientAddress(req)}`;
 }
