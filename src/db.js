@@ -15,7 +15,7 @@ export async function migrate(){
   try{
     await client.query('BEGIN');
     await client.query('SELECT pg_advisory_xact_lock(hashtext($1))',['mrgus_schema_migration']);
-    await client.query(\`CREATE TABLE IF NOT EXISTS users(
+    await client.query(`CREATE TABLE IF NOT EXISTS users(
     id BIGSERIAL PRIMARY KEY,telegram_id BIGINT NOT NULL UNIQUE,username TEXT,first_name TEXT NOT NULL DEFAULT '',last_name TEXT NOT NULL DEFAULT '',photo_url TEXT,
     balance BIGINT NOT NULL DEFAULT 0 CHECK(balance>=0),xp BIGINT NOT NULL DEFAULT 0 CHECK(xp>=0),level INTEGER NOT NULL DEFAULT 1 CHECK(level>=1),
     businesses JSONB NOT NULL DEFAULT '{}'::jsonb,claimed_tasks JSONB NOT NULL DEFAULT '[]'::jsonb,claimed_achievements JSONB NOT NULL DEFAULT '[]'::jsonb,claimed_goals JSONB NOT NULL DEFAULT '[]'::jsonb,event_claims JSONB NOT NULL DEFAULT '{}'::jsonb,stats JSONB NOT NULL DEFAULT '{}'::jsonb,inventory JSONB NOT NULL DEFAULT '{}'::jsonb,active_bonuses JSONB NOT NULL DEFAULT '{}'::jsonb,daily_state JSONB NOT NULL DEFAULT '{}'::jsonb,last_income_at BIGINT,
@@ -50,7 +50,7 @@ export async function migrate(){
       path TEXT,severity TEXT NOT NULL DEFAULT 'error',message TEXT NOT NULL,
       details JSONB NOT NULL DEFAULT '{}'::jsonb,created_at TIMESTAMPTZ NOT NULL DEFAULT NOW());
     CREATE INDEX IF NOT EXISTS error_logs_created_idx ON error_logs(created_at DESC);
-    CREATE INDEX IF NOT EXISTS error_logs_path_idx ON error_logs(path);\`);
+    CREATE INDEX IF NOT EXISTS error_logs_path_idx ON error_logs(path);`);
     await client.query('COMMIT');
   }catch(e){await client.query('ROLLBACK');throw e}
   finally{client.release()}
