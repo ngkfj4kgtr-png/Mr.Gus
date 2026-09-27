@@ -61,6 +61,16 @@ export async function getProfile(telegramId){
   const xpNext=Math.max(xpCurrent+1,Math.floor(xpCurrent/1000+1)*1000);
   return {...p,telegramId:p.id,ownedBusinesses:Object.entries(businesses).map(([id,b])=>({id,level:b.level,expansionLevel:b.expansionLevel||0,investment:b.investment||0,employees:b.employees||{},profitPerHour:Number(b.profitPerHour)||0})),daily:{streak:Number(r.daily_state?.streak)||0,lastClaimDate:r.daily_state?.lastClaimDate||null},progress:{xp:xpCurrent,level:p.level,current:xpCurrent,next:xpNext,percent:Math.min(100,Math.max(0,Math.round(((xpCurrent-(xpNext-1000))/1000)*100)))},stats:{...p.stats}};
 }
+export async function searchAdminUsers(query='',limit=100){
+  const q=String(query||'').trim().slice(0,100);
+  const p=await getPool();
+  const r=await p.query(`SELECT id,telegram_id,username,first_name,last_name,photo_url,balance,xp,level,businesses,claimed_achievements,stats,blocked,created_at,updated_at
+    FROM users
+    WHERE ($1='' OR telegram_id::text ILIKE '%'||$1||'%' OR username ILIKE '%'||$1||'%' OR first_name ILIKE '%'||$1||'%' OR last_name ILIKE '%'||$1||'%')
+    ORDER BY created_at DESC LIMIT $2`,[q,Math.max(1,Math.min(100,Number(limit)||100))]);
+  return r.rows.map(row=>({...playerRow(row),dbId:String(row.id),blocked:!!row.blocked,updatedAt:row.updated_at}));
+}
+
 export async function getAdminSnapshot(){
   const p=await getPool();
   const users=(await p.query(`SELECT id,telegram_id,username,first_name,last_name,photo_url,balance,xp,level,businesses,claimed_achievements,stats,blocked,created_at,updated_at FROM users ORDER BY created_at DESC LIMIT 200`)).rows.map(r=>({...playerRow(r),dbId:String(r.id),blocked:!!r.blocked,updatedAt:r.updated_at}));
