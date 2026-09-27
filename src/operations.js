@@ -13,7 +13,8 @@ export const OPERATION_TYPES = Object.freeze({
   INCOME_COLLECTION: 'income_collection',
   ACHIEVEMENT_REWARD: 'achievement_reward',
   GOAL_REWARD: 'goal_reward',
-  EVENT_REWARD: 'event_reward'
+  EVENT_REWARD: 'event_reward',
+  ORDER_REVENUE: 'order_revenue'
 });
 
 export function createOperationId(prefix='op') {
