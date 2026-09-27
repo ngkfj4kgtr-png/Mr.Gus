@@ -14,6 +14,13 @@ export const BUSINESS = Object.freeze({
   factory:Object.freeze({id:'factory',name:'Фабрика',description:'Крупный источник дохода.',baseCost:100_000,upgradeBaseCost:30_000,grossPerHour:32_000,expensesPerHour:7_000,upgradeMultiplier:1.28,maxLevel:100})
 });
 
+export const EMPLOYEE_ROLES=Object.freeze({
+  cashier:Object.freeze({id:'cashier',title:'Кассир',hireCost:2_000,salaryPerHour:100,incomeMultiplier:1.05,maxPerBusiness:5}),
+  manager:Object.freeze({id:'manager',title:'Управляющий',hireCost:10_000,salaryPerHour:400,incomeMultiplier:1.12,maxPerBusiness:2}),
+  accountant:Object.freeze({id:'accountant',title:'Бухгалтер',hireCost:25_000,salaryPerHour:900,incomeMultiplier:1.08,maxPerBusiness:1})
+});
+export const EXPANSION=Object.freeze({maxLevel:5,multiplierPerLevel:1.15});
+export const INVESTMENT=Object.freeze({min:5_000,maxTotal:500_000,profitPer100k:0.05});
 export const XP_REWARDS = Object.freeze({businessPurchase:100,businessUpgrade:50});
 const LEVEL_XP=Object.freeze([
   0,500,1_200,2_100,3_300,4_800,6_600,8_700,11_200,14_200,
@@ -88,6 +95,10 @@ function assertPlayer(player){
     const definition=BUSINESS[id];
     if(!definition||!business||typeof business!=='object'||Array.isArray(business))throw new Error('Invalid business');
     if(business.id!==id||!Number.isSafeInteger(business.level)||business.level<1||business.level>definition.maxLevel)throw new Error('Invalid business');
+    if(!Number.isSafeInteger(business.expansionLevel)||business.expansionLevel<0||business.expansionLevel>EXPANSION.maxLevel)throw new Error('Invalid expansion level');
+    if(!business.employees||typeof business.employees!=='object'||Array.isArray(business.employees))throw new Error('Invalid employees');
+    for(const [role,count] of Object.entries(business.employees)){const r=EMPLOYEE_ROLES[role];if(!r||!Number.isSafeInteger(count)||count<0||count>r.maxPerBusiness)throw new Error('Invalid employee count');}
+    if(!Number.isSafeInteger(business.investment)||business.investment<0||business.investment>INVESTMENT.maxTotal)throw new Error('Invalid investment');
     if(!Number.isSafeInteger(business.purchasedAt)||business.purchasedAt<0)throw new Error('Invalid business timestamp');
   }
   if(!(player.claimedTasks instanceof Set)||!(player.claimedAchievements instanceof Set)||!(player.claimedGoals instanceof Set))throw new Error('Invalid progression state');
@@ -201,13 +212,18 @@ export function buyBusiness(player,businessId,now=Date.now()){
   if(!definition)throw new Error('Business not found');if(player.businesses[businessId])throw new Error('Business already owned');
   if(!canBuyBusiness(player,businessId))throw new Error('Business is locked');if(!Number.isSafeInteger(now)||now<0)throw new Error('Invalid timestamp');
   if(player.balance<definition.baseCost)throw new Error('Insufficient balance');
-  player.balance-=definition.baseCost;player.businesses[businessId]={id:businessId,level:1,purchasedAt:now};addXp(player,XP_REWARDS.businessPurchase);player.lastIncomeAt=now;player.stats.businessesOwned=Object.keys(player.businesses).length;
+  player.balance-=definition.baseCost;player.businesses[businessId]={id:businessId,level:1,purchasedAt:now,expansionLevel:0,employees:{},investment:0,boostUntil:0,boostMultiplier:1};addXp(player,XP_REWARDS.businessPurchase);player.lastIncomeAt=now;player.stats.businessesOwned=Object.keys(player.businesses).length;
   return player.businesses[businessId];
 }
 export function hourlyProfit(player,businessId){
   assertPlayer(player);const d=BUSINESS[businessId],owned=player.businesses[businessId];
   if(!d||!owned)throw new Error('Business not owned');if(!Number.isSafeInteger(owned.level)||owned.level<1||owned.level>d.maxLevel)throw new Error('Invalid business level');
-  const scale=d.upgradeMultiplier**(owned.level-1);return Math.max(0,Math.floor(d.grossPerHour*scale)-Math.floor(d.expensesPerHour*scale));
+  const scale=d.upgradeMultiplier**(owned.level-1);
+  const expansion=(owned.expansionLevel||0)*EXPANSION.multiplierPerLevel;
+  const employeeMultiplier=Object.entries(owned.employees||{}).reduce((m,[role,count])=>m*(EMPLOYEE_ROLES[role]?.incomeMultiplier||1)**count,1);
+  const investmentMultiplier=1+Math.min(0.25,(owned.investment||0)/100_000*INVESTMENT.profitPer100k);
+  const salary=Object.entries(owned.employees||{}).reduce((sum,[role,count])=>sum+(EMPLOYEE_ROLES[role]?.salaryPerHour||0)*count,0);
+  return Math.max(0,Math.floor((d.grossPerHour*scale*expansion*employeeMultiplier*investmentMultiplier))-Math.floor(d.expensesPerHour*scale+salary));
 }
 export function collectOfflineIncome(player,now=Date.now(),incomeMultiplier=1){
   assertPlayer(player);if(!Number.isSafeInteger(now)||now<0)throw new Error('Invalid timestamp');if(typeof incomeMultiplier!=='number'||!Number.isFinite(incomeMultiplier)||incomeMultiplier<0||incomeMultiplier>10)throw new Error('Invalid income multiplier');
@@ -225,4 +241,32 @@ export function upgradeBusiness(player,businessId,now=Date.now()){
   const cost=Math.max(d.upgradeBaseCost,Math.round(d.upgradeBaseCost*d.upgradeMultiplier**(owned.level-1)));
   if(player.balance<cost)throw new Error('Insufficient balance');
   player.balance-=cost;owned.level+=1;addXp(player,XP_REWARDS.businessUpgrade);player.stats.businessUpgrades+=1;return {level:owned.level,cost,balance:player.balance,profitPerHour:hourlyProfit(player,businessId)};
+}
+
+export function hireEmployee(player,businessId,role,now=Date.now()){
+  assertPlayer(player);const business=player.businesses[businessId],employee=EMPLOYEE_ROLES[role];
+  if(!business||!employee)throw new Error('Employee role not found');
+  const count=Number(business.employees?.[role]||0);if(count>=employee.maxPerBusiness)throw new Error('Employee limit reached');
+  if(player.balance<employee.hireCost)throw new Error('Insufficient balance');
+  player.balance-=employee.hireCost;business.employees[role]=count+1;return {businessId,role,count:count+1,cost:employee.hireCost};
+}
+export function expandBusiness(player,businessId,now=Date.now()){
+  assertPlayer(player);const business=player.businesses[businessId],definition=BUSINESS[businessId];
+  if(!business||!definition)throw new Error('Business not owned');if(business.expansionLevel>=EXPANSION.maxLevel)throw new Error('Maximum expansion level reached');
+  const cost=Math.max(5_000,Math.round(definition.baseCost*(business.expansionLevel+1)*1.5));
+  if(player.balance<cost)throw new Error('Insufficient balance');
+  player.balance-=cost;business.expansionLevel+=1;return {businessId,expansionLevel:business.expansionLevel,cost,profitPerHour:hourlyProfit(player,businessId)};
+}
+export function addInvestment(player,businessId,amount){
+  assertPlayer(player);const business=player.businesses[businessId];assertMoneyAmount(amount,'Investment');
+  if(!business)throw new Error('Business not owned');if(amount<INVESTMENT.min)throw new Error('Investment too small');
+  if((business.investment||0)+amount>INVESTMENT.maxTotal)throw new Error('Investment limit reached');
+  if(player.balance<amount)throw new Error('Insufficient balance');
+  player.balance-=amount;business.investment=(business.investment||0)+amount;return {businessId,investment:business.investment,amount,profitPerHour:hourlyProfit(player,businessId)};
+}
+export function activateBusinessBoost(player,businessId,now=Date.now()){
+  assertPlayer(player);const business=player.businesses[businessId];if(!business)throw new Error('Business not owned');
+  if(!Number.isSafeInteger(now)||now<0)throw new Error('Invalid timestamp');if((business.boostUntil||0)>now)throw new Error('Business boost already active');
+  if(player.balance<1_000)throw new Error('Insufficient balance');player.balance-=1_000;business.boostUntil=now+2*60*60*1000;business.boostMultiplier=1.25;
+  return {businessId,boostUntil:business.boostUntil,cost:1_000};
 }
