@@ -12,9 +12,10 @@ import { getRankings,getProfile,isAdminTelegramId,getAdminSnapshot,searchAdminUs
 const root=join(fileURLToPath(new URL('.',import.meta.url)),'public');
 const port=Number(process.env.PORT||8080),botToken=process.env.TELEGRAM_BOT_TOKEN,demoMode=process.env.DEMO_MODE==='true';
 const runtimeMetrics={requests:0,apiErrors:0,rateLimited:0,dbErrors:0,activeUsers:0};
+let dbReady=demoMode,dbStartupError=null,dbReadyPromise=Promise.resolve();
 if(!botToken&&!demoMode)throw new Error('TELEGRAM_BOT_TOKEN is required');
 if(!process.env.DATABASE_URL&&!demoMode)throw new Error('DATABASE_URL is required');
-if(!demoMode){await initDb();await migrate();}
+if(!demoMode){dbReadyPromise=Promise.resolve();}
 const demoPlayers=new Map(),demoOperations=new Set();
 const cookieOptions=()=>`Path=/; HttpOnly; SameSite=Lax${process.env.NODE_ENV==='production'?'; Secure':''}`;
 function parseCookies(header=''){const out={};for(const part of header.split(';')){const i=part.indexOf('=');if(i<0)continue;const k=part.slice(0,i).trim(),v=part.slice(i+1).trim();try{out[k]=decodeURIComponent(v)}catch{}}return out}
@@ -47,7 +48,7 @@ if(url.pathname.startsWith('/api/') && (req.method==='POST'||req.method==='PUT'|
   const limit=checkRateLimit(req,{mutation:true});
   if(!limit.allowed){runtimeMetrics.rateLimited++;writeError({path:url.pathname,message:'Rate limit exceeded',severity:'warn',details:{method:req.method,ip:req.socket.remoteAddress||'unknown',limit:'request/mutation'}});return sendJson(res,429,{error:'Too many requests'},{'Retry-After':String(limit.retryAfter)});}
 }
-if(req.method==='GET'&&url.pathname==='/health'){if(!demoMode)await (await getPool()).query('SELECT 1');return sendJson(res,200,{ok:true,service:'Mr.Gus',status:'healthy',database:demoMode?'demo':'ok',metrics:runtimeMetrics})}
+if(req.method==='GET'&&url.pathname==='/health'){if(!demoMode&&!dbReady)return sendJson(res,503,{ok:false,service:'Mr.Gus',status:'starting',database:'starting',error:dbStartupError?'database initialization failed':'database initializing',metrics:runtimeMetrics});if(!demoMode)await (await getPool()).query('SELECT 1');return sendJson(res,200,{ok:true,service:'Mr.Gus',status:'healthy',database:demoMode?'demo':'ok',metrics:runtimeMetrics})}
 if(req.method==='POST'&&url.pathname==='/api/auth/telegram'){
 if(demoMode&&!req.headers['x-telegram-init-data']){res.setHeader('Set-Cookie',`mfz_demo=1; ${cookieOptions()}; Max-Age=604800`);return sendJson(res,200,{ok:true,demo:true,user:{first_name:'Демо',last_name:'Игрок',username:'demo'}})}
 const verified=validateTelegramInitData(String(req.headers['x-telegram-init-data']||''),botToken),user=await upsertTelegramUser(verified.user),token=await createSession(user.id);
@@ -113,4 +114,9 @@ const requested=url.pathname==='/'?'/index.html':url.pathname,safe=normalize(req
 if(!demoMode){setInterval(()=>cleanupExpiredSessions().catch(()=>{}),15*60*1000).unref()}
 process.on('uncaughtException',e=>{runtimeMetrics.apiErrors++;console.error(JSON.stringify({type:'uncaught_exception',message:e?.message||'unknown'}));writeError({path:'process',message:e?.message||'uncaught exception',severity:'critical'}).catch(()=>{})});
 process.on('unhandledRejection',e=>{runtimeMetrics.apiErrors++;console.error(JSON.stringify({type:'unhandled_rejection',message:e?.message||String(e)}));writeError({path:'process',message:e?.message||String(e),severity:'critical'}).catch(()=>{})});
-server.listen(port,'0.0.0.0',()=>console.log(`Mr.Gus — stage 9 progression: http://localhost:${port}`));
+server.listen(port,'0.0.0.0',()=>{
+  console.log(`Mr.Gus — listening on ${port}`);
+  if(!demoMode){
+    dbReadyPromise=initDb().then(()=>migrate()).then(()=>{dbReady=true;console.log('Mr.Gus — database ready')}).catch(e=>{dbStartupError=e?.message||String(e);runtimeMetrics.dbErrors++;console.error(JSON.stringify({type:'database_startup_error',message:dbStartupError}));});
+  }
+});
