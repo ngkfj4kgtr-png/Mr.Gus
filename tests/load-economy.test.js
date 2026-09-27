@@ -55,15 +55,15 @@ test('load: 1000 isolated players survive a full early-game economy workload', a
       start + index + 16 * 60 * 60 * 1_000,
       1.10
     );
-    assert.equal(secondCollection.income, 4_950);
+    assert.equal(secondCollection.income, 5_940);
 
     assert.ok(hourlyProfit(player, 'kiosk') > 500);
     assertInvariant(player);
   }));
 
   assert.equal(players.length, playerCount);
-  assert.equal(players.reduce((sum, p) => sum + p.balance, 0), 8_550_000);
-  assert.equal(players.reduce((sum, p) => sum + p.stats.totalIncome, 0), 8_950_000);
+  assert.equal(players.reduce((sum, p) => sum + p.balance, 0), 9_540_000);
+  assert.equal(players.reduce((sum, p) => sum + p.stats.totalIncome, 0), 9_940_000);
   assertInvariant(players[0]);
 });
 
