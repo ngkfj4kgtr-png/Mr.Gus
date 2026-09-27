@@ -57,6 +57,10 @@ res.setHeader('Set-Cookie',`mfz_session=${encodeURIComponent(token)}; ${cookieOp
 if(req.method==='POST'&&url.pathname==='/api/auth/logout'){const c=parseCookies(req.headers.cookie);if(!demoMode)await deleteSession(c.mfz_session);else demoPlayers.delete('demo-user');res.setHeader('Set-Cookie',[`mfz_session=; ${cookieOptions()}; Max-Age=0`,`mfz_demo=; ${cookieOptions()}; Max-Age=0`]);return sendJson(res,200,{ok:true})}
 if(url.pathname.startsWith('/api/')){
 const a=await auth(req,res);if(!a)return;
+if(!a.demo&&req.method==='GET'&&url.pathname==='/api/rankings')return sendJson(res,200,await getRankings(url.searchParams.get('limit'),a.user.telegram_id));
+if(!a.demo&&req.method==='GET'&&url.pathname==='/api/profile'){const profile=await getProfile(a.user.telegram_id);if(!profile)return sendJson(res,404,{error:'Profile not found'});return sendJson(res,200,profile);}
+if(!a.demo&&req.method==='GET'&&url.pathname==='/api/admin/users'){if(!isAdminTelegramId(a.user.telegram_id))return sendJson(res,403,{error:'Forbidden'});return sendJson(res,200,{users:await searchAdminUsers(url.searchParams.get('q'),url.searchParams.get('limit'))});}
+if(!a.demo&&req.method==='GET'&&url.pathname==='/api/admin'){if(!isAdminTelegramId(a.user.telegram_id))return sendJson(res,403,{error:'Forbidden'});return sendJson(res,200,await getAdminSnapshot());}
 if(a.demo){const player=a.player;if(req.method==='GET'&&url.pathname==='/api/rankings'){const a=await auth(req,res);if(!a)return;return sendJson(res,200,await getRankings(url.searchParams.get('limit'),a.user.telegram_id))}
 if(req.method==='GET'&&url.pathname==='/api/profile'){const a=await auth(req,res);if(!a)return;return sendJson(res,200,await getProfile(a.user.telegram_id))}
 if(req.method==='GET'&&url.pathname==='/api/admin/users'){const a=await auth(req,res);if(!a)return;if(!isAdminTelegramId(a.user.telegram_id)){writeAudit({userId:a.user.id,telegramId:a.user.telegram_id,action:'admin_forbidden',details:{path:url.pathname}});return sendJson(res,403,{error:'Forbidden'})}return sendJson(res,200,{users:await searchAdminUsers(url.searchParams.get('q'),url.searchParams.get('limit'))})}
