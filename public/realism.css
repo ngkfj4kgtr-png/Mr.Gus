@@ -150,3 +150,29 @@
 .npc-family::after{background:linear-gradient(#607d91,#2b3d49)}
 .npc-courier::after{background:linear-gradient(#8b704d,#3b2d1e)}
 .npc-queue{filter:drop-shadow(0 0 5px rgba(232,209,139,.25))}
+
+
+/* Infrastructure & architecture pass */
+.map-world{isolation:isolate;background-image:linear-gradient(rgba(255,255,255,.015),rgba(0,0,0,.08)),radial-gradient(circle at 50% 42%,rgba(255,255,255,.035),transparent 52%)}
+.map-road{box-shadow:inset 0 2px 0 rgba(255,255,255,.035),inset 0 -2px 0 rgba(0,0,0,.16),0 5px 14px rgba(0,0,0,.12)}
+.map-road::after{opacity:.72;filter:drop-shadow(0 1px 1px rgba(0,0,0,.35))}
+.arch-sidewalk{box-shadow:inset 0 1px 0 rgba(255,255,255,.08),inset 0 -2px 0 rgba(0,0,0,.12)}
+.arch-crosswalk{filter:drop-shadow(0 1px 1px rgba(0,0,0,.22))}
+.arch-road-mark{opacity:.78;filter:drop-shadow(0 1px 1px rgba(0,0,0,.3))}
+.arch-house{filter:drop-shadow(0 5px 5px rgba(0,0,0,.28));transform:translateZ(0)}
+.arch-house .house-body{box-shadow:inset 2px 0 0 rgba(255,255,255,.08),inset -3px -3px 0 rgba(0,0,0,.12)}
+.arch-house .house-roof{filter:drop-shadow(0 2px 2px rgba(0,0,0,.25))}
+.arch-house .house-window{box-shadow:inset 0 0 0 1px rgba(255,255,255,.12),0 0 7px rgba(255,220,140,.12)}
+.arch-house .house-door{box-shadow:inset 1px 0 0 rgba(255,255,255,.08),2px 2px 3px rgba(0,0,0,.22)}
+.arch-lamp-post{filter:drop-shadow(0 2px 2px rgba(0,0,0,.35))}
+.city-time-night .arch-lamp-post,.city-time-night .city-lamp{filter:drop-shadow(0 0 7px rgba(255,220,145,.4))}
+.arch-tree,.city-tree{filter:drop-shadow(0 4px 4px rgba(0,0,0,.25))}
+.map-plaza{box-shadow:inset 0 0 0 1px rgba(255,255,255,.045),inset 0 -5px 12px rgba(0,0,0,.12)}
+.map-marker{box-shadow:0 4px 12px rgba(0,0,0,.28),0 0 0 1px rgba(255,255,255,.08)}
+.business-marker{transform:translateZ(0);filter:drop-shadow(0 4px 5px rgba(0,0,0,.3))}
+.business-marker.working{box-shadow:0 0 0 1px rgba(245,208,117,.1),0 5px 14px rgba(0,0,0,.24)}
+@media(max-width:600px){
+  .arch-house{filter:drop-shadow(0 3px 3px rgba(0,0,0,.25))}
+  .map-road{box-shadow:inset 0 1px 0 rgba(255,255,255,.035),inset 0 -1px 0 rgba(0,0,0,.14)}
+  .business-marker{filter:drop-shadow(0 3px 4px rgba(0,0,0,.28))}
+}
