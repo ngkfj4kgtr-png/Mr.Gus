@@ -796,3 +796,11 @@ body:has(.city-map-card.page-active) .map-center-label{bottom:62px}
 @keyframes incomePulseToCenter{0%{opacity:0;transform:translate(-50%,-50%) scale(.55)}12%{opacity:1}68%{opacity:.9;transform:translate(170%,-170%) scale(1)}88%,100%{opacity:0;transform:translate(300%,-300%) scale(.35)}}
 .pulse-kiosk,.pulse-cafe{color:rgba(255,214,112,.95)}.pulse-workshop{color:rgba(118,180,255,.95)}.pulse-factory{color:rgba(114,227,154,.95)}
 @media(prefers-reduced-motion:reduce){.income-pulse{animation:none!important;display:none}}
+
+.map-world{position:absolute;inset:0;transform-origin:50% 50%;touch-action:none;will-change:transform}
+.city-map{touch-action:none;cursor:grab}
+.city-map:active{cursor:grabbing}
+.map-zoom-controls{position:absolute;z-index:70;right:12px;top:62px;display:flex;flex-direction:column;gap:6px}
+.map-zoom-controls button{width:38px;height:38px;border:1px solid rgba(120,140,170,.35);border-radius:12px;background:rgba(7,11,18,.82);color:#e9eef7;font-size:22px;font-weight:900;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);box-shadow:0 8px 20px rgba(0,0,0,.3)}
+.map-zoom-controls button:active{transform:scale(.94)}
+@media(max-width:500px){.map-zoom-controls{right:8px;top:62px}.map-zoom-controls button{width:36px;height:36px}}
