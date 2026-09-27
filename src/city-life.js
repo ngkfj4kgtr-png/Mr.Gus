@@ -25,7 +25,7 @@ function ensure(player,now){
   for(const d of DISTRICTS)raw.districts[d]=Math.max(0,Math.min(100,Number(raw.districts[d]||0)));
   raw.orders=Array.isArray(raw.orders)?raw.orders:[];
   raw.npcs=Array.isArray(raw.npcs)?raw.npcs:[];
-  raw.npcTick=Number(raw.npcTick||0);
+  raw.npcTick=Number(raw.npcTick||0);raw.visitRevenue=Number.isSafeInteger(raw.visitRevenue)?raw.visitRevenue:0;raw.visitsCompleted=Number.isSafeInteger(raw.visitsCompleted)?raw.visitsCompleted:0;raw.visitOperations=Array.isArray(raw.visitOperations)?raw.visitOperations:[];
   return raw
 }
 
@@ -41,7 +41,7 @@ function seedNpcState(state,now){
   for(let i=0;i<18;i++){const type=types[i%types.length],home=NPC_TYPES[type].home;state.npcs.push({id:'npc_'+i,type,phase:'home',home,createdAt:now,cycle:i%4});}
 }
 function businessCapacity(player,businessId){const b=player.businesses?.[businessId];if(!b)return 0;const e=b.employees||{};return Math.max(1,2+(Number(e.cashier)||0)*2+(Number(e.manager)||0)+(Number(b.expansionLevel)||0)*2)}
-function completeNpcVisit(player,state,npc,now){const id=npc.targetBusiness,b=player.businesses?.[id],def=BUSINESS_DEMAND[id];if(!b||!def)return null;const level=Math.max(1,Number(b.level)||1),reward=Math.max(10,Math.round(def.ticket*(1+(level-1)*.06))),xp=Math.max(1,Math.round(reward/25));player.balance+=reward;player.xp+=xp;player.level=levelFromXp(player.xp);player.stats.totalEarned=Number(player.stats.totalEarned||0)+reward;player.stats.totalIncome=Number(player.stats.totalIncome||0)+reward;player.stats.visitsCompleted=Number(player.stats.visitsCompleted||0)+1;state.visitRevenue=Number(state.visitRevenue||0)+reward;state.visitsCompleted=Number(state.visitsCompleted||0)+1;state.lastVisitAt=now;return {npcId:npc.id,businessId:id,reward,xp}}
+function completeNpcVisit(player,state,npc,now){const id=npc.targetBusiness,b=player.businesses?.[id],def=BUSINESS_DEMAND[id];if(!b||!def)return null;const level=Math.max(1,Number(b.level)||1),reward=Math.max(10,Math.round(def.ticket*(1+(level-1)*.06))),xp=Math.max(1,Math.round(reward/25));if(!Number.isSafeInteger(reward)||!Number.isSafeInteger(xp))throw new Error('Invalid NPC visit reward');player.balance+=reward;player.xp+=xp;player.level=levelFromXp(player.xp);player.stats.totalEarned=Number(player.stats.totalEarned||0)+reward;player.stats.totalIncome=Number(player.stats.totalIncome||0)+reward;player.stats.visitsCompleted=Number(player.stats.visitsCompleted||0)+1;player.stats.visitRevenue=Number(player.stats.visitRevenue||0)+reward;state.visitRevenue=Number(state.visitRevenue||0)+reward;state.visitsCompleted=Number(state.visitsCompleted||0)+1;state.lastVisitAt=now;state.visitOperations.push({id:'npc_visit_'+npc.id+'_'+now,npcId:npc.id,businessId:id,reward,xp,at:now});return {npcId:npc.id,businessId:id,reward,xp}}
 function simulateNpcs(player,state,now){
   seedNpcState(state,now);
   const owned=Object.keys(player.businesses||{}), tick=Math.floor(now/15000);
@@ -103,7 +103,7 @@ export function getCityLive(player,now=Date.now()){
     npcs:npcSnapshot(player,state),
     queues:Object.fromEntries(Object.entries(state.queue||{})),
     service:Object.fromEntries(Object.entries(state.service||{})),
-    visitsCompleted:Number(state.visitsCompleted||0),visitRevenue:Number(state.visitRevenue||0),
+    visitsCompleted:Number(state.visitsCompleted||0),visitRevenue:Number(state.visitRevenue||0),visitOperations:state.visitOperations.map(v=>({...v})),
     demand:Object.fromEntries(owned.map(id=>[id,businessDemand(player,id,state)])),
     totalIncomePerHour:income,
     generatedAt:now
@@ -127,12 +127,12 @@ export function claimCityOrder(player,orderId,now=Date.now()){
   state.districts[BUSINESS_SPECIALIZATIONS[order.businessId]?.district||'center']=Math.min(100,(state.districts[BUSINESS_SPECIALIZATIONS[order.businessId]?.district||'center']||0)+2);
   return {orderId:order.id,reward,xp:Number(order.xp)||0,balance:player.balance};
 }
-export function cityAnalytics(player,now=Date.now()){
+export function consumeVisitOperations(player){const state=ensure(player,Date.now());const out=state.visitOperations.map(v=>({...v}));state.visitOperations=[];return out}\n\nexport function cityAnalytics(player,now=Date.now()){
   const live=getCityLive(player,now),st=player.stats||{};
-  return {live,summary:{
+  return {live,visitOperations:live.visitOperations,summary:{
     balance:Number(player.balance||0),xp:Number(player.xp||0),level:Number(player.level||1),
     incomePerHour:Number(live.totalIncomePerHour||0),orders:Number(st.ordersCompleted||0),
-    orderRevenue:Number(st.orderRevenue||0),totalEarned:Number(st.totalEarned||0),
+    orderRevenue:Number(st.orderRevenue||0),visitRevenue:Number(st.visitRevenue||0),visitsCompleted:Number(st.visitsCompleted||0),totalEarned:Number(st.totalEarned||0),
     businesses:Object.keys(player.businesses||{}).length
   }}
 }
