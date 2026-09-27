@@ -6,7 +6,7 @@ if(tg){tg.ready();tg.expand();try{tg.enableClosingConfirmation?.()}catch{}}
 const op=t=>t+"_"+crypto.randomUUID();
 const money=n=>new Intl.NumberFormat("ru-RU").format(Math.max(0,Math.floor(Number(n)||0)))+" ₽";
 
-function setStatus(message,error=false){const el=document.querySelector("#status");if(el){el.textContent=message;el.dataset.error=error?"1":"0"}}
+function setStatus(message,error=false){const el=document.querySelector("#status");if(!el)return;clearTimeout(window.__mrGusStatusTimer);el.textContent=message;el.dataset.error=error?"1":"0";if(message===t("status.waitingTelegram"))return;window.__mrGusStatusTimer=setTimeout(()=>{if(el.textContent===message){el.textContent="";el.dataset.error="0"}},error?3500:2200)}
 function friendlyError(error){
   const message=String(error?.message||"Ошибка");
   const map={
