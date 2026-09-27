@@ -222,8 +222,9 @@ export function hourlyProfit(player,businessId){
   const expansion=(owned.expansionLevel||0)*EXPANSION.multiplierPerLevel;
   const employeeMultiplier=Object.entries(owned.employees||{}).reduce((m,[role,count])=>m*(EMPLOYEE_ROLES[role]?.incomeMultiplier||1)**count,1);
   const investmentMultiplier=1+Math.min(0.25,(owned.investment||0)/100_000*INVESTMENT.profitPer100k);
+  const boost=(owned.boostUntil&&owned.boostUntil>Date.now()?owned.boostMultiplier||1:1);
   const salary=Object.entries(owned.employees||{}).reduce((sum,[role,count])=>sum+(EMPLOYEE_ROLES[role]?.salaryPerHour||0)*count,0);
-  return Math.max(0,Math.floor((d.grossPerHour*scale*expansion*employeeMultiplier*investmentMultiplier))-Math.floor(d.expensesPerHour*scale+salary));
+  return Math.max(0,Math.floor((d.grossPerHour*scale*expansion*employeeMultiplier*investmentMultiplier*boost))-Math.floor(d.expensesPerHour*scale+salary));
 }
 export function collectOfflineIncome(player,now=Date.now(),incomeMultiplier=1){
   assertPlayer(player);if(!Number.isSafeInteger(now)||now<0)throw new Error('Invalid timestamp');if(typeof incomeMultiplier!=='number'||!Number.isFinite(incomeMultiplier)||incomeMultiplier<0||incomeMultiplier>10)throw new Error('Invalid income multiplier');
