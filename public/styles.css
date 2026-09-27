@@ -593,3 +593,14 @@ body{
 .home-marker{box-shadow:0 8px 22px rgba(0,0,0,.4),0 0 0 3px rgba(118,108,255,.08)}
 .city-map:after{content:"";position:absolute;inset:0;z-index:2;pointer-events:none;background:linear-gradient(180deg,rgba(255,255,255,.018),transparent 30%,rgba(0,0,0,.08));border-radius:inherit}
 .map-marker{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+
+/* Mr.Gus UI pass 11 — city routes and building scale */
+.map-route{position:absolute;z-index:2;height:3px;border-radius:99px;background:linear-gradient(90deg,rgba(118,108,255,.05),rgba(118,108,255,.28),rgba(118,108,255,.05));box-shadow:0 0 10px rgba(118,108,255,.08);transform-origin:left center;pointer-events:none}
+.route-home-trade{left:20%;top:37%;width:34%;transform:rotate(25deg)}
+.route-home-center{left:45%;top:53%;width:29%;transform:rotate(-75deg)}
+.route-home-industry{left:52%;top:58%;width:31%;transform:rotate(-18deg)}
+.business-marker em{max-width:92px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.business-marker{transition:transform .16s ease,border-color .16s ease,box-shadow .16s ease}
+.business-marker.building-lg span{font-size:27px;line-height:28px}
+.business-marker.building-xl span{font-size:31px;line-height:32px}
+@media(max-width:500px){.business-marker em{max-width:76px;font-size:7px}.business-marker.building-lg span{font-size:24px}.business-marker.building-xl span{font-size:28px}.map-route{height:2px}}
