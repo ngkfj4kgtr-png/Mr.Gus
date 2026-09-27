@@ -822,3 +822,8 @@ body:has(.city-map-card.page-active) .map-center-label{bottom:62px}
 .map-hud{position:absolute;z-index:65;left:12px;top:62px;display:flex;gap:6px;flex-wrap:wrap;max-width:calc(100% - 80px);pointer-events:none}
 .map-hud span{padding:7px 9px;border:1px solid rgba(120,140,170,.25);border-radius:11px;background:rgba(7,11,18,.76);color:#e9eef7;font-size:9px;font-weight:900;backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px);box-shadow:0 6px 16px rgba(0,0,0,.24)}
 @media(max-width:500px){.map-hud{left:8px;top:62px;gap:4px}.map-hud span{padding:6px 7px;font-size:8px}}
+
+.map-live-feed{position:absolute;z-index:65;left:12px;bottom:62px;display:flex;align-items:center;gap:7px;padding:7px 10px;border:1px solid rgba(90,220,150,.22);border-radius:12px;background:rgba(7,11,18,.72);color:#dfeee5;font-size:9px;font-weight:900;pointer-events:none;backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px)}
+.map-live-dot{width:7px;height:7px;border-radius:50%;background:#5de19a;box-shadow:0 0 0 0 rgba(93,225,154,.6);animation:mapLivePulse 1.6s infinite}
+@keyframes mapLivePulse{0%{box-shadow:0 0 0 0 rgba(93,225,154,.55)}70%{box-shadow:0 0 0 7px rgba(93,225,154,0)}100%{box-shadow:0 0 0 0 rgba(93,225,154,0)}}
+@media(max-width:500px){.map-live-feed{left:8px;bottom:62px;font-size:8px;padding:6px 8px}}
