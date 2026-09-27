@@ -9,6 +9,7 @@ export const OPERATION_TYPES = Object.freeze({
   BUSINESS_INVESTMENT: 'business_investment',
   BUSINESS_BOOST: 'business_boost',
   SHOP_PURCHASE: 'shop_purchase',
+  DAILY_REWARD: 'daily_reward',
   INCOME_COLLECTION: 'income_collection',
   ACHIEVEMENT_REWARD: 'achievement_reward',
   GOAL_REWARD: 'goal_reward',
