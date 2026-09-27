@@ -186,3 +186,82 @@ body{
   .card{padding:14px}
   .visual-card{min-height:190px}
 }
+
+/* Mr.Gus UI pass 3 — section-specific presentation, no logic changes */
+[data-page="tasks"] .section-head,
+[data-page="achievements"] .section-head,
+[data-page="daily"] .section-head,
+[data-page="shop"] .section-head,
+[data-page="event"] .section-head{margin-bottom:10px}
+
+[data-page="tasks"] .mini-card{
+  position:relative;padding-left:16px;
+  border-left:3px solid #766cff;
+}
+[data-page="tasks"] .mini-card .progress{
+  height:8px;border-radius:99px;margin:8px 0 4px;
+}
+[data-page="tasks"] .mini-card .btn{margin-top:7px}
+
+[data-page="achievements"] .mini-card{
+  position:relative;overflow:hidden;
+  padding:15px 14px 15px 52px;
+  background:linear-gradient(145deg,#171d2a,#0d121a);
+}
+[data-page="achievements"] .mini-card:before{
+  content:"🏆";position:absolute;left:14px;top:15px;
+  font-size:25px;filter:drop-shadow(0 3px 7px rgba(118,108,255,.25));
+}
+[data-page="achievements"] .mini-card:after{
+  content:"";position:absolute;right:-25px;top:-25px;width:75px;height:75px;
+  border-radius:50%;background:rgba(118,108,255,.07);pointer-events:none;
+}
+
+[data-page="daily"] .event-card{
+  min-height:190px;
+  display:flex;flex-direction:column;justify-content:center;
+  text-align:center;
+  border-color:#3a4560;
+}
+[data-page="daily"] .event-card .btn{
+  width:100%;margin-top:12px;
+}
+[data-page="daily"] .mini-card{
+  text-align:center;border-color:#303b52;
+}
+
+[data-page="shop"] .mini-card{
+  border-color:#303b50;
+  background:linear-gradient(145deg,#171e2b,#0c1118);
+}
+[data-page="shop"] .mini-card .btn{
+  width:100%;margin-top:8px;
+}
+[data-page="shop"] .pill{font-weight:800}
+
+[data-page="event"] .event-card{
+  min-height:210px;
+  border:1px solid #3d4770;
+  box-shadow:0 14px 34px rgba(0,0,0,.24);
+}
+[data-page="event"] .progress{
+  height:11px;border-radius:99px;margin:11px 0;
+}
+[data-page="event"] .btn{width:100%;margin-top:9px}
+
+[data-page] .section-head .pill{
+  white-space:nowrap;
+  font-size:11px;
+  padding:5px 9px;
+}
+
+@media(max-width:500px){
+  [data-page="tasks"] .mini-card,
+  [data-page="achievements"] .mini-card,
+  [data-page="shop"] .mini-card{padding-top:13px;padding-bottom:13px}
+  [data-page="daily"] .event-card,
+  [data-page="event"] .event-card{min-height:175px}
+}
+@media(prefers-reduced-motion:reduce){
+  .page-screen,.mini-card,.btn,.quick-bar button{animation:none!important;transition:none!important}
+}
