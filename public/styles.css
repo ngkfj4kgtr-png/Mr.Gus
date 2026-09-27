@@ -1106,3 +1106,136 @@ body:has(.city-map-card) .page-screen[data-page]:not(.city-map-card){display:non
   .city-map .city-business-routes{opacity:.28!important}
   .city-map .map-plaza{opacity:.72!important}
 }
+
+
+/* Mr.Gus map layout v3 — explicit zones for iPhone */
+body.map-fullscreen{overflow:hidden}
+@media(max-width:600px){
+  body.map-fullscreen .hero,
+  body.map-fullscreen #status,
+  body.map-fullscreen .stats,
+  body.map-fullscreen .visual-card,
+  body.map-fullscreen .progress-card,
+  body.map-fullscreen .page-screen:not(.city-map-card),
+  body.map-fullscreen > .wrap > .actions{display:none!important}
+
+  body.map-fullscreen .wrap{padding:0!important;margin:0!important;max-width:none!important}
+  body.map-fullscreen .city-map-card,
+  body.map-fullscreen .city-map-card.page-active{
+    display:block!important;position:fixed!important;inset:0!important;
+    z-index:900!important;margin:0!important;padding:0!important;
+    width:100%!important;height:100dvh!important;min-height:100dvh!important;
+    border:0!important;border-radius:0!important;background:#071019!important;
+  }
+  body.map-fullscreen #cityMap,
+  body.map-fullscreen .city-map{
+    width:100%!important;height:100dvh!important;min-height:100dvh!important;
+    border:0!important;border-radius:0!important;overflow:hidden!important;
+  }
+
+  /* One compact top HUD: balance + level only */
+  body.map-fullscreen .city-map .map-hud{
+    left:10px!important;top:max(10px,env(safe-area-inset-top) + 8px)!important;
+    right:auto!important;max-width:150px!important;z-index:160!important;
+    gap:5px!important;flex-wrap:nowrap!important;
+  }
+  body.map-fullscreen .city-map .map-hud span{
+    min-width:0!important;padding:6px 8px!important;border-radius:10px!important;
+    font-size:10px!important;line-height:1!important;
+    background:rgba(7,13,21,.94)!important;
+    border:1px solid rgba(145,160,185,.24)!important;
+    box-shadow:0 5px 16px rgba(0,0,0,.22)!important;
+  }
+
+  /* City title is centered and never shares the HUD row */
+  body.map-fullscreen .city-map .map-city-status{
+    top:max(10px,env(safe-area-inset-top) + 8px)!important;
+    left:50%!important;right:auto!important;transform:translateX(-50%)!important;
+    max-width:42%!important;padding:6px 9px!important;z-index:160!important;
+    display:flex!important;justify-content:center!important;gap:4px!important;
+    overflow:hidden!important;white-space:nowrap!important;
+  }
+  body.map-fullscreen .city-map .map-city-status b{font-size:9px!important}
+  body.map-fullscreen .city-map .map-city-status span{display:none!important}
+
+  /* Navigation controls have one dedicated right column */
+  body.map-fullscreen .city-map .map-compass{
+    top:max(10px,env(safe-area-inset-top) + 8px)!important;
+    left:auto!important;right:62px!important;z-index:161!important;
+    width:30px!important;height:30px!important;
+  }
+  body.map-fullscreen .city-map .map-zoom-controls{
+    top:50%!important;right:8px!important;bottom:auto!important;
+    transform:translateY(-50%)!important;z-index:170!important;
+    display:flex!important;flex-direction:column!important;gap:5px!important;
+  }
+  body.map-fullscreen .city-map .map-zoom-controls button{
+    width:38px!important;height:38px!important;min-width:38px!important;
+    border-radius:11px!important;
+  }
+
+  /* Service dock: six functions in one safe bottom row */
+  body.map-fullscreen .city-map .city-service-marker{
+    top:88%!important;
+    width:42px!important;min-width:42px!important;max-width:42px!important;
+    height:42px!important;padding:2px!important;border-radius:12px!important;
+    z-index:150!important;
+    background:rgba(7,13,21,.94)!important;
+    border:1px solid rgba(145,160,185,.25)!important;
+    box-shadow:0 6px 16px rgba(0,0,0,.28)!important;
+  }
+  body.map-fullscreen .city-map .city-service-marker span{font-size:20px!important;line-height:1!important}
+  body.map-fullscreen .city-map .city-service-marker small,
+  body.map-fullscreen .city-map .city-service-marker em{display:none!important}
+
+  /* Territories stay in the lower map corners, above the dock */
+  body.map-fullscreen .city-map .territory-marker{
+    z-index:145!important;width:44px!important;min-width:44px!important;
+    max-width:44px!important;height:44px!important;padding:2px!important;
+  }
+  body.map-fullscreen .city-map .territory-marker small,
+  body.map-fullscreen .city-map .territory-marker em{display:none!important}
+
+  /* Business and event objects occupy the middle playfield */
+  body.map-fullscreen .city-map .business-marker{
+    z-index:130!important;width:56px!important;min-width:56px!important;
+    max-width:56px!important;height:56px!important;padding:4px!important;
+  }
+  body.map-fullscreen .city-map .business-marker span{font-size:25px!important;line-height:26px!important}
+  body.map-fullscreen .city-map .business-marker small,
+  body.map-fullscreen .city-map .business-marker em{display:none!important}
+
+  body.map-fullscreen .city-map .city-event-marker{
+    z-index:135!important;width:46px!important;min-width:46px!important;
+    max-width:46px!important;height:46px!important;padding:2px!important;
+  }
+  body.map-fullscreen .city-map .city-event-marker small,
+  body.map-fullscreen .city-map .city-event-marker em{display:none!important}
+
+  /* Home/base marker is centered below the playfield */
+  body.map-fullscreen .city-map .home-marker{
+    z-index:140!important;width:58px!important;min-width:58px!important;
+    max-width:58px!important;height:58px!important;
+  }
+  body.map-fullscreen .city-map .home-marker small,
+  body.map-fullscreen .city-map .home-marker em{display:none!important}
+
+  /* Remove non-interactive labels/layers that visually compete with controls */
+  body.map-fullscreen .city-map .map-district,
+  body.map-fullscreen .city-map .map-road,
+  body.map-fullscreen .city-map .map-water,
+  body.map-fullscreen .city-map .map-route,
+  body.map-fullscreen .city-map .business-route,
+  body.map-fullscreen .city-map .map-center-label,
+  body.map-fullscreen .city-map .map-scale-label,
+  body.map-fullscreen .city-map .map-legend{display:none!important}
+
+  body.map-fullscreen .city-map .city-houses-layer{opacity:.22!important}
+  body.map-fullscreen .city-map .city-street-life{opacity:.28!important}
+  body.map-fullscreen .city-map .city-traffic,
+  body.map-fullscreen .city-map .city-life,
+  body.map-fullscreen .city-map .city-logistics,
+  body.map-fullscreen .city-map .city-economy-flow,
+  body.map-fullscreen .city-map .city-business-life,
+  body.map-fullscreen .city-map .city-business-routes{opacity:.22!important}
+}
