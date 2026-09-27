@@ -512,3 +512,61 @@ body{
   .status:not(:empty){animation:none}
   .progress-fill{transition:none}
 }
+
+/* Mr.Gus UI pass 8 — city map */
+.city-map-card{overflow:hidden}
+.city-map{
+  position:relative;min-height:340px;border-radius:20px;overflow:hidden;
+  background:
+    radial-gradient(circle at 18% 22%,rgba(118,108,255,.12),transparent 22%),
+    radial-gradient(circle at 82% 72%,rgba(68,132,255,.10),transparent 24%),
+    linear-gradient(145deg,#0e1620,#091019);
+  border:1px solid #2b374b;
+  box-shadow:inset 0 0 50px rgba(0,0,0,.24);
+}
+.map-water{position:absolute;right:-12%;top:-5%;width:34%;height:115%;background:rgba(53,116,156,.12);transform:rotate(8deg);border-left:2px solid rgba(75,143,180,.12)}
+.map-zone{position:absolute;border:1px solid rgba(118,108,255,.10);background:rgba(118,108,255,.025);border-radius:28px}
+.zone-1{left:5%;top:8%;width:37%;height:34%;transform:rotate(-5deg)}
+.zone-2{left:35%;top:47%;width:40%;height:38%;transform:rotate(4deg)}
+.zone-3{left:66%;top:8%;width:25%;height:31%;transform:rotate(-7deg)}
+.map-road{position:absolute;background:rgba(142,153,171,.09);border:1px solid rgba(142,153,171,.07);border-radius:99px}
+.road-a{left:-10%;top:43%;width:120%;height:22%;transform:rotate(-8deg)}
+.road-b{left:44%;top:-18%;width:12%;height:135%;transform:rotate(16deg)}
+.road-c{left:-8%;top:71%;width:116%;height:9%;transform:rotate(10deg)}
+.map-marker{
+  position:absolute;z-index:4;transform:translate(-50%,-50%);
+  display:flex;flex-direction:column;align-items:center;gap:2px;
+  min-width:54px;padding:5px 6px 4px;border:1px solid #35435a;
+  border-radius:13px;background:rgba(11,16,24,.91);
+  color:#fff;box-shadow:0 7px 18px rgba(0,0,0,.34);
+  backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px);
+  cursor:pointer;transition:transform .16s ease,border-color .16s ease,box-shadow .16s ease
+}
+.map-marker:hover{transform:translate(-50%,-50%) scale(1.08);border-color:#756cff;box-shadow:0 10px 24px rgba(0,0,0,.42),0 0 0 3px rgba(118,108,255,.08)}
+.map-marker:active{transform:translate(-50%,-50%) scale(.95)}
+.map-marker span{font-size:23px;line-height:24px}
+.map-marker small{max-width:78px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:9px;font-weight:850;color:#c4ccda}
+.home-marker{width:76px;min-width:76px;border-color:#655df0;background:linear-gradient(180deg,rgba(38,36,74,.94),rgba(12,16,25,.94));animation:gusPulse 2.5s infinite}
+.business-marker{animation:mapFloat 3s ease-in-out infinite}
+.business-marker:nth-of-type(2n){animation-delay:-1.2s}
+@keyframes mapFloat{0%,100%{transform:translate(-50%,-50%)}50%{transform:translate(-50%,calc(-50% - 3px))}}
+.map-label{
+  position:absolute;left:50%;bottom:10px;transform:translateX(-50%);z-index:3;
+  padding:6px 11px;border:1px solid #303d53;border-radius:999px;
+  background:rgba(7,10,16,.78);font-size:10px;font-weight:850;color:#9da8bb;
+  backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)
+}
+.map-legend{display:flex;flex-wrap:wrap;gap:7px;margin-top:9px}
+.map-legend span,.map-legend b{padding:7px 9px;border-radius:10px;background:#111925;border:1px solid #273347;font-size:10px}
+.map-legend b{margin-left:auto;color:#aaa3ff}
+@media(max-width:500px){
+  .city-map{min-height:300px;border-radius:18px}
+  .map-marker{min-width:48px;padding:4px 5px 3px;border-radius:11px}
+  .map-marker span{font-size:20px}
+  .map-marker small{font-size:8px;max-width:64px}
+  .home-marker{min-width:68px}
+  .map-legend b{margin-left:0}
+}
+@media(prefers-reduced-motion:reduce){
+  .home-marker,.business-marker{animation:none}
+}
