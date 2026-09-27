@@ -466,3 +466,49 @@ body{
 @media(prefers-reduced-motion:reduce){
   .btn:after,.quick-bar button:after{transition:none}
 }
+
+/* Mr.Gus UI pass 7 — tactile feedback */
+@keyframes gusPop{
+  0%{opacity:.45;transform:translate(-50%,-46%) scale(.94)}
+  55%{opacity:1;transform:translate(-50%,-50%) scale(1.02)}
+  100%{opacity:1;transform:translate(-50%,-50%) scale(1)}
+}
+@keyframes gusPulse{
+  0%{box-shadow:0 0 0 0 rgba(118,108,255,.32)}
+  70%{box-shadow:0 0 0 10px rgba(118,108,255,0)}
+  100%{box-shadow:0 0 0 0 rgba(118,108,255,0)}
+}
+.status:not(:empty){
+  animation:gusPop .2s ease-out both;
+}
+.card .reward{
+  display:inline-flex;
+  align-items:center;
+  min-height:28px;
+  padding:4px 9px;
+  border-radius:9px;
+  background:rgba(114,227,154,.08);
+  border:1px solid rgba(114,227,154,.18);
+  color:#8be9aa;
+  font-weight:900;
+}
+.progress-fill{
+  transition:width .45s ease;
+}
+.mini-card .progress-fill{
+  box-shadow:0 0 12px rgba(118,108,255,.24);
+}
+.page-screen .btn:not(:disabled):focus-visible,
+.quick-bar button:focus-visible{
+  outline:2px solid #a49eff;
+  outline-offset:2px;
+}
+.btn:disabled{
+  opacity:.52;
+  cursor:not-allowed;
+  filter:saturate(.65);
+}
+@media(prefers-reduced-motion:reduce){
+  .status:not(:empty){animation:none}
+  .progress-fill{transition:none}
+}
