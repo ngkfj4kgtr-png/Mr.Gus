@@ -8,7 +8,7 @@ import { validateOperationId, OPERATION_TYPES } from './src/operations.js';
 import { createPlayer,claimTask,buyBusiness,upgradeBusiness,collectOfflineIncome,hourlyProfit,availableTasks,availableAchievements,availableGoals,claimAchievement,claimGoal,currentEvent,claimEvent,BUSINESS,canBuyBusiness,businessUnlockLevel,xpForLevel,hireEmployee,expandBusiness,addInvestment,activateBusinessBoost,availableShop,buyShopItem,dailyActivity,claimDailyActivity } from './src/economy.js';
 import { checkRateLimit,validateSameOrigin,validateFetchMetadata,securityHeaders,clearRateLimitBuckets } from './src/http-security.js';
 import { getRankings,getProfile,isAdminTelegramId,getAdminSnapshot,searchAdminUsers,setBlocked,writeAudit,writeError } from './src/social.js';
-import { cityAnalytics,claimCityOrder } from './src/city-life.js';
+import { cityAnalytics,claimCityOrder,consumeVisitOperations } from './src/city-life.js';
 import { recordCitySnapshot,getCityHistory } from './src/db.js';
 
 const root=join(fileURLToPath(new URL('.',import.meta.url)),'public');
@@ -60,7 +60,7 @@ if(req.method==='POST'&&url.pathname==='/api/auth/logout'){const c=parseCookies(
 if(url.pathname.startsWith('/api/')){
 const a=await auth(req,res);if(!a)return;
 if(!a.demo&&req.method==='GET'&&url.pathname==='/api/rankings')return sendJson(res,200,await getRankings(url.searchParams.get('limit'),a.user.telegram_id));
-if(!a.demo&&req.method==='GET'&&url.pathname==='/api/city/live'){const tx=await withPlayerTransaction(a.user.id,async(player)=>cityAnalytics(player));return sendJson(res,200,tx.result.live)}
+if(!a.demo&&req.method==='GET'&&url.pathname==='/api/city/live'){const tx=await withPlayerTransaction(a.user.id,async(player,client)=>{const analytics=cityAnalytics(player);for(const visit of analytics.visitOperations||[]){await recordOperation(client,{operationId:visit.id,type:OPERATION_TYPES.NPC_VISIT_REVENUE,userId:a.user.id,reward:visit.reward,at:visit.at});}consumeVisitOperations(player);return analytics});return sendJson(res,200,tx.result.live)}
 if(!a.demo&&req.method==='GET'&&url.pathname==='/api/analytics'){const range=['24h','7d','30d'].includes(url.searchParams.get('range'))?url.searchParams.get('range'):'24h';return sendJson(res,200,{range,points:await getCityHistory(a.user.id,range)})}
 if(!a.demo&&req.method==='GET'&&url.pathname==='/api/profile'){const profile=await getProfile(a.user.telegram_id);if(!profile)return sendJson(res,404,{error:'Profile not found'});return sendJson(res,200,profile);}
 if(!a.demo&&req.method==='GET'&&url.pathname==='/api/admin/users'){if(!isAdminTelegramId(a.user.telegram_id))return sendJson(res,403,{error:'Forbidden'});return sendJson(res,200,{users:await searchAdminUsers(url.searchParams.get('q'),url.searchParams.get('limit'))});}
@@ -83,7 +83,7 @@ else if(url.pathname==='/api/shop/buy')action=buyShopItem(player,String(body.ite
 else if(url.pathname==='/api/daily/claim')action=claimDailyActivity(player,Date.now());
 else return sendJson(res,404,{error:'Endpoint not found'});
 demoOperations.add(`demo-user:${operationId}`);demoPlayers.set('demo-user',player);return sendJson(res,200,{...serialize(player,a.user),action})}return sendJson(res,405,{error:'Method not allowed'})}
-if(req.method==='GET'&&url.pathname==='/api/state'){const tx=await withPlayerTransaction(a.user.id,async(player,client)=>{const from=player.lastIncomeAt,now=Date.now(),out=collectOfflineIncome(player,now,currentEvent(now).incomeMultiplier);if(out.seconds>0&&from!==null){const operationId=`income_auto_${from}_${now}`;await recordOperation(client,{operationId,type:OPERATION_TYPES.INCOME_COLLECTION,userId:a.user.id,reward:out.income,at:now})}const live=cityAnalytics(player,now).live;await recordCitySnapshot(client,a.user.id,player,live);return{out,live}});return sendJson(res,200,{...serialize(tx.player,a.user),cityLive:tx.result.live,action:tx.result.out})}
+if(req.method==='GET'&&url.pathname==='/api/state'){const tx=await withPlayerTransaction(a.user.id,async(player,client)=>{const from=player.lastIncomeAt,now=Date.now(),out=collectOfflineIncome(player,now,currentEvent(now).incomeMultiplier);if(out.seconds>0&&from!==null){const operationId=`income_auto_${from}_${now}`;await recordOperation(client,{operationId,type:OPERATION_TYPES.INCOME_COLLECTION,userId:a.user.id,reward:out.income,at:now})}const analytics=cityAnalytics(player,now);for(const visit of analytics.visitOperations||[]){await recordOperation(client,{operationId:visit.id,type:OPERATION_TYPES.NPC_VISIT_REVENUE,userId:a.user.id,reward:visit.reward,at:visit.at});}consumeVisitOperations(player);const live=analytics.live;await recordCitySnapshot(client,a.user.id,player,live);return{out,live}});return sendJson(res,200,{...serialize(tx.player,a.user),cityLive:tx.result.live,action:tx.result.out})}
 if(req.method==='POST'){
 const allowedPostEndpoints=new Set(['/api/admin/block','/api/admin/unblock','/api/task/claim','/api/business/buy','/api/business/upgrade','/api/income/collect','/api/achievement/claim','/api/goal/claim','/api/event/claim','/api/business/employee/hire','/api/business/expand','/api/business/invest','/api/business/boost','/api/shop/buy','/api/daily/claim']);
 if(!allowedPostEndpoints.has(url.pathname))return sendJson(res,404,{error:'Endpoint not found'});
