@@ -1743,3 +1743,87 @@ body.map-fullscreen{overflow:hidden}
     max-height:calc(100dvh - 150px)!important;
   }
 }
+
+
+/* Mr.Gus UI repair 11 — tablet, landscape and panel-open pass */
+@media (min-width:601px) and (max-width:900px){
+  body.map-fullscreen .city-map{
+    min-height:100dvh!important;
+    height:100dvh!important;
+    border-radius:0!important;
+    overflow:hidden!important;
+  }
+  body.map-fullscreen .city-map .map-hud{
+    left:16px!important;
+    top:max(16px,env(safe-area-inset-top) + 10px)!important;
+  }
+  body.map-fullscreen .city-map .map-city-status{
+    top:max(16px,env(safe-area-inset-top) + 10px)!important;
+    max-width:260px!important;
+  }
+  body.map-fullscreen .city-map .map-compass{
+    top:max(16px,env(safe-area-inset-top) + 10px)!important;
+    right:64px!important;
+  }
+  body.map-fullscreen .city-map .city-service-marker{
+    width:56px!important;min-width:56px!important;max-width:56px!important;
+    height:56px!important;
+    bottom:calc(env(safe-area-inset-bottom) + 14px)!important;
+  }
+  body.map-fullscreen .city-map .map-zoom-controls{
+    right:14px!important;
+    top:50%!important;
+    bottom:auto!important;
+    transform:translateY(-50%)!important;
+  }
+  body.map-fullscreen.map-panel-open .city-map #cityPanel{
+    left:50%!important;
+    right:auto!important;
+    width:min(560px,calc(100% - 32px))!important;
+    bottom:calc(env(safe-area-inset-bottom) + 16px)!important;
+    max-height:calc(100dvh - 110px)!important;
+    transform:translateX(-50%)!important;
+    box-sizing:border-box!important;
+  }
+  body.map-fullscreen.map-panel-open .city-map #cityPanel .city-panel-scroll{
+    max-height:calc(100dvh - 205px)!important;
+  }
+}
+
+@media (max-width:900px) and (orientation:landscape){
+  body.map-fullscreen .city-map .map-city-status{
+    max-width:180px!important;
+    height:28px!important;
+    padding:5px 10px!important;
+  }
+  body.map-fullscreen .city-map .map-hud{
+    top:max(8px,env(safe-area-inset-top) + 5px)!important;
+  }
+  body.map-fullscreen .city-map .map-compass{
+    top:max(8px,env(safe-area-inset-top) + 5px)!important;
+  }
+  body.map-fullscreen .city-map .home-marker{
+    top:57%!important;
+  }
+  body.map-fullscreen .city-map .map-zoom-controls{
+    top:50%!important;
+  }
+  body.map-fullscreen.map-panel-open .city-map #cityPanel{
+    top:max(44px,env(safe-area-inset-top) + 38px)!important;
+    bottom:8px!important;
+    max-height:none!important;
+  }
+  body.map-fullscreen.map-panel-open .city-map #cityPanel .city-panel-scroll{
+    max-height:calc(100dvh - 125px)!important;
+  }
+}
+
+@media (min-width:901px){
+  body.map-fullscreen .city-map #cityPanel{
+    left:50%!important;
+    right:auto!important;
+    width:min(620px,calc(100% - 48px))!important;
+    transform:translateX(-50%)!important;
+    box-sizing:border-box!important;
+  }
+}
