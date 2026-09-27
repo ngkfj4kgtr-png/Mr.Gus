@@ -178,6 +178,9 @@
 }
 
 
+/* Layer contract: roads stay under moving traffic; people above roads; business markers above both. */
+.city-houses-layer{z-index:3}.city-street-life{z-index:3}.city-traffic{z-index:7}.city-life{z-index:9}.city-logistics{z-index:8}.city-business-life{z-index:10}.city-economy-flow{z-index:11}.city-business-routes{z-index:6}.business-marker{z-index:20}.city-service-marker,.city-event-marker,.territory-marker,.home-marker{z-index:21}.map-ui-layer{z-index:60;position:absolute;inset:0;pointer-events:none}.map-ui-layer [data-city-open]{pointer-events:auto}.city-traffic-light{pointer-events:none}.city-bus,.city-car,.city-truck,.city-person,.business-worker{pointer-events:none}
+
 /* Final city infrastructure visual pass: roads → buildings → transport → NPC → business → lighting → mobile */
 .map-road::before{content:"";position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(90deg,transparent 0 42px,rgba(246,220,143,.68) 42px 52px,transparent 52px 88px);opacity:.42;mix-blend-mode:screen}
 .road-a::before,.road-c::before{background:repeating-linear-gradient(90deg,transparent 0 34px,rgba(246,220,143,.72) 34px 43px,transparent 43px 74px)}
@@ -211,4 +214,18 @@
  .city-bus{transform:scale(.78);transform-origin:center}
  .map-marker small{font-size:8px}.map-marker em{font-size:7px}
  .arch-sidewalk{opacity:.9}.arch-road-mark{opacity:.65}
+}
+
+@media(max-width:600px){
+ .city-map{min-height:100dvh;overflow:hidden}
+ .city-houses-layer .arch-house{transform:scale(.82);transform-origin:center center}
+ .business-marker{min-width:46px;max-width:74px;padding:3px 4px 3px;gap:1px}
+ .business-marker .building-art{transform:scale(.84);transform-origin:center bottom}
+ .business-marker small{font-size:8px;max-width:68px}.business-marker em{font-size:7px;max-width:70px;overflow:hidden;text-overflow:ellipsis}
+ .city-person{transform:scale(.9);transform-origin:bottom center}.city-bus{width:36px;height:14px}
+ .city-traffic-light{transform:scale(.72);transform-origin:bottom center}
+ .map-marker.home-marker{min-width:64px;width:64px}.home-marker .building-art{transform:scale(.88);transform-origin:center bottom}
+ .map-hud{left:8px;right:8px;max-width:calc(100% - 16px);overflow:hidden}.map-hud span{white-space:nowrap}
+ .map-city-status{max-width:calc(100% - 16px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+ .map-zoom-controls{right:8px;top:116px}.map-zoom-controls button{width:38px;height:38px;min-width:38px}
 }
