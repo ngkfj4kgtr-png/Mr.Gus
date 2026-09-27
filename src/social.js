@@ -47,10 +47,10 @@ export async function getRankings(limit=50,currentTelegramId=null){
   const achievements=sortRows([...users], 'achievements');
   const weekly=(await p.query(`SELECT u.telegram_id,u.username,u.first_name,u.last_name,u.photo_url,COALESCE(SUM(o.reward_amount),0)::bigint AS points,COUNT(o.id)::bigint AS operations
     FROM users u LEFT JOIN economy_operations o ON o.user_id=u.id AND o.created_at>=date_trunc('week',NOW())
-    WHERE u.blocked=false GROUP BY u.id ORDER BY points DESC,operations DESC,u.id ASC LIMIT $1`,[safe])).rows.map(r=>({...playerRow({...r,balance:0,xp:0,level:0,businesses:{},claimed_achievements:[],stats:{},created_at:null}),points:Number(r.points),operations:Number(r.operations)}));
+    WHERE u.blocked=false GROUP BY u.id ORDER BY points DESC,operations DESC,u.id ASC`).rows.map(r=>({...playerRow({...r,balance:0,xp:0,level:0,businesses:{},claimed_achievements:[],stats:{},created_at:null}),points:Number(r.points),operations:Number(r.operations)}));
   const season=(await p.query(`SELECT u.telegram_id,u.username,u.first_name,u.last_name,u.photo_url,COALESCE(SUM(o.reward_amount),0)::bigint AS points,COUNT(o.id)::bigint AS operations
     FROM users u LEFT JOIN economy_operations o ON o.user_id=u.id AND o.created_at>=date_trunc('month',NOW())
-    WHERE u.blocked=false GROUP BY u.id ORDER BY points DESC,operations DESC,u.id ASC LIMIT $1`,[safe])).rows.map(r=>({...playerRow({...r,balance:0,xp:0,level:0,businesses:{},claimed_achievements:[],stats:{},created_at:null}),points:Number(r.points),operations:Number(r.operations)}));
+    WHERE u.blocked=false GROUP BY u.id ORDER BY points DESC,operations DESC,u.id ASC`).rows.map(r=>({...playerRow({...r,balance:0,xp:0,level:0,businesses:{},claimed_achievements:[],stats:{},created_at:null}),points:Number(r.points),operations:Number(r.operations)}));
   return {overall:trimWithMe(overall),level:trimWithMe(level),capital:trimWithMe(capital),businesses:trimWithMe(businesses),achievements:trimWithMe(achievements),weekly:trimWithMe(weekly),season:trimWithMe(season),seasonKey:new Date().toISOString().slice(0,7)};
 }
 export async function getProfile(telegramId){
