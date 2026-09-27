@@ -974,3 +974,17 @@ body:has(.city-map-card) .page-screen[data-page]:not(.city-map-card){display:non
   .city-map .map-center-label{max-width:72%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .city-map .map-legend{position:relative}
 }
+
+/* Final mobile collision fix: icons stay readable without stacked text blocks */
+@media(max-width:600px){
+  .city-map .map-marker{min-width:42px!important;max-width:48px!important;width:48px!important;height:44px!important;padding:3px!important;border-radius:11px!important;gap:0!important;justify-content:center}
+  .city-map .map-marker span{font-size:20px!important;line-height:21px!important}
+  .city-map .map-marker small,.city-map .map-marker em{display:none!important}
+  .city-map .home-marker{width:58px!important;min-width:58px!important;max-width:58px!important;height:50px!important}
+  .city-map .city-service-marker,.city-map .territory-marker,.city-map .city-event-marker{width:44px!important;min-width:44px!important;max-width:44px!important;height:42px!important}
+  .city-map .city-service-marker:before{display:none}
+  .city-map .city-house{font-size:24px!important}
+  .city-map .city-person{font-size:13px!important}
+  .city-map .city-tree,.city-map .city-lamp{font-size:22px!important}
+  .city-map .map-plaza small,.city-map .map-district span{font-size:6px!important}
+}
