@@ -10,7 +10,7 @@ export const BUSINESS_SPECIALIZATIONS=Object.freeze({
 const CLIENTS=['Антон','Марина','Илья','Светлана','Дмитрий','Ольга','Максим','Алина','Сергей','Елена'];
 const DISTRICTS=['residential','center','commercial','industrial','outskirts'];
 const NPC_TYPES={resident:{name:'Житель',speed:1.0,home:'residential'},student:{name:'Студент',speed:1.25,home:'center'},worker:{name:'Рабочий',speed:.9,home:'industrial'},family:{name:'Семья',speed:.75,home:'residential'},courier:{name:'Курьер',speed:1.45,home:'commercial'}};
-const BUSINESS_DEMAND={kiosk:{base:28,preferred:['resident','family','courier']},cafe:{base:34,preferred:['student','resident','family']},workshop:{base:22,preferred:['worker','resident','courier']},factory:{base:18,preferred:['worker','courier']}};
+const BUSINESS_DEMAND={kiosk:{base:28,preferred:['resident','family','courier'],ticket:45},cafe:{base:34,preferred:['student','resident','family'],ticket:75},workshop:{base:22,preferred:['worker','resident','courier'],ticket:140},factory:{base:18,preferred:['worker','courier'],ticket:220}};
 const DISTRICT_POINTS={residential:[20,72],center:[50,44],commercial:[73,53],industrial:[79,72],outskirts:[12,48]};
 
 function hash(n){let x=Number(n)||0;return Math.abs(Math.sin(x*12.9898)*43758.5453)%1}
@@ -40,6 +40,10 @@ function seedNpcState(state,now){
   const types=Object.keys(NPC_TYPES);
   for(let i=0;i<18;i++){const type=types[i%types.length],home=NPC_TYPES[type].home;state.npcs.push({id:'npc_'+i,type,phase:'home',home,createdAt:now,cycle:i%4});}
 }
+function businessCapacity(player,businessId){const b=player.businesses?.[businessId];if(!b)return 0;const e=b.employees||{};return Math.max(1,2+(Number(e.cashier)||0)*2+(Number(e.manager)||0)+(Number(b.expansionLevel)||0)*2)}
+function completeNpcVisit(player,state,npc,now){const id=npc.targetBusiness,b=player.businesses?.[id],def=BUSINESS_DEMAND[id];if(!b||!def)return null;const level=Math.max(1,Number(b.level)||1),reward=Math.max(10,Math.round(def.ticket*(1+(level-1)*.06))),xp=Math.max(1,Math.round(reward/25));player.balance+=reward;player.xp+=xp;player.level=levelFromXp(player.xp);player.stats.totalEarned=Number(player.stats.totalEarned||0)+reward;player.stats.totalIncome=Number(player.stats.totalIncome||0)+reward;player.stats.visitsCompleted=Number(player.stats.visitsCompleted||0)+1;state.visitRevenue=Number(state.visitRevenue||0)+reward;state.visitsCompleted=Number(state.visitsCompleted||0)+1;state.lastVisitAt=now;return {npcId:npc.id,businessId:id,reward,xp}}
+function levelFromXp(xp){let level=1;while(level<100&&xp>=xpForLevel(level+1))level+=1;return level}
+function xpForLevel(level){return level<=1?0:Math.round(500+(level-2)*700)}
 function simulateNpcs(player,state,now){
   seedNpcState(state,now);
   const owned=Object.keys(player.businesses||{}), tick=Math.floor(now/15000);
@@ -47,16 +51,20 @@ function simulateNpcs(player,state,now){
   state.npcTick=tick;
   const businessPool=owned.map(id=>({id,demand:businessDemand(player,id,state)})).filter(x=>x.demand>0);
   const totalDemand=businessPool.reduce((n,x)=>n+x.demand,0);
+  const previousQueue={};for(const npc of state.npcs)previousQueue[npc.id]=npc.phase==='queue'||npc.phase==='service';
   state.npcs.forEach((npc,i)=>{
-    const phase=(tick+i*3)%12;
+    const phase=(tick+i*3)%12;npc.previousPhase=npc.phase;
     if(phase<4){npc.phase='home';npc.targetDistrict=npc.home;npc.targetBusiness=null}
     else if(phase<7){npc.phase='travel';const pick=businessPool.length?businessPool[(tick+i)%businessPool.length]:null;npc.targetBusiness=pick?.id||null;npc.targetDistrict=pick?BUSINESS_SPECIALIZATIONS[pick.id]?.district:'center'}
-    else if(phase<10){npc.phase='queue';npc.targetDistrict=npc.targetDistrict||'center'}
-    else{npc.phase='return';npc.targetBusiness=null;npc.targetDistrict=npc.home}
+    else if(phase<9){npc.phase='queue';npc.targetDistrict=npc.targetDistrict||'center'}
+    else if(phase<10){npc.phase='service';npc.targetDistrict=npc.targetDistrict||'center'}
+    else{npc.phase='return';npc.targetDistrict=npc.home}
+    if(npc.phase==='service'&&npc.targetBusiness){const cap=businessCapacity(player,npc.targetBusiness);const active=state.npcs.filter(x=>x.targetBusiness===npc.targetBusiness&&(x.phase==='service'||x.phase==='queue')).length;if(active>cap)npc.phase='queue'}
+    if(previousQueue[npc.id]&&npc.phase==='return')completeNpcVisit(player,state,npc,now);
     npc.progress=((tick+i*7)%20)/20;
   });
-  state.queue={};
-  for(const npc of state.npcs)if(npc.phase==='queue'&&npc.targetBusiness)state.queue[npc.targetBusiness]=(state.queue[npc.targetBusiness]||0)+1;
+  state.queue={};state.service={};
+  for(const npc of state.npcs){if(npc.phase==='queue'&&npc.targetBusiness)state.queue[npc.targetBusiness]=(state.queue[npc.targetBusiness]||0)+1;if(npc.phase==='service'&&npc.targetBusiness)state.service[npc.targetBusiness]=(state.service[npc.targetBusiness]||0)+1}
   state.totalDemand=totalDemand;
 }
 function npcSnapshot(player,state){
@@ -96,6 +104,8 @@ export function getCityLive(player,now=Date.now()){
     orders:state.orders.map(o=>({...o,remainingMs:Math.max(0,o.expiresAt-now)})),
     npcs:npcSnapshot(player,state),
     queues:Object.fromEntries(Object.entries(state.queue||{})),
+    service:Object.fromEntries(Object.entries(state.service||{})),
+    visitsCompleted:Number(state.visitsCompleted||0),visitRevenue:Number(state.visitRevenue||0),
     demand:Object.fromEntries(owned.map(id=>[id,businessDemand(player,id,state)])),
     totalIncomePerHour:income,
     generatedAt:now
