@@ -911,3 +911,41 @@ body:has(.city-map-card) .page-screen[data-page]:not(.city-map-card){display:non
 @keyframes lightsPulse{0%,100%{opacity:.45}50%{opacity:1}}
 @keyframes smokeRise{0%{transform:translate(0,0) scale(.5);opacity:.1}50%{opacity:.7}100%{transform:translate(10px,-25px) scale(1.6);opacity:0}}
 @keyframes craneMove{0%,100%{transform:rotate(-4deg)}50%{transform:rotate(5deg)}}
+
+
+/* Full city game loop — map objects, district growth, events and mobile touch polish */
+.district-growth{position:absolute;inset:0;z-index:4;pointer-events:none;transition:opacity .5s ease}
+.district-growth-1{opacity:.18;background:radial-gradient(circle at 22% 46%,rgba(100,150,255,.08),transparent 24%)}
+.district-growth-2{opacity:.28;background:radial-gradient(circle at 22% 46%,rgba(100,150,255,.12),transparent 25%),radial-gradient(circle at 47% 28%,rgba(255,205,100,.08),transparent 20%)}
+.district-growth-3{opacity:.38;background:radial-gradient(circle at 22% 46%,rgba(100,150,255,.15),transparent 27%),radial-gradient(circle at 47% 28%,rgba(255,205,100,.12),transparent 23%),radial-gradient(circle at 76% 55%,rgba(110,210,150,.09),transparent 25%)}
+.district-growth-4{opacity:.48;background:radial-gradient(circle at 22% 46%,rgba(100,150,255,.18),transparent 29%),radial-gradient(circle at 47% 28%,rgba(255,205,100,.15),transparent 26%),radial-gradient(circle at 76% 55%,rgba(110,210,150,.13),transparent 28%)}
+.district-growth-5{opacity:.6;background:radial-gradient(circle at 22% 46%,rgba(100,150,255,.22),transparent 31%),radial-gradient(circle at 47% 28%,rgba(255,205,100,.19),transparent 28%),radial-gradient(circle at 76% 55%,rgba(110,210,150,.17),transparent 30%)}
+.map-stage-badge{color:#72e39a!important}
+.service-ready{border-color:rgba(114,227,154,.5)!important;box-shadow:0 0 18px rgba(114,227,154,.14)}
+.service-ready:after{content:"";position:absolute;inset:-5px;border:1px solid rgba(114,227,154,.22);border-radius:inherit;animation:servicePulse 1.8s ease-in-out infinite;pointer-events:none}
+.service-idle{opacity:.82}
+.event-ready{border-color:rgba(255,201,107,.6)!important;box-shadow:0 0 22px rgba(255,201,107,.16)}
+.event-ready:after{content:"";position:absolute;inset:-6px;border:1px solid rgba(255,201,107,.22);border-radius:inherit;animation:eventPulse 1.5s ease-in-out infinite;pointer-events:none}
+.event-done{opacity:.62;filter:saturate(.65)}
+@keyframes servicePulse{0%,100%{transform:scale(.98);opacity:.25}50%{transform:scale(1.05);opacity:.85}}
+@keyframes eventPulse{0%,100%{transform:scale(.96);opacity:.25}50%{transform:scale(1.07);opacity:1}}
+.city-map .map-marker{will-change:transform}
+.city-map .map-marker:active{transform:translate(-50%,-50%) scale(.94)}
+.city-map .territory-open{filter:saturate(1.12)}
+.city-map .territory-locked{opacity:.55}
+.city-map .building-stage-large,.city-map .building-stage-landmark{box-shadow:0 0 22px rgba(255,214,112,.12)}
+.city-map.city-stage-large .city-house{font-size:clamp(22px,4.1vw,42px)}
+.city-map.city-stage-mega .city-house{font-size:clamp(24px,4.5vw,46px)}
+.city-map.city-stage-large .city-person{font-size:20px}
+.city-map.city-stage-mega .city-person{font-size:21px}
+.city-map.city-stage-large .city-truck,.city-map.city-stage-mega .city-truck{font-size:16px}
+.city-map.city-stage-mega .map-plaza{transform:scale(1.12)}
+.city-map.city-stage-mega .map-road{filter:brightness(1.12)}
+@media(max-width:600px){
+  .city-map .map-marker{min-width:72px;max-width:92px;padding:5px 6px}
+  .city-map .map-marker small{font-size:8px}
+  .city-map .map-marker em{font-size:6px}
+}
+@media(prefers-reduced-motion:reduce){
+  .service-ready:after,.event-ready:after{animation:none!important}
+}
