@@ -768,3 +768,19 @@ body:has(.city-map-card.page-active) .map-center-label{bottom:62px}
 @media(max-width:500px){
 .city-car{font-size:9px}.city-truck{font-size:10px}.business-worker{width:3px;height:3px}
 }
+
+/* Connected business routes */
+.business-flow{position:absolute;z-index:5;width:7px;height:7px;left:var(--sx);top:var(--sy);border-radius:50%;background:rgba(114,227,154,.95);box-shadow:0 0 9px rgba(114,227,154,.45);pointer-events:none;animation:businessToCenter 4.8s cubic-bezier(.4,0,.2,1) infinite;animation-delay:var(--delay)}
+.flow-kiosk,.flow-cafe{background:rgba(255,214,112,.95);box-shadow:0 0 9px rgba(255,214,112,.45)}
+.flow-workshop{background:rgba(118,180,255,.95);box-shadow:0 0 10px rgba(118,180,255,.45)}
+.flow-factory{background:rgba(114,227,154,.95);box-shadow:0 0 10px rgba(114,227,154,.5)}
+@keyframes businessToCenter{0%{left:var(--sx);top:var(--sy);opacity:0;transform:scale(.55)}12%{opacity:1;transform:scale(1)}72%{left:var(--tx);top:var(--ty);opacity:.9;transform:scale(.8)}88%,100%{left:var(--tx);top:var(--ty);opacity:0;transform:scale(.25)}}
+.city-business-life:before{content:"";position:absolute;left:47.5%;top:54.5%;width:5%;height:5%;border-radius:50%;background:radial-gradient(circle,rgba(255,214,112,.28),transparent 68%);animation:cityHeart 2.8s ease-in-out infinite}
+@keyframes cityHeart{0%,100%{transform:scale(.8);opacity:.35}50%{transform:scale(1.25);opacity:.85}}
+.business-marker.working .building-lights{animation:buildingLights 2.1s ease-in-out infinite}
+@keyframes buildingLights{0%,100%{opacity:.35;transform:scale(.92)}50%{opacity:1;transform:scale(1.06)}}
+.business-marker.building-stage-plot:after{content:"СТРОИТЕЛЬСТВО";position:absolute;left:50%;top:-13px;transform:translateX(-50%);font-size:6px;font-weight:950;letter-spacing:.06em;color:rgba(255,214,112,.72);white-space:nowrap;opacity:.7}
+.city-stage-large .business-marker.working small,.city-stage-mega .business-marker.working small{letter-spacing:.01em}
+@media(prefers-reduced-motion:reduce){
+.business-flow,.city-business-life:before,.business-marker.working .building-lights{animation:none!important}
+}
