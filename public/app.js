@@ -85,7 +85,7 @@ async function loadSocial(){
 function initCityMapControls(){
   const map=document.querySelector(".city-map"),world=document.querySelector(".map-world");if(!map||!world||map.dataset.controls==="1")return;
   map.dataset.controls="1";
-  let scale=1,tx=0,ty=0,startX=0,startY=0,startTx=0,startTy=0,drag=false,moved=false,pinchStart=0,pinchScale=1;
+  let scale=1,tx=0,ty=0,startX=0,startY=0,startTx=0,startTy=0,drag=false,moved=false,pinchStart=0;
   const clamp=()=>{scale=Math.max(.85,Math.min(2.4,scale));tx=Math.max(-map.clientWidth*(scale-1)*.55,Math.min(map.clientWidth*(scale-1)*.55,tx));ty=Math.max(-map.clientHeight*(scale-1)*.55,Math.min(map.clientHeight*(scale-1)*.55,ty));};
   const apply=()=>{clamp();world.style.transform='translate3d('+tx+'px,'+ty+'px,0) scale('+scale+')';};
   let pointers=new Map(),pinchDistance=0,pinchScale=1;
