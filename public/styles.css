@@ -1663,3 +1663,40 @@ body.map-fullscreen{overflow:hidden}
     border-radius:11px!important;
   }
 }
+
+
+/* Mr.Gus UI repair 9 — final mobile hierarchy cleanup */
+@media(max-width:600px){
+  /* The center pill is the city title only; secondary metrics stay in the HUD. */
+  body.map-fullscreen .city-map .map-ui-layer .map-city-status{
+    min-width:0!important;
+    width:auto!important;
+    max-width:148px!important;
+    height:30px!important;
+    padding:6px 12px!important;
+    white-space:nowrap!important;
+    overflow:hidden!important;
+    text-overflow:ellipsis!important;
+  }
+  body.map-fullscreen .city-map .map-ui-layer .map-city-status span{
+    display:none!important;
+  }
+
+  /* Bottom dock labels remain readable on small iPhone screens. */
+  body.map-fullscreen .city-map .map-ui-layer .city-service-marker small{
+    font-size:7.5px!important;
+    line-height:8px!important;
+    max-width:42px!important;
+  }
+
+  /* Keep zoom controls visually separate from the bottom dock and side objects. */
+  body.map-fullscreen .city-map .map-zoom-controls{
+    right:7px!important;
+    top:54%!important;
+  }
+
+  /* Keep the playable center visually clear of interface chrome. */
+  body.map-fullscreen .city-map .home-marker{
+    top:64%!important;
+  }
+}
