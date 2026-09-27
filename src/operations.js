@@ -24,6 +24,7 @@ export function createOperationId(prefix='op') {
 export function validateOperationId(operationId) {
   if (typeof operationId !== 'string' || operationId.length < 8 || operationId.length > 100) throw new Error('Invalid operation ID');
   if (!/^[A-Za-z0-9][A-Za-z0-9._:-]*$/.test(operationId)) throw new Error('Invalid operation ID');
+  if (/^sys_/i.test(operationId)) throw new Error('Invalid operation ID');
   return operationId;
 }
 
