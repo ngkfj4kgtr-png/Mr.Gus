@@ -955,3 +955,22 @@ body:has(.city-map-card) .page-screen[data-page]:not(.city-map-card){display:non
  .city-map .map-zoom-controls{right:8px;bottom:76px}
  .city-map .map-zoom-controls button{width:40px;height:40px;min-width:40px}
 }
+
+/* Map stability: give the city enough physical space on phones so fixed map objects do not stack */
+@media(max-width:600px){
+  .city-map{min-height:500px!important;overflow:hidden}
+  .city-map .map-world{min-height:500px}
+  .city-map .map-marker{min-width:48px;max-width:64px;padding:3px 4px 3px;gap:1px;border-radius:10px}
+  .city-map .map-marker span{font-size:18px;line-height:19px}
+  .city-map .map-marker small{font-size:7px;max-width:56px}
+  .city-map .map-marker em{font-size:6px;max-width:58px}
+  .city-map .business-marker{min-width:56px;max-width:70px}
+  .city-map .city-service-marker{min-width:46px;max-width:58px}
+  .city-map .territory-marker{min-width:46px;max-width:60px}
+  .city-map .city-event-marker{min-width:46px;max-width:60px}
+  .city-map .home-marker{min-width:64px;width:64px}
+  .city-map .map-city-status{max-width:72%;overflow:hidden}
+  .city-map .map-city-status span{overflow:hidden;text-overflow:ellipsis}
+  .city-map .map-center-label{max-width:72%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .city-map .map-legend{position:relative}
+}
