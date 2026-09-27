@@ -1,20 +1,20 @@
 <!doctype html>
 <html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#080a0f"><title data-i18n="pageTitle">Mr.Gus — Миллион с нуля</title><script src="https://telegram.org/js/telegram-web-app.js"></script><script src="/locale.js" defer></script><link rel="stylesheet" href="/styles.css"></head>
-<body><div class="wrap">
+<body id="top"><div class="wrap">
 <header class="hero"><div><h1>🪿 Mr.Gus</h1><p class="muted" data-i18n="subtitle">Миллион с нуля · играй · развивай · зарабатывай</p></div><div class="hero-actions"><button class="lang-btn" data-lang="ru">RU</button><button class="lang-btn" data-lang="en">EN</button><div class="hero-badge">LIVE</div></div></header>
 <div id="status" class="status" role="status" data-i18n="status.starting">Запуск…</div>
 <div class="stats"><div class="card stat"><small data-i18n="balance">Баланс</small><div class="v" id="balance">0 ₽</div></div><div class="card stat"><small data-i18n="level">Уровень</small><div class="v" id="level">1</div></div><div class="card stat"><small data-i18n="income">Доход</small><div class="v" id="income">0 ₽/ч</div></div></div>
 <div class="card visual-card"><div class="section-head"><h2>📈 Империя Mr.Gus</h2><span class="pill">LIVE</span></div><div id="empireVisual"></div></div><div class="card progress-card"><div class="section-head"><h2 data-i18n="progress">⭐ Прогресс</h2><span id="xpText" class="muted">0 XP</span></div><div class="progress"><div id="xpBar" class="progress-fill"></div></div><div id="xpHint" class="muted"></div></div>
 <div class="card"><div class="section-head"><h2 data-i18n="businesses">🏢 Бизнесы</h2><span class="pill" data-i18n="economy">Экономика</span></div><div id="businesses">Загрузка...</div><div id="incomeAction" class="actions"></div></div>
-<div class="card"><div class="section-head"><h2 data-i18n="tasks">🎯 Задания</h2><span class="pill" data-i18n="xpMoney">XP + ₽</span></div><div id="tasks"></div></div>
-<div class="card"><div class="section-head"><h2 data-i18n="achievements">🏆 Достижения</h2><span class="pill" data-i18n="rewards">Награды</span></div><div id="achievements"></div></div>
-<div class="card"><div class="section-head"><h2 data-i18n="goals">🎯 Цели</h2><span class="pill" data-i18n="progress">Прогресс</span></div><div id="goals"></div></div>
-<div class="card"><div class="section-head"><h2 data-i18n="daily">🎁 Daily Bonus</h2><span class="pill" data-i18n="streak">Серия</span></div><div id="daily"></div></div>
-<div class="card"><div class="section-head"><h2 data-i18n="shop">🛒 Магазин</h2><span class="pill" data-i18n="items">Предметы</span></div><div id="shop"></div></div>
-<div class="card"><div class="section-head"><h2 data-i18n="event">🎁 Событие дня</h2><span class="pill" data-i18n="hours24">24 часа</span></div><div id="event"></div></div>
+<div id="tasksSection" class="card"><div class="section-head"><h2 data-i18n="tasks">🎯 Задания</h2><span class="pill" data-i18n="xpMoney">XP + ₽</span></div><div id="tasks"></div></div>
+<div id="achievementsSection" class="card"><div class="section-head"><h2 data-i18n="achievements">🏆 Достижения</h2><span class="pill" data-i18n="rewards">Награды</span></div><div id="achievements"></div></div>
+<div id="goalsSection" class="card"><div class="section-head"><h2 data-i18n="goals">🎯 Цели</h2><span class="pill" data-i18n="progress">Прогресс</span></div><div id="goals"></div></div>
+<div id="dailySection" class="card"><div class="section-head"><h2 data-i18n="daily">🎁 Daily Bonus</h2><span class="pill" data-i18n="streak">Серия</span></div><div id="daily"></div></div>
+<div id="shopSection" class="card"><div class="section-head"><h2 data-i18n="shop">🛒 Магазин</h2><span class="pill" data-i18n="items">Предметы</span></div><div id="shop"></div></div>
+<div id="eventSection" class="card"><div class="section-head"><h2 data-i18n="event">🎁 Событие дня</h2><span class="pill" data-i18n="hours24">24 часа</span></div><div id="event"></div></div>
 <div class="card profile-card"><div class="section-head"><h2>👤 Профиль</h2><span class="pill">PLAYER</span></div><div id="profile"></div></div>
 <div class="card"><div class="section-head"><h2>🏆 Рейтинги</h2><span class="pill">LIVE</span></div><div class="rank-tabs"><button class="rank-tab active" data-rank-tab="overall">Общий</button><button class="rank-tab" data-rank-tab="level">Уровень</button><button class="rank-tab" data-rank-tab="capital">Капитал</button><button class="rank-tab" data-rank-tab="businesses">Бизнесы</button><button class="rank-tab" data-rank-tab="achievements">Достижения</button><button class="rank-tab" data-rank-tab="weekly">Неделя</button><button class="rank-tab" data-rank-tab="season">Сезон</button></div><div id="rankings"></div></div>
 <div class="card admin-only" id="adminPanel" hidden><div class="section-head"><h2>🛠️ Админ-панель</h2><span class="pill">OWNER</span></div><div id="admin"></div></div>
 <div class="card"><div class="section-head"><h2 data-i18n="stats">📊 Статистика</h2><span class="pill" data-i18n="player">Игрок</span></div><div id="stats" class="stats-grid"></div></div>
 <div class="actions"><button class="btn" data-action="auth" data-i18n="loginTelegram">Войти через Telegram</button><button class="btn secondary" data-action="refresh" data-i18n="refresh">Обновить</button></div>
-</div><script src="/app.js" defer></script></body></html>
+</div><nav class="quick-bar" aria-label="Быстрая навигация"><a href="#top">🏠</a><a href="#tasksSection">🎯</a><a href="#achievementsSection">🏆</a><a href="#dailySection">🎁</a><a href="#shopSection">🛒</a><a href="#eventSection">⚡</a></nav><script src="/app.js" defer></script></body></html>
