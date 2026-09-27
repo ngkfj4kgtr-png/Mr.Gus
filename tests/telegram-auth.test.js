@@ -42,3 +42,10 @@ test('Telegram init data rejects unsafe user ids',()=>{
   const now=1_700_000_000;
   assert.throws(()=>validateTelegramInitData(makeInitData({authDate:now-10,user:{id:0,first_name:'Bad'}}),botToken,{now,maxAgeSeconds:60}),/Invalid Telegram user id/);
 });
+
+
+test('Telegram init data default validity window is short',()=>{
+  const now=1_700_000_000;
+  assert.throws(()=>validateTelegramInitData(makeInitData({authDate:now-601}),botToken,{now}),/expired/);
+  assert.doesNotThrow(()=>validateTelegramInitData(makeInitData({authDate:now-600}),botToken,{now}));
+});
