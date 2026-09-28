@@ -276,3 +276,13 @@
  .arch-crosswalk{opacity:.78}
  .business-marker{filter:brightness(.98)}
 }
+
+
+/* Geometry correction: sidewalks/parking stay on road edges, never across active lanes. */
+.city-sidewalks{z-index:3}
+.sb1{left:7%;top:34%;width:31%;height:3%}
+.sb2{left:61%;top:34%;width:32%;height:3%}
+.sb3{left:61%;top:83%;width:32%;height:3%}
+.sb4{left:7%;top:83%;width:31%;height:3%}
+.city-parking{z-index:3}
+.city-parking-slot{z-index:3}
