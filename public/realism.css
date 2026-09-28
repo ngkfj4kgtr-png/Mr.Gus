@@ -126,9 +126,10 @@
 .customer-person{z-index:9;animation:customerRoute var(--customer-duration) ease-in-out infinite;animation-delay:var(--customer-delay);will-change:transform}
 @keyframes customerRoute{
   0%,8%{transform:translate3d(0,0,0) scale(.85);opacity:.2}
-  25%{opacity:1}
+  22%{transform:translate3d(0,0,0) scale(.95);opacity:1}
+  40%{transform:translate3d(var(--route-x),var(--route-y),0) scale(1);opacity:1}
   48%,62%{transform:translate3d(var(--customer-x),var(--customer-y),0) scale(1);opacity:1}
-  70%{opacity:1}
+  70%{transform:translate3d(var(--customer-x),var(--customer-y),0) scale(1);opacity:1}
   92%,100%{transform:translate3d(0,0,0) scale(.85);opacity:.2}
 }
 .customer-person::after{background:linear-gradient(#4d7182,#263943);box-shadow:0 0 6px rgba(255,220,140,.18)}
@@ -286,3 +287,8 @@
 .sb4{left:7%;top:83%;width:31%;height:3%}
 .city-parking{z-index:3}
 .city-parking-slot{z-index:3}
+
+/* NPC route polish: street corridor first, business entrance second. */
+.customer-person{animation-timing-function:cubic-bezier(.22,.78,.28,1)}
+.customer-person.npc-queue{animation-play-state:paused;opacity:1}
+.customer-person.npc-service{animation-play-state:paused;opacity:1;transform:scale(1)}
