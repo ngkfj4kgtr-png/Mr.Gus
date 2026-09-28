@@ -1,0 +1,78 @@
+/* Mr.Gus City Redesign — clean mobile-first city composition */
+.city-map{min-height:430px!important;border-radius:18px!important;background:linear-gradient(160deg,#536257 0%,#46544a 55%,#35423a 100%)!important;border:1px solid rgba(255,255,255,.12)!important;box-shadow:inset 0 0 55px rgba(0,0,0,.22)!important}
+.map-world{inset:0!important;overflow:hidden!important;background:linear-gradient(155deg,rgba(255,255,255,.04),transparent 35%,rgba(0,0,0,.08))!important}
+.city-architecture-layer{position:absolute;inset:0;z-index:1!important}
+.city-zone{border:0!important;background:transparent!important;box-shadow:none!important}
+.city-zone.residential{left:0!important;top:0!important;width:100%!important;height:43%!important;border-bottom:1px solid rgba(255,255,255,.08)!important}
+.city-zone.center{left:25%!important;top:38%!important;width:50%!important;height:25%!important;border:1px solid rgba(255,255,255,.08)!important;background:rgba(203,179,116,.055)!important;border-radius:20px!important}
+.city-zone.commercial{left:0!important;top:62%!important;width:68%!important;height:38%!important;border-top:1px solid rgba(255,255,255,.07)!important}
+.city-zone.industrial{left:68%!important;top:62%!important;width:32%!important;height:38%!important;border-left:1px solid rgba(255,255,255,.07)!important}
+.city-zone.outskirts{display:none!important}
+.city-zone-label{z-index:3!important;background:rgba(27,36,31,.62)!important;color:rgba(255,255,255,.5)!important;font-size:7px!important;padding:3px 6px!important;border:1px solid rgba(255,255,255,.08)!important}
+.city-zone-label.res{left:6%!important;top:5%!important}.city-zone-label.com{left:5%!important;top:65%!important}.city-zone-label.cen{left:44%!important;top:43%!important}.city-zone-label.ind{left:73%!important;top:65%!important}.city-zone-label.out{display:none!important}
+
+.map-road{z-index:4!important;border:0!important;border-radius:3px!important;background:#303638!important;box-shadow:inset 0 1px rgba(255,255,255,.08),inset 0 -2px rgba(0,0,0,.3),0 3px 7px rgba(0,0,0,.22)!important}
+.road-a{left:-5%!important;top:47%!important;width:110%!important;height:10%!important;transform:none!important}
+.road-b{left:46%!important;top:-5%!important;width:9%!important;height:110%!important;transform:none!important}
+.road-c{left:-5%!important;top:76%!important;width:110%!important;height:7%!important;transform:none!important}
+.road-d{left:63%!important;top:55%!important;width:7%!important;height:50%!important;transform:none!important}
+.map-road:after{background:repeating-linear-gradient(90deg,transparent 0 22px,rgba(244,224,151,.65) 22px 34px,transparent 34px 55px)!important;opacity:.75!important;inset:47% 0!important;height:2px!important}
+.road-b:after,.road-d:after{background:repeating-linear-gradient(0deg,transparent 0 22px,rgba(244,224,151,.65) 22px 34px,transparent 34px 55px)!important;inset:0 47%!important;width:2px!important;height:100%!important}
+
+.arch-sidewalk,.city-sidewalks,.city-parking,.arch-crosswalk,.arch-road-mark,.arch-lamp-post,.arch-park,.arch-fountain{z-index:5!important}
+.arch-sidewalk{background:#9d9a8d!important;border:0!important;box-shadow:inset 0 1px rgba(255,255,255,.3),inset 0 -2px rgba(0,0,0,.14)!important}
+.arch-sidewalk.s1{left:0!important;top:43%!important;width:100%!important;height:4%!important}
+.arch-sidewalk.s2{left:0!important;top:57%!important;width:100%!important;height:4%!important}
+.arch-crosswalk{background:repeating-linear-gradient(90deg,#eee8d9 0 7px,transparent 7px 14px)!important;opacity:.85!important}
+.arch-park{background:radial-gradient(circle,#6f965c,#486c4c 70%)!important;border-radius:18px!important}
+.arch-tree::before,.city-tree::before{width:24px!important;height:28px!important}
+.arch-tree.t1{left:4%!important;top:17%!important}.arch-tree.t2{left:91%!important;top:19%!important}.arch-tree.t3{left:5%!important;top:87%!important}
+.city-houses-layer{z-index:15!important;pointer-events:none!important}
+.arch-house{transform:none!important;filter:drop-shadow(0 7px 5px rgba(0,0,0,.35))!important}
+.arch-house .house-body{background:linear-gradient(90deg,#9b7456,#d6b083 48%,#8c674f)!important}
+.arch-house .house-roof{background:linear-gradient(135deg,#6e3f38,#3d2929)!important}
+.arch-house .house-window{background:linear-gradient(135deg,#fff4bc,#75a7b6 50%,#304751)!important}
+.arch-house .house-door{background:#4b3025!important}
+.arch-house .house-chimney{background:#67463c!important}
+.city-street-life{z-index:16!important}
+.map-plaza{z-index:12!important;left:34%!important;top:39%!important;width:32%!important;height:18%!important;border-radius:16px!important;background:radial-gradient(circle,#bba674,#76684c)!important;box-shadow:0 5px 12px rgba(0,0,0,.28)!important}
+.map-plaza span{font-size:18px!important}.map-plaza small{font-size:6px!important;color:#eee3c5!important}
+.city-traffic{z-index:25!important}.city-life{z-index:30!important}.city-logistics,.city-economy-flow,.city-business-life,.city-business-routes{z-index:31!important}
+.city-car{z-index:2!important}.customer-person{z-index:3!important}
+
+.business-marker{z-index:45!important;min-width:70px!important;padding:4px!important;background:rgba(21,28,25,.92)!important;border:1px solid rgba(245,216,140,.35)!important;border-radius:10px!important;box-shadow:0 8px 18px rgba(0,0,0,.38)!important;animation:none!important}
+.business-marker small{font-size:8px!important;color:#f2ead6!important}.business-marker em{font-size:7px!important;color:#c8c0aa!important}
+.building-art{width:42px!important;height:31px!important;position:relative!important;display:block!important}
+.building-art .b-body{position:absolute!important;left:4px!important;right:4px!important;bottom:0!important;height:22px!important;background:linear-gradient(90deg,#765743,#c19a6a 50%,#6e503e)!important;border:1px solid rgba(255,255,255,.2)!important}
+.building-art .b-roof{position:absolute!important;left:2px!important;right:2px!important;top:2px!important;height:13px!important;background:#503638!important;clip-path:polygon(50% 0,100% 100%,0 100%)!important}
+.building-art .b-window{position:absolute!important;left:10px!important;bottom:8px!important;width:7px!important;height:7px!important;background:#d8e7d6!important;box-shadow:14px 0 #d8e7d6!important;z-index:2!important}
+.building-art .b-door{position:absolute!important;right:8px!important;bottom:0!important;width:7px!important;height:12px!important;background:#402c25!important;z-index:2!important}
+.building-cafe .b-body{background:linear-gradient(90deg,#9a6548,#d7ad79 50%,#8a5a43)!important}
+.building-cafe .b-roof{background:#5a3930!important}
+.building-workshop .b-body{background:linear-gradient(90deg,#56636a,#87959a 50%,#465157)!important}
+.building-workshop .b-roof{background:#374147!important}
+.building-factory .b-body{background:linear-gradient(90deg,#5b6260,#8d9690 50%,#4d5551)!important}
+.building-factory .b-roof{background:#3c4543!important}
+.building-factory .b-smokestack{position:absolute!important;right:5px!important;top:-2px!important;width:6px!important;height:14px!important;background:#424946!important;z-index:3!important}
+.building-stage-developed,.building-stage-large,.building-stage-landmark{min-width:78px!important}
+.home-marker{z-index:50!important;min-width:82px!important;background:rgba(32,42,34,.96)!important;border-color:#d8b96e!important}
+.home-marker .building-art{width:50px!important;height:37px!important}
+
+.city-service-marker,.territory-marker,.city-event-marker{z-index:40!important;transform:translate(-50%,-50%) scale(.72)!important;opacity:.72!important}
+.city-service-marker span,.territory-marker span,.city-event-marker span{font-size:18px!important}
+.map-center-label{z-index:60!important;bottom:8px!important;background:rgba(22,29,25,.82)!important;border:1px solid rgba(255,255,255,.12)!important;color:#e6ddc7!important}
+.map-hud{z-index:80!important;top:8px!important;left:8px!important}.map-city-status{z-index:80!important;top:8px!important;right:8px!important}
+.map-legend{z-index:80!important;background:rgba(22,29,25,.76)!important}
+.map-compass{z-index:80!important;top:52px!important}.map-scale-label{z-index:80!important}
+.map-zoom-controls{z-index:90!important;top:52px!important}
+
+@media(max-width:600px){
+ .city-map{min-height:410px!important}
+ .arch-house{transform:scale(.82)!important;transform-origin:top left!important}
+ .business-marker{min-width:62px!important}
+ .building-art{transform:scale(.86)!important}
+ .city-zone-label{font-size:6px!important}
+ .map-city-status{font-size:8px!important;max-width:48%!important}
+ .map-hud{max-width:48%!important}
+ .city-service-marker,.territory-marker,.city-event-marker{transform:translate(-50%,-50%) scale(.6)!important}
+}
