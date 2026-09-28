@@ -1909,3 +1909,29 @@ button{font-family:"Courier New",monospace!important}
 .business-demand-badge{border-radius:0!important;border:2px solid #927c42!important;background:#1d271c!important;box-shadow:2px 2px 0 #080b08!important}
 .map-route,.business-route,.business-flow{stroke-dasharray:5 5!important;animation:pxRoute 1s steps(2,end) infinite!important}
 @keyframes pxRoute{to{stroke-dashoffset:-10}}
+
+/* PIXEL BUILDING EVOLUTION — level/stage sprites */
+.business-marker .building-art{min-width:42px;min-height:34px}
+.business-marker.building-stage-plot .building-art{width:34px!important;height:24px!important;background:#80663f!important;border-style:dashed!important}
+.business-marker.building-stage-small .building-art{width:44px!important;height:38px!important}
+.business-marker.building-stage-developed .building-art{width:52px!important;height:47px!important}
+.business-marker.building-stage-landmark .building-art{width:62px!important;height:56px!important;box-shadow:6px 6px 0 #181c17,0 0 0 3px #d1b55d!important}
+.business-marker .building-art:before{content:"";position:absolute;left:4px;right:4px;top:-10px;height:8px;background:#8f4b3e;border:2px solid #332622}
+.business-marker.building-stage-developed .building-art:before{height:11px;top:-13px;background:#a45643}
+.business-marker.building-stage-landmark .building-art:before{height:14px;top:-16px;background:#b75d45;box-shadow:0 -5px 0 #7b4037}
+.business-marker .building-art:after{content:"";position:absolute;left:8px;right:8px;bottom:8px;height:10px;background:#79a5a0;border:2px solid #283531;box-shadow:0 -16px 0 #79a5a0,0 -16px 0 2px #283531}
+.business-marker.building-stage-developed .building-art:after{height:12px;bottom:10px;box-shadow:0 -19px 0 #79a5a0,0 -19px 0 2px #283531,16px 0 #79a5a0,16px -19px 0 #79a5a0}
+.business-marker.building-stage-landmark .building-art:after{height:13px;bottom:11px;box-shadow:0 -21px 0 #e0c45c,0 -21px 0 2px #283531,18px 0 #e0c45c,18px -21px 0 #e0c45c}
+.business-marker.building-stage-landmark .building-lights{display:block!important;position:absolute;inset:5px;opacity:1;background:transparent;box-shadow:0 0 0 2px #d7bd58}
+.business-marker.building-stage-landmark .building-lights:before{content:"";position:absolute;width:5px;height:5px;background:#e0c45c;left:5px;top:5px;box-shadow:24px 0 #e0c45c,5px 22px #e0c45c,29px 22px #e0c45c;animation:pxLights 1.4s steps(1,end) infinite}
+.business-marker.building-factory .building-art:before{background:#464b4e}
+.business-marker.building-factory .building-art:after{background:#78989a;box-shadow:0 -16px 0 #78989a,0 -16px 0 2px #293432,18px 0 #78989a}
+.business-marker.building-factory .b-smokestack{display:block!important;position:absolute;right:4px;top:-20px;width:7px;height:18px;background:#3a3d3d;border:2px solid #242626}
+.business-marker.building-factory .b-smoke{display:block!important;position:absolute;right:0;top:-28px;width:5px;height:5px;background:#77766b;box-shadow:-5px -5px #8a897c,-1px -10px #77766b;animation:pxSmoke 2s steps(3,end) infinite}
+@keyframes pxLights{0%,100%{opacity:1}50%{opacity:.35}}
+@keyframes pxSmoke{0%{transform:translate(0,0);opacity:.8}100%{transform:translate(5px,-8px);opacity:0}}
+/* pixel street details */
+.city-parking-slot{border-radius:0!important;border:2px solid #4d4d3b!important;background:#272b24!important}
+.city-road-mark,.road-mark{border-radius:0!important}
+.home-pulse-ring{border-radius:0!important;border:2px dashed #d2b957!important;animation:pxPulse 1.8s steps(3,end) infinite}
+@keyframes pxPulse{0%,100%{transform:scale(1);opacity:.9}50%{transform:scale(1.08);opacity:.35}}
