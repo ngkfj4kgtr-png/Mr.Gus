@@ -155,23 +155,28 @@ function renderCityMap(s){
   const buses=Array.from({length:Math.min(2,cityProgress)},(_,i)=>'<i class="city-bus" style="left:-12%;top:'+(49+i*26)+'%;--bus-delay:-'+(i*6)+'s"></i>').join("");
   const trafficLights='<i class="city-traffic-light active" style="left:49%;top:51%"></i><i class="city-traffic-light" style="left:57%;top:73%"></i><i class="city-traffic-light" style="left:70%;top:58%"></i>';
   const npcList=Array.isArray(live.npcs)?live.npcs:[];
-  const phaseMap={home:"ДОМА",travel:"ИДЁТ",queue:"СТОИТ В ОЧЕРЕДИ",service:"ПОКУПАЕТ",return:"ВОЗВРАЩАЕТСЯ"};
-  const districtSpots={residential:[18,72],center:[50,45],commercial:[73,53],industrial:[79,72],outskirts:[10,48]};
-  const walkers=npcList.slice(0,18).map((n,i)=>{
-    const target=n.targetBusiness&&businessTargets.find(x=>x.id===n.targetBusiness);
-    const businessSpot=target?.m?.spot||districtSpots[n.targetDistrict]||[50,55];
-    const homeSpot=districtSpots[n.home]||[18,72];
-    const p=Math.max(0,Math.min(1,Number(n.progress)||0));
-    const phase=String(n.phase||"home").toLowerCase();
-    let x=homeSpot[0],y=homeSpot[1];
-    if(phase==="travel"){x=homeSpot[0]+(businessSpot[0]-homeSpot[0])*p;y=homeSpot[1]+(businessSpot[1]-homeSpot[1])*p}
-    else if(phase==="queue"||phase==="service"){x=businessSpot[0];y=businessSpot[1]}
-    else if(phase==="return"){x=businessSpot[0]+(homeSpot[0]-businessSpot[0])*p;y=businessSpot[1]+(homeSpot[1]-businessSpot[1])*p}
-    const q=Number(live.queues?.[n.targetBusiness]||0), demand=Number(live.demand?.[n.targetBusiness]||0);
-    const stateClass=phase==="queue"?"npc-phase-queue":phase==="service"?"npc-phase-buy":phase==="return"?"npc-phase-leave":"npc-phase-walk";
-    const title=(phaseMap[phase]||n.typeName||"Житель")+(q?" · очередь "+q:"")+(demand?" · спрос "+demand:"");
-    return '<i class="city-person customer-person npc-'+n.type+' npc-'+phase+' '+stateClass+'" style="left:'+x+'%;top:'+y+'%;--customer-x:0%;--customer-y:0%;--route-x:0%;--route-y:0%;--customer-duration:'+(5+(i%5))+'s;--customer-delay:-'+(i*.55)+'s;--npc-progress:'+(p*100)+'%" title="'+title+'"></i>';
-  }).join("");
+  const phaseMap={home:"ДОМА",travel:"ИДЁТ ПО ДОРОГЕ",queue:"СТОИТ В ОЧЕРЕДИ",service:"ПОКУПАЕТ",return:"ВОЗВРАЩАЕТСЯ ПО ДОРОГЕ"};
+const walkers=npcList.slice(0,18).map((n,i)=>{
+  const target=n.targetBusiness&&businessTargets.find(x=>x.id===n.targetBusiness);
+  const fallbackTarget=target?.m?.spot||districtSpots[n.targetDistrict]||[50,55];
+  const homeSpot=districtSpots[n.home]||[18,72];
+  const route=Array.isArray(n.route)&&n.route.length>1?n.route:[homeSpot,fallbackTarget];
+  const p=Math.max(0,Math.min(1,Number(n.progress)||0));
+  const phase=String(n.phase||"home").toLowerCase();
+  let x=route[0][0],y=route[0][1];
+  if(phase==="travel"||phase==="return"){
+    const lengths=[];let total=0;
+    for(let j=1;j<route.length;j++){const dx=route[j][0]-route[j-1][0],dy=route[j][1]-route[j-1][1],len=Math.hypot(dx,dy);lengths.push(len);total+=len}
+    let d=p*total,seg=0;
+    for(let j=0;j<lengths.length;j++){if(d<=lengths[j]||j===lengths.length-1){seg=j;break}d-=lengths[j]}
+    const a=route[seg],b=route[Math.min(seg+1,route.length-1)],q=lengths[seg]?d/lengths[seg]:0;
+    x=a[0]+(b[0]-a[0])*q;y=a[1]+(b[1]-a[1])*q;
+  }else if(phase==="queue"||phase==="service"){x=fallbackTarget[0];y=fallbackTarget[1]}
+  const q=Number(live.queues?.[n.targetBusiness]||0),demand=Number(live.demand?.[n.targetBusiness]||0);
+  const stateClass=phase==="queue"?"npc-phase-queue":phase==="service"?"npc-phase-buy":phase==="return"?"npc-phase-leave":"npc-phase-walk";
+  const title=(phaseMap[phase]||n.typeName||"Житель")+(q?" · очередь "+q:"")+(demand?" · спрос "+demand:"")+(n.routeKey?" · маршрут "+n.routeKey:"");
+  return '<i class="city-person customer-person npc-'+n.type+' npc-'+phase+' '+stateClass+'" style="left:'+x+'%;top:'+y+'%;--customer-x:0%;--customer-y:0%;--route-x:0%;--route-y:0%;--customer-duration:'+(5+(i%5))+'s;--customer-delay:-'+(i*.55)+'s;--npc-progress:'+(p*100)+'%" title="'+title+'"></i>';
+.join("");
   const queueBadges=businesses.map(b=>{const m=meta[b.id];if(!m)return "";const q=Number(live.queues?.[b.id]||0),d=Number(live.demand?.[b.id]||0),metric=live.businessMetrics?.[b.id]||{},load=Number(metric.load||Math.min(100,Math.round((q+d)/Math.max(1,(Number(b.level)||1)*2)*100))),eff=Number(metric.efficiency||100);if(!q&&!d)return "";const state=load>=100?"OVERLOAD":load>=70?"BUSY":q?"QUEUE":"DEMAND";return '<span class="business-demand-badge load-'+(load>=100?"high":load>=70?"mid":"low")+'" style="left:'+m.spot[0]+'%;top:'+(m.spot[1]-6)+'%" title="Загрузка '+load+'% · эффективность '+eff+'%">'+state+' '+load+'% · EFF '+eff+'%</span>';}).join("");
   const streetLife='<i class="city-tree tree-1"></i><i class="city-tree tree-2"></i><i class="city-tree tree-3"></i><i class="city-lamp lamp-1"></i><i class="city-lamp lamp-2"></i>';
   const activeBusinesses=businesses.filter(b=>Number(b.level||1)>=5);
