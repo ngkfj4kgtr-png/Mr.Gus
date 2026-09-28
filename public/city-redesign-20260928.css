@@ -136,3 +136,11 @@
 .city-caption{position:absolute;z-index:80;left:50%;bottom:7px;transform:translateX(-50%);padding:5px 8px;border-radius:8px;background:rgba(18,25,21,.78);border:1px solid rgba(255,255,255,.12);font-size:7px;color:#e2dccb;white-space:nowrap}
 .city-v2-legend{position:absolute;z-index:80;left:8px;bottom:8px;display:flex;gap:4px}.city-v2-legend span{padding:4px 5px;border-radius:7px;background:rgba(18,25,21,.78);font-size:6px;color:#ddd5c1}
 @media(max-width:600px){.city-map-v2{min-height:400px!important}.city-house-block{width:49px;height:42px}.city-house-roof{height:19px}.city-house-body{height:25px}.city-house-body i{top:6px;width:7px;height:7px;box-shadow:17px 0 #cfe4dc}.city-business-new{width:66px;min-height:56px}.city-business-art{transform:scale(.86)}.city-home-v2{width:68px;height:58px}.city-action-new{width:43px;height:34px}.city-caption{font-size:6px}.city-v2-top{overflow:hidden}.city-v2-top>*{font-size:6px;padding:4px 5px}.city-park-new{width:23%;height:17%}}
+
+/* Fixed viewport: zoom affects only the city world, never HUD/actions */
+.city-map-v2{overflow:hidden!important;contain:layout paint!important;touch-action:none!important}
+.city-v2-world{position:absolute!important;left:0!important;top:0!important;width:100%!important;height:100%!important;transform-origin:50% 50%!important;will-change:transform!important;backface-visibility:hidden!important}
+.city-v2-top,.city-v2-compass,.city-v2-zoom,.city-v2-actions,.city-v2-legend,.city-caption{transform-origin:center!important}
+.city-v2-zoom{pointer-events:auto!important}
+.city-v2-zoom button{pointer-events:auto!important}
+.city-map-v2 [data-city-open]{touch-action:manipulation!important}
