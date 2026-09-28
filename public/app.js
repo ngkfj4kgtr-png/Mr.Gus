@@ -92,158 +92,108 @@ function startCityLifeLoop(){
   },12000);
 }
 function initCityMapControls(){
-  const map=document.querySelector(".city-map");
-  const world=map?.querySelector(".city-v2-world,.map-world");
+  const map=document.querySelector(".city-map"),world=document.querySelector(".map-world");
   if(!map||!world||map.dataset.controls==="1")return;
   map.dataset.controls="1";
   let scale=1,tx=0,ty=0,dragId=null,startX=0,startY=0,startTx=0,startTy=0;
   const pointers=new Map();let pinchDistance=0,pinchScale=1;
-  const limits=()=>({min:.9,max:1.65});
   const clamp=()=>{
-    const {min,max}=limits();scale=Math.max(min,Math.min(max,scale));
-    const w=map.clientWidth,h=map.clientHeight;
-    const maxX=Math.max(0,(w*scale-w)/2),maxY=Math.max(0,(h*scale-h)/2);
+    scale=Math.max(.85,Math.min(2.4,scale));
+    const maxX=map.clientWidth*(scale-1)*.55,maxY=map.clientHeight*(scale-1)*.55;
     tx=Math.max(-maxX,Math.min(maxX,tx));ty=Math.max(-maxY,Math.min(maxY,ty));
   };
-  const apply=()=>{
-    clamp();
-    world.style.transformOrigin="50% 50%";
-    world.style.transform="translate3d("+tx+"px,"+ty+"px,0) scale("+scale+")";
-    map.dataset.mapScale=String(Math.round(scale*100));
-  };
+  const apply=()=>{clamp();world.style.transform='translate3d('+tx+'px,'+ty+'px,0) scale('+scale+')';};
   const dist=()=>{const p=[...pointers.values()];return p.length<2?0:Math.hypot(p[0].x-p[1].x,p[0].y-p[1].y)};
   const down=e=>{
-    if(e.target.closest("button,.city-panel,[data-city-open]"))return;
+    if(e.target.closest("button,.city-panel,.map-zoom-controls,[data-city-open]"))return;
     pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
     try{map.setPointerCapture(e.pointerId)}catch{}
     if(pointers.size===2){pinchDistance=dist();pinchScale=scale;dragId=null}
-    else{dragId=e.pointerId;startX=e.clientX;startY=e.clientY;startTx=tx;startTy=ty}
+    else {dragId=e.pointerId;startX=e.clientX;startY=e.clientY;startTx=tx;startTy=ty}
   };
   const move=e=>{
     if(!pointers.has(e.pointerId))return;
     pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
-    if(pointers.size===2&&pinchDistance){
-      const next=pinchScale*dist()/pinchDistance;
-      scale=next;apply();return;
-    }
-    if(pointers.size===1&&dragId===e.pointerId){
-      tx=startTx+e.clientX-startX;ty=startTy+e.clientY-startY;apply();
-    }
+    if(pointers.size===2&&pinchDistance){scale=pinchScale*dist()/pinchDistance;apply();return}
+    if(pointers.size===1&&dragId===e.pointerId){tx=startTx+e.clientX-startX;ty=startTy+e.clientY-startY;apply()}
   };
   const up=e=>{
     pointers.delete(e.pointerId);try{map.releasePointerCapture(e.pointerId)}catch{}
     if(pointers.size<2)pinchDistance=0;
-    if(pointers.size===1){
-      const [id,p]=[...pointers.entries()][0];dragId=id;
-      startX=p.x;startY=p.y;startTx=tx;startTy=ty;
-    }else dragId=null;
+    if(pointers.size===1){const [id,p]=[...pointers.entries()][0];dragId=id;startX=p.x;startY=p.y;startTx=tx;startTy=ty}else dragId=null;
   };
   map.addEventListener("pointerdown",down);map.addEventListener("pointermove",move);
   map.addEventListener("pointerup",up);map.addEventListener("pointercancel",up);
-  map.addEventListener("wheel",e=>{
-    e.preventDefault();
-    scale*=e.deltaY<0?1.08:.925;
-    apply();
-  },{passive:false});
-  const zoomIn=()=>{scale+=.1;apply()};
-  const zoomOut=()=>{scale-=.1;apply()};
-  const reset=()=>{scale=1;tx=0;ty=0;apply()};
-  map.querySelectorAll("[data-map-zoom]").forEach(btn=>btn.addEventListener("click",()=>{
-    Number(btn.dataset.mapZoom)>0?zoomIn():zoomOut();
-  }));
-  map.querySelectorAll("[data-map-reset]").forEach(btn=>btn.addEventListener("click",reset));
-  apply();
+  map.addEventListener("wheel",e=>{e.preventDefault();const old=scale;scale*=e.deltaY<0?1.12:.89;const r=map.getBoundingClientRect(),cx=e.clientX-r.left-r.width/2,cy=e.clientY-r.top-r.height/2;tx=cx-(cx-tx)*(scale/old);ty=cy-(cy-ty)*(scale/old);apply()},{passive:false});
+  const controls=document.createElement("div");controls.className="map-zoom-controls";controls.innerHTML='<button type="button" data-map-zoom="-1" aria-label="Уменьшить">−</button><button type="button" data-map-zoom="1" aria-label="Увеличить">+</button><button type="button" data-map-reset="1" aria-label="Сбросить карту">⌖</button>';
+  map.appendChild(controls);
+  controls.addEventListener("click",e=>{const z=e.target.closest("[data-map-zoom]");if(z){scale+=Number(z.dataset.mapZoom)*.18;apply();return}if(e.target.closest("[data-map-reset]")){scale=1;tx=0;ty=0;apply()}});
 }
+
 function ensureArchitectureStyle(){if(document.querySelector("#mrgus-architecture-style"))return;const style=document.createElement("style");style.id="mrgus-architecture-style";style.textContent=".city-houses-layer{z-index:3}.arch-house{width:48px;height:42px;filter:drop-shadow(0 7px 6px rgba(0,0,0,.32))}.arch-house span{position:absolute;display:block}.arch-house .house-body{left:7px;right:7px;bottom:2px;height:25px;border-radius:4px 4px 3px 3px;background:linear-gradient(90deg,var(--wall-dark),var(--wall),var(--wall-dark));border:1px solid rgba(255,255,255,.18)}.arch-house .house-roof{left:3px;top:3px;width:42px;height:24px;background:linear-gradient(135deg,var(--roof-light),var(--roof),var(--roof-dark));clip-path:polygon(50% 0,100% 72%,100% 88%,0 88%,0 72%)}.arch-house .house-window{left:17px;bottom:12px;width:10px;height:9px;border-radius:2px;background:#bfe6ff;box-shadow:inset 0 0 0 2px rgba(20,35,45,.35),0 0 5px rgba(255,224,130,.22)}.arch-house .house-door{left:28px;bottom:2px;width:7px;height:15px;border-radius:2px 2px 0 0;background:#4d3528}.arch-house .house-chimney{right:10px;top:0;width:6px;height:12px;background:#70483b}.arch-house.house-0{--wall:#d6b184;--wall-dark:#9c704b;--roof:#8d3f35;--roof-light:#b85a4b;--roof-dark:#5d2c2a}.arch-house.house-1{--wall:#b7c9bd;--wall-dark:#71897d;--roof:#4d6674;--roof-light:#708b99;--roof-dark:#344752}.arch-house.house-2{--wall:#d7c08b;--wall-dark:#9b7d4c;--roof:#566d42;--roof-light:#718c58;--roof-dark:#34472d}.arch-house.house-3{--wall:#c7a5c4;--wall-dark:#886681;--roof:#6a405f;--roof-light:#8d587d;--roof-dark:#43283f}.arch-house .house-lawn{left:-5px;right:-5px;bottom:-2px;height:6px;border-radius:50%;background:rgba(84,123,64,.45);z-index:-1}.arch-house.house-2 .house-chimney,.arch-house.house-3 .house-chimney{display:none}.building-art{position:relative;display:block;width:46px;height:48px;filter:drop-shadow(0 7px 7px rgba(0,0,0,.35))}.building-art i{position:absolute;display:block}.building-art .b-body{left:6px;right:6px;bottom:3px;height:34px;border-radius:4px 4px 2px 2px;background:linear-gradient(90deg,var(--b-dark),var(--b-main),var(--b-dark));border:1px solid rgba(255,255,255,.2)}.building-art .b-roof{left:4px;right:4px;top:2px;height:13px;background:var(--b-roof);clip-path:polygon(8% 100%,50% 0,92% 100%)}.building-art .b-window{left:14px;top:19px;width:8px;height:7px;background:#c7edff;box-shadow:13px 0 #c7edff,0 11px rgba(255,221,132,.9),13px 11px rgba(255,221,132,.9);border-radius:1px}.building-art .b-door{left:24px;bottom:3px;width:8px;height:14px;background:#44352e;border-radius:2px 2px 0 0}.building-art .b-sign{left:9px;right:9px;top:11px;height:7px;border-radius:2px;background:rgba(255,235,185,.82)}.building-kiosk{--b-main:#c98b45;--b-dark:#7e512e;--b-roof:#9b342f}.building-cafe{--b-main:#a97a59;--b-dark:#634736;--b-roof:#d2a15e}.building-workshop{--b-main:#73828c;--b-dark:#46535b;--b-roof:#3c4a53}.building-factory{width:56px;height:58px;--b-main:#6d777d;--b-dark:#394349;--b-roof:#59656b}.building-factory .b-body{height:43px}.building-factory .b-roof{height:18px}.building-factory .b-smokestack{right:7px;top:-7px;width:7px;height:25px;background:#4b5558;border-radius:2px}.building-factory .b-smoke{right:3px;top:-16px;width:9px;height:9px;border-radius:50%;background:rgba(220,225,225,.55);box-shadow:8px -8px 0 -1px rgba(220,225,225,.3)}.city-architecture-layer{position:absolute;inset:0;pointer-events:none;z-index:2}.city-zone{position:absolute;pointer-events:none;z-index:1;border:1px solid rgba(255,255,255,.06);box-shadow:inset 0 0 35px rgba(0,0,0,.08)}.city-zone.residential{left:2%;top:10%;width:38%;height:43%;border-radius:18px;background:linear-gradient(145deg,rgba(120,151,105,.13),rgba(190,161,115,.04))}.city-zone.center{left:35%;top:30%;width:31%;height:39%;border-radius:50%;background:radial-gradient(circle,rgba(219,193,139,.16),rgba(92,111,93,.03) 70%,transparent)}.city-zone.commercial{left:39%;top:8%;width:55%;height:32%;border-radius:22px;background:linear-gradient(160deg,rgba(187,143,83,.12),rgba(89,101,111,.03))}.city-zone.industrial{left:60%;top:48%;width:37%;height:43%;border-radius:16px;background:linear-gradient(145deg,rgba(91,102,108,.14),rgba(60,66,69,.04))}.city-zone.outskirts{left:1%;top:54%;width:34%;height:44%;border-radius:25px;background:radial-gradient(circle at 35% 45%,rgba(91,128,74,.12),transparent 70%)}.city-zone-label{position:absolute;z-index:2;pointer-events:none;font-size:8px;letter-spacing:.14em;text-transform:uppercase;color:rgba(238,228,199,.46);font-weight:800;text-shadow:0 2px 4px rgba(0,0,0,.5)}.city-zone-label.res{left:7%;top:13%}.city-zone-label.com{left:65%;top:11%}.city-zone-label.cen{left:44%;top:34%}.city-zone-label.ind{left:69%;top:82%}.city-zone-label.out{left:7%;top:91%}.arch-park{position:absolute;border-radius:50%;background:radial-gradient(circle at 50% 45%,rgba(95,145,76,.65),rgba(54,91,58,.2) 65%,transparent 70%)}.arch-park.p1{left:4%;top:63%;width:17%;height:13%}.arch-park.p2{right:4%;top:15%;width:15%;height:11%}.arch-fountain{position:absolute;left:48%;top:43%;width:28px;height:28px;border-radius:50%;background:radial-gradient(circle,#dff6ff 0 12%,#6da7bd 13% 30%,#405e68 31% 100%);box-shadow:0 0 0 5px rgba(110,155,169,.12)}.arch-road-mark{position:absolute;height:3px;background:rgba(235,210,144,.32);border-radius:3px;transform-origin:left center}.arch-road-mark.r1{left:8%;top:53%;width:37%;transform:rotate(-10deg)}.arch-road-mark.r2{left:53%;top:54%;width:38%;transform:rotate(13deg)}.city-chart{display:flex;flex-direction:column;gap:8px;margin:8px 0 14px}.city-chart-title{font-size:12px;font-weight:900;letter-spacing:.06em;color:rgba(255,255,255,.72);margin-top:10px}.city-chart-row{display:grid;grid-template-columns:78px 1fr auto;gap:7px;align-items:center;font-size:10px}.city-chart-row span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.city-chart-track,.city-level-track{height:8px;border-radius:8px;background:rgba(255,255,255,.08);overflow:hidden}.city-chart-track i,.city-level-track i{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,#d7a84d,#f3d477);box-shadow:0 0 8px rgba(243,212,119,.2)}.city-chart-row b{font-size:9px;white-space:nowrap}.city-level-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:12px}.city-level-card{padding:8px;border-radius:10px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06)}.city-level-card b{display:block;font-size:10px}.city-level-card span{display:block;font-size:9px;opacity:.62;margin:2px 0 6px}.city-zone-label{transition:opacity .2s}.city-time-night .city-zone-label{opacity:.34}.city-stage-village .city-zone{opacity:.72}.city-stage-town .city-zone,.city-stage-small .city-zone{opacity:.86}.city-stage-large .city-zone,.city-stage-mega .city-zone{opacity:1}@media(max-width:600px){.arch-house{width:36px;height:33px}.arch-house .house-body{left:5px;right:5px;height:20px}.arch-house .house-roof{left:2px;width:32px;height:19px}.arch-house .house-window{left:13px;bottom:9px;width:8px;height:7px}.arch-house .house-door{left:22px;height:11px}.building-art{width:34px;height:38px}.building-art .b-body{left:4px;right:4px;height:27px}.building-art .b-roof{left:3px;right:3px;height:10px}.building-art .b-window{left:10px;top:14px;width:6px;height:5px;box-shadow:10px 0 #c7edff,0 8px rgba(255,221,132,.9),10px 8px rgba(255,221,132,.9)}.building-art .b-door{left:18px;height:11px}.building-factory{width:40px;height:44px}.building-factory .b-body{height:32px}.building-factory .b-roof{height:13px}.building-factory .b-smokestack{right:5px;top:-5px;height:19px}.building-factory .b-smoke{right:2px;top:-12px}.arch-fountain{transform:scale(.8)}}";document.head.appendChild(style)}
 
 function renderCityMap(s){
   const el=document.querySelector("#cityMap");if(!el)return;
+  ensureArchitectureStyle();
   const businesses=s.businesses||[],catalog=s.businessCatalog||[];
-  const level=Math.max(1,Number(s.level)||1),owned=businesses.length;
+  const meta={kiosk:{icon:"🏪",spot:[22,37],zone:"trade"},cafe:{icon:"☕",spot:[64,37],zone:"trade"},workshop:{icon:"🔧",spot:[69,67],zone:"business"},factory:{icon:"🏭",spot:[84,70],zone:"industry"}};
+  const totalIncome=businesses.reduce((n,b)=>n+(Number(b.profitPerHour)||0),0),owned=businesses.length,level=Math.max(1,Number(s.level)||1);
   const cityStage=level>=25||owned>=4?"mega":level>=15||owned>=3?"large":level>=10||owned>=2?"small":level>=7?"town":"village";
   const cityNames={village:"ДЕРЕВНЯ",town:"ПОСЁЛОК",small:"МАЛЕНЬКИЙ ГОРОД",large:"БОЛЬШОЙ ГОРОД",mega:"МЕГАПОЛИС"};
   const cityProgress={village:1,town:2,small:3,large:4,mega:5}[cityStage];
-  const live=s.cityLive||{}, traffic=Math.min(10,Math.max(2,Math.ceil((Number(live.traffic)||0)/12)+owned)), visitors=Math.min(12,Math.max(2,Math.ceil((Number(live.visitors)||0)/10)+(owned?1:0)));
+  const live=s.cityLive||{};
+  const liveTraffic=Math.max(0,Number(live.traffic)||0),liveVisitors=Math.max(0,Number(live.visitors)||0);
+  const traffic=Math.min(14,Math.max(1,Math.ceil(liveTraffic/8)+(owned*1.2)+(level/6)));
+  const people=Math.min(14,Math.max(2,Math.ceil(liveVisitors/8)+(owned?1:0)));
   const hour=new Date().getHours(),night=hour>=20||hour<7;
-  const meta={
-    kiosk:{icon:"🏪",spot:[24,41],zone:"commercial"},
-    cafe:{icon:"☕",spot:[63,41],zone:"commercial"},
-    workshop:{icon:"🔧",spot:[72,76],zone:"industrial"},
-    factory:{icon:"🏭",spot:[88,76],zone:"industrial"}
-  };
-  const totalIncome=businesses.reduce((n,b)=>n+(Number(b.profitPerHour)||0),0);
-  const houseData=[
-    [9,15,0],[24,15,1],[9,29,2],[24,29,3],
-    [57,15,1],[72,15,2],[87,15,0],[72,29,3]
-  ];
-  const visibleHouses=houseData.slice(0,cityStage==="mega"?8:cityStage==="large"?8:cityStage==="small"?7:cityStage==="town"?6:5);
-  const palettes=[
-    ["#b9865d","#6a3d34"],["#9aaea6","#3f5b62"],["#d1b26e","#596a42"],["#b08da5","#5a4057"]
-  ];
-  const houses=visibleHouses.map(([x,y,type],i)=>{
-    const p=palettes[type];
-    return '<div class="city-house-block" style="left:'+x+'%;top:'+y+'%;--house-wall:'+p[0]+';--house-roof:'+p[1]+';--delay:-'+(i*.35)+'s"><div class="city-house-roof"></div><div class="city-house-body"><i></i><i></i><b></b></div><span class="city-house-door"></span></div>';
-  }).join("");
-  const parking=[[19,47],[29,47],[54,47],[65,47],[79,47],[89,47],[76,84],[91,84]].map(([x,y])=>'<i class="city-parking-slot-new" style="left:'+x+'%;top:'+y+'%"></i>').join("");
-  const trees=[[4,12],[42,12],[95,16],[5,89],[32,91],[47,69],[58,88]].map(([x,y],i)=>'<i class="city-tree-new" style="left:'+x+'%;top:'+y+'%;--d:-'+(i*.4)+'s"></i>').join("");
-  const lamps=[[39,46],[57,46],[39,64],[66,64]].map(([x,y])=>'<i class="city-lamp-new" style="left:'+x+'%;top:'+y+'%"></i>').join("");
+  const houseSlots=[[8,12],[24,12],[40,12],[68,12],[84,12],[8,27],[24,27],[38,27],[68,27],[84,27],[8,36],[24,35],[38,36],[68,31],[84,35],[8,84],[30,84],[67,85]];const houseCount=cityStage==="mega"?18:cityStage==="large"?15:cityStage==="small"?12:cityStage==="town"?9:6;const housePalette=[["#c99a6b","#873f38","#e9c68f"],["#9fb6ae","#415866","#d8e4dc"],["#d2b56f","#52683e","#f0dca3"],["#b48bad","#593c58","#e4c1d9"]];const houses=houseSlots.slice(0,houseCount).map((p,i)=>{const x=p[0],y=p[1],type=i%4,col=housePalette[type];return '<i class="arch-house house-'+type+'" style="position:absolute;left:'+x+'%;top:'+y+'%;width:64px;height:56px;display:block;z-index:14;background:linear-gradient(180deg,'+col[1]+' 0 34%,transparent 34%),linear-gradient(90deg,'+col[0]+','+col[2]+' 48%,'+col[0]+');border:1px solid rgba(255,255,255,.24);border-radius:5px 5px 3px 3px;box-shadow:0 8px 10px rgba(0,0,0,.45),inset 0 1px rgba(255,255,255,.2)"><span class="house-lawn"></span><span class="house-body"></span><span class="house-roof"></span><span class="house-window"></span><span class="house-door"></span><span class="house-chimney"></span></i>';}).join("");
+  const businessTargets=businesses.map(b=>({id:b.id,m:meta[b.id]})).filter(x=>x.m);
   const cars=Array.from({length:traffic},(_,i)=>{
-    const lane=i%2?55:61,dur=10+(i%4)*2;
-    return '<i class="city-car traffic-car-new" style="top:'+lane+'%;--dur:'+dur+'s;--delay:-'+(i*1.5)+'s;--dir:'+(i%2?'1':'-1')+'"></i>';
+    const lane=i%4, y=[49,53,57,75][lane], dur=12+(i%5)*2, delay=-(i*1.7);
+    return '<i class="city-car traffic-car lane-'+lane+'" style="--road-y:'+y+'%;--car-duration:'+dur+'s;--car-delay:'+delay+'s"></i>';
   }).join("");
+  const buses=Array.from({length:Math.min(2,cityProgress)},(_,i)=>'<i class="city-bus" style="left:-12%;top:'+(49+i*26)+'%;--bus-delay:-'+(i*6)+'s"></i>').join("");
+  const trafficLights='<i class="city-traffic-light active" style="left:49%;top:51%"></i><i class="city-traffic-light" style="left:57%;top:73%"></i><i class="city-traffic-light" style="left:70%;top:58%"></i>';
   const npcList=Array.isArray(live.npcs)?live.npcs:[];
-  const walkers=npcList.slice(0,visitors).map((n,i)=>{
-    const side=i%2?"commercial":"residential";
-    const startX=side==="commercial"?12+i*7:20+i*11;
-    const startY=side==="commercial"?58:36;
-    return '<i class="city-person-new npc-'+(n.type||"resident")+'" style="left:'+startX+'%;top:'+startY+'%;--walk:'+((i%3)+1)+'"></i>';
+  const walkers=npcList.slice(0,16).map((n,i)=>{
+    const target=n.targetBusiness&&businessTargets.find(x=>x.id===n.targetBusiness);
+    const spot=target?.m?.spot||[50,55];
+    const spawnPoints=[[12,52],[25,53],[37,56],[61,53],[76,55],[89,57],[18,75],[35,76],[53,76],[72,76],[86,77],[30,48]];const spawn=spawnPoints[i%spawnPoints.length],sx=spawn[0],sy=spawn[1];const routeY=spot[1]>62?75:52;const routeX=spot[0];
+    return '<i class="city-person customer-person npc-'+n.type+' npc-'+n.phase+'" style="left:'+sx+'%;top:'+sy+'%;--customer-x:'+(spot[0]-sx)+'%;--customer-y:'+(spot[1]-sy)+'%;--route-x:'+(routeX-sx)+'%;--route-y:'+(routeY-sy)+'%;--customer-duration:'+(5+(i%5))+'s;--customer-delay:-'+(i*.55)+'s" title="'+n.typeName+'"></i>';
   }).join("");
-  const businessButtons=catalog.filter(c=>meta[c.id]).map(cat=>{
-    const m=meta[cat.id],biz=businesses.find(x=>x.id===cat.id);
-    const lv=Math.max(1,Number(biz?.level)||1);
-    const typeClass=cat.id==="factory"?"factory":cat.id==="workshop"?"workshop":cat.id==="cafe"?"cafe":"kiosk";
-    const title=cat.name||cat.id;
-    if(!biz){
-      return '<button class="city-business-new locked" style="left:'+m.spot[0]+'%;top:'+m.spot[1]+'%" data-city-open="business" data-business-id="'+cat.id+'"><span class="city-business-art '+typeClass+'"></span><b>'+title+'</b><small>Участок · '+money(cat.baseCost)+'</small></button>';
-    }
-    return '<button class="city-business-new '+typeClass+' owned" style="left:'+m.spot[0]+'%;top:'+m.spot[1]+'%" data-city-open="business" data-business-id="'+cat.id+'"><span class="city-business-art '+typeClass+'"></span><b>'+title+'</b><small>ур. '+lv+' · '+money(biz.profitPerHour||0)+'/ч</small></button>';
-  }).join("");
-  const badges=businesses.map(b=>{
+  const queueBadges=businesses.map(b=>{const m=meta[b.id];if(!m)return "";const q=Number(live.queues?.[b.id]||0),d=Number(live.demand?.[b.id]||0);if(!q&&!d)return "";return '<span class="business-demand-badge" style="left:'+m.spot[0]+'%;top:'+(m.spot[1]-6)+'%">'+(q?'👥 '+q+' в очереди':'📈 спрос '+d)+'</span>';}).join("");
+  const streetLife='<i class="city-tree tree-1">🌳</i><i class="city-tree tree-2">🌲</i><i class="city-tree tree-3">🌳</i><i class="city-lamp lamp-1">💡</i><i class="city-lamp lamp-2">💡</i>';
+  const activeBusinesses=businesses.filter(b=>Number(b.level||1)>=5);
+  const trucks=activeBusinesses.filter(b=>b.id==="workshop"||b.id==="factory").slice(0,4).map((b,i)=>'<i class="city-truck truck-route-'+b.id+'" style="--i:'+i+'"></i>').join("");
+  const moneyFlows=businesses.slice(0,4).map((b,i)=>{const m=meta[b.id]||{spot:[50,68]};return '<i class="money-flow money-'+b.id+'" style="--x:'+m.spot[0]+';--y:'+m.spot[1]+';--i:'+i+'">+'+Math.max(1,Math.round(Number(b.profitPerHour||0)))+'</i>'}).join("");
+  const activity=businesses.map(b=>{const m=meta[b.id];if(!m)return "";const count=Math.min(3,Math.max(1,Math.floor((Number(b.level)||1)/5)));return Array.from({length:count},(_,i)=>'<i class="business-worker worker-'+b.id+'" style="--n:'+i+';left:'+m.spot[0]+'%;top:'+(m.spot[1]+5+i*2)+'%"></i>').join("")}).join("");
+  const pendingByBusiness=businesses.map(b=>{
+    const pending=Math.max(0,Number(b.pendingIncome||b.pending||0)); if(!pending)return "";
     const m=meta[b.id];if(!m)return "";
-    const q=Number(live.queues?.[b.id]||0),d=Number(live.demand?.[b.id]||0);
-    if(!q&&!d)return "";
-    return '<span class="city-demand-new" style="left:'+m.spot[0]+'%;top:'+(m.spot[1]-7)+'%">'+(q?'👥 '+q:'📈 '+d)+'</span>';
+    const pulses=Math.min(3,Math.max(1,Math.ceil(pending/Math.max(1,Number(b.profitPerHour||1))*3)));
+    return Array.from({length:pulses},(_,i)=>'<i class="income-pulse pulse-'+b.id+'" style="--sx:'+m.spot[0]+'%;--sy:'+m.spot[1]+'%;--dx:'+((48-m.spot[0]))+'vw;--dy:'+((55-m.spot[1]))+'vh;--delay:'+(i*.7)+'s">₽</i>').join("");
   }).join("");
-  const readyTasks=(s.tasks||[]).filter(x=>!x.claimed&&x.locked===false).length;
-  const readyDaily=!(s.daily||{}).already,readyEvent=!(s.event||{}).claimed;
-  const actions=[
-    ["🎯","Задания","tasks",12,readyTasks],["🏆","Достижения","achievements",28,0],
-    ["🎁","Бонус","daily",44,readyDaily?1:0],["🛒","Магазин","shop",60,(s.shop||[]).length],
-    ["⚡","Событие","event",76,readyEvent?1:0],["🥇","Рейтинг","rankings",92,0]
-  ].map(x=>'<button class="city-action-new '+(x[4]?'ready':'')+'" style="left:'+x[3]+'%;top:'+(x[0]==="🎯"?88:92)+'%" data-city-open="'+x[2]+'"><span>'+x[0]+'</span><small>'+x[1]+'</small></button>').join("");
-  const panel='';
-  el.innerHTML='<div class="city-map city-map-v2 city-stage-'+cityStage+(night?" city-time-night":" city-time-day")+'">'+
-    '<div class="city-v2-world">'+
-      '<div class="city-v2-block block-res-1"></div><div class="city-v2-block block-res-2"></div>'+
-      '<div class="city-v2-block block-commercial"></div><div class="city-v2-block block-industrial"></div>'+
-      '<div class="city-road-h road-main"></div><div class="city-road-h road-side"></div>'+
-      '<div class="city-road-v road-central"></div><div class="city-road-v road-industry"></div>'+
-      '<div class="city-sidewalk-new sw-top"></div><div class="city-sidewalk-new sw-mid"></div><div class="city-sidewalk-new sw-bottom"></div>'+
-      '<div class="city-plaza-new"><span>★</span><small>ЦЕНТР</small></div>'+
-      '<div class="city-park-new"><b>ПАРК</b></div>'+
-      '<div class="city-houses-v2">'+houses+'</div>'+
-      '<div class="city-decor-v2">'+trees+lamps+parking+'</div>'+
-      '<div class="city-traffic-v2">'+cars+'</div><div class="city-life-v2">'+walkers+'</div>'+
-      '<div class="city-businesses-v2">'+businessButtons+badges+'</div>'+
-      '<button class="city-home-v2" style="left:47%;top:34%" data-city-open="home"><span>🏠</span><b>МОЙ ДОМ</b><small>ур. '+level+'</small></button>'+
-      '<div class="city-road-sign sign-main">ГЛАВНАЯ</div><div class="city-road-sign sign-ind">ПРОМЗОНА</div>'+
-      '<div class="city-caption">Мой город · '+cityNames[cityStage]+' · '+cityProgress+' территория</div>'+
-    '</div>'+
-    '<div class="city-v2-top"><b>'+cityNames[cityStage]+'</b><span>ур. '+level+'</span><span>'+owned+'/4 бизнеса</span><span>'+money(totalIncome)+'/ч</span></div>'+
-    '<div class="city-v2-compass">N</div><div class="city-v2-zoom"><button type="button" data-map-zoom="-1">−</button><button type="button" data-map-zoom="1">+</button></div>'+
-    '<div class="city-v2-actions">'+actions+'</div><div class="city-v2-legend"><span>🏠 Жилой район</span><span>🏪 Торговля</span><span>🏭 Промзона</span></div>'+
-    '<div id="cityPanel" class="city-panel" hidden></div>'+panel+
-    '</div>';
+  const routeLines=businesses.map(b=>{const m=meta[b.id];if(!m)return "";const dx=48-m.spot[0],dy=55-m.spot[1],len=Math.sqrt(dx*dx+dy*dy);return '<i class="business-route route-'+b.id+'" style="--sx:'+m.spot[0]+'%;--sy:'+m.spot[1]+'%;--len:'+len+'%;--angle:'+Math.atan2(dy,dx)*180/Math.PI+'deg"></i>';}).join("");
+  const businessFlows=businesses.map((b,i)=>{const m=meta[b.id];if(!m)return "";return '<i class="business-flow flow-'+b.id+'" style="--sx:'+m.spot[0]+'%;--sy:'+m.spot[1]+'%;--dx:'+((48-m.spot[0]))+'vw;--dy:'+((55-m.spot[1]))+'vh;--delay:'+(i*.8)+'s"></i>';}).join("");
+  const parkingSpots=[[13,39],[27,39],[72,39],[86,39],[13,83],[28,83],[70,83],[84,83]];const parking=parkingSpots.map(p=>'<i class="city-parking-slot" style="left:'+p[0]+'%;top:'+p[1]+'%"></i>').join("");const homePulse='<div class="home-pulse-ring"></div>';
+  const cityLabels='<div class="map-compass">N</div><div class="map-scale-label">МАСШТАБ · ГОРОД</div>';
+  const markers=catalog.filter(b=>meta[b.id]).map(cat=>{
+    const m=meta[cat.id],biz=businesses.find(x=>x.id===cat.id);
+    const typeClass=cat.id==="factory"?"building-factory":cat.id==="workshop"?"building-workshop":cat.id==="cafe"?"building-cafe":"building-kiosk";
+    if(!biz)return '<button type="button" class="map-marker business-marker locked-business" style="left:'+m.spot[0]+'%;top:'+m.spot[1]+'%" data-city-open="business" data-business-id="'+cat.id+'"><span class="building-art '+typeClass+'"><i class="b-roof"></i><i class="b-body"></i><i class="b-window"></i><i class="b-door"></i></span><small>'+cat.name+'</small><em>Участок · '+money(cat.baseCost)+'</em></button>';
+    const lv=Math.max(1,Number(biz.level)||1),tier=lv>=25?"city-tier-4":lv>=10?"city-tier-3":lv>=5?"city-tier-2":"city-tier-1";
+    const stage=lv>=25?"landmark":lv>=10?"large":lv>=5?"developed":lv>=2?"small":"plot",work=lv>=5?"working":"";
+    const art=stage==="plot"?"<span class=\"building-art building-workshop\"><i class=\"b-body\"></i><i class=\"b-roof\"></i></span>":'<span class="building-art '+typeClass+' '+(stage==="landmark"?"building-landmark":"")+'"><i class="b-roof"></i><i class="b-body"></i><i class="b-window"></i><i class="b-door"></i>'+(cat.id==="factory"?'<i class="b-smokestack"></i><i class="b-smoke"></i>':'')+(stage==="large"||stage==="landmark"?'<i class="b-sign"></i>':'')+'</span>';
+    return '<button type="button" class="map-marker business-marker '+tier+' building-stage-'+stage+' '+work+'" style="left:'+m.spot[0]+'%;top:'+m.spot[1]+'%" data-city-open="business" data-business-id="'+cat.id+'">'+art+'<small>'+cat.name+'</small><em>ур. '+lv+' · '+money(biz.profitPerHour||0)+'/ч</em><i class="building-lights"></i><i class="building-smoke"></i></button>';
+  }).join("");
+  const pendingTasks=(s.tasks||[]).filter(x=>!x.claimed&&x.locked===false).length;
+  const pendingAchievements=(s.achievements||[]).filter(x=>!x.claimed&&x.unlocked).length;
+  const dailyReady=!(s.daily||{}).already;
+  const eventReady=!(s.event||{}).claimed;
+  const cityEvents=[["⚡","Спрос +25%","event",30,57],["📦","Заказ","event",72,30],["🎉","Праздник","event",50,24]].slice(0,cityStage==="village"?1:cityStage==="town"?2:3).map(x=>'<button type="button" class="map-marker city-event-marker '+(eventReady?"event-ready":"event-done")+'" style="left:'+x[3]+'%;top:'+x[4]+'%" data-city-open="event"><span>'+x[0]+'</span><small>'+x[1]+'</small><em>'+(eventReady?"Забрать":"Получено")+'</em></button>').join("");
+  const servicePoints=[["🎯","Задания","tasks",8,pendingTasks],["🏆","Достижения","achievements",24.8,pendingAchievements],["🎁","Бонус","daily",41.6,dailyReady?1:0],["🛒","Магазин","shop",58.4,(s.shop||[]).length],["⚡","Событие","event",75.2,eventReady?1:0],["🥇","Рейтинг","rankings",92,0]].map(x=>'<button type="button" class="map-marker city-service-marker service-'+x[2]+' '+(x[4]?'service-ready':'service-idle')+'" style="left:'+x[3]+'%" data-city-open="'+x[2]+'"><span>'+x[0]+'</span><small>'+x[1]+'</small></button>').join("");
+  const territoryMarks=[["🌳","Новая территория",8,72,1],["🧭","Северный район",92,72,2],["🏗️","Новый квартал",92,80,3],["🌉","Большая зона",8,80,4]].map(x=>'<button type="button" class="map-marker territory-marker '+(cityProgress>=x[4]?"territory-open":"territory-locked")+'" style="left:'+x[2]+'%;top:'+x[3]+'%" data-city-open="territory" data-territory="'+x[1]+'"><span>'+(cityProgress>=x[4]?x[0]:"🔒")+'</span><small>'+x[1]+'</small><em>'+(cityProgress>=x[4]?"Открыто":"Требуется ур. "+([0,1,7,10,15][x[4]]) )+'</em></button>').join("");
+  el.innerHTML='<div class="city-map city-stage-'+cityStage+(night?" city-time-night":" city-time-day")+'"><div class="map-world"><div class="city-architecture-layer"><div class="city-zone residential"></div><div class="city-zone center"></div><div class="city-zone commercial"></div><div class="city-zone industrial"></div><div class="city-zone outskirts"></div><span class="city-zone-label res">Жилой район</span><span class="city-zone-label com">Торговая улица</span><span class="city-zone-label cen">Центр</span><span class="city-zone-label ind">Промзона</span><span class="city-zone-label out">Окраина</span><div class="arch-sidewalk s1"></div><div class="arch-sidewalk s2"></div><div class="arch-road-mark r1"></div><div class="arch-road-mark r2"></div><i class="arch-crosswalk c1"></i><i class="arch-crosswalk c2"></i><i class="arch-lamp-post l1"></i><i class="arch-lamp-post l2"></i><i class="arch-tree t1"></i><i class="arch-tree t2"></i><i class="arch-tree t3"></i><div class="arch-park p1"></div><div class="arch-park p2"></div><div class="arch-fountain"></div></div><div class="city-houses-layer">'+houses+'</div><div class="city-street-life">'+streetLife+'</div><div class="map-plaza"><span>⭐</span><small>ЦЕНТРАЛЬНАЯ ПЛОЩАДЬ</small></div><div class="city-sidewalks"><i class="sidewalk-block sb1"></i><i class="sidewalk-block sb2"></i><i class="sidewalk-block sb3"></i><i class="sidewalk-block sb4"></i></div><div class="city-parking">'+parking+'</div><div class="map-road road-a"></div><div class="map-road road-b"></div><div class="map-road road-c"></div><div class="map-road road-d"></div><div class="map-water"></div><div class="map-route route-home-trade"></div><div class="map-route route-home-center"></div><div class="map-route route-home-industry"></div><div class="city-business-routes">'+routeLines+businessFlows+pendingByBusiness+'</div><div class="city-traffic">'+cars+buses+trafficLights+'</div><div class="city-life">'+walkers+'</div><div class="city-logistics">'+trucks+'</div><div class="city-economy-flow">'+moneyFlows+'</div><div class="city-business-life">'+activity+'</div><button type="button" class="map-marker home-marker" style="left:50%;top:67%" data-city-open="home"><span class="building-art building-landmark building-cafe"><i class="b-roof"></i><i class="b-body"></i><i class="b-window"></i><i class="b-door"></i><i class="b-sign"></i></span><small>Мой дом</small><em>База · ур. '+level+'</em>'+homePulse+'</button>'+markers+territoryMarks+'<div class="map-center-label">Мой город · '+cityNames[cityStage].toLowerCase()+' · '+cityProgress+' территории</div></div><div class="map-ui-layer"><div class="map-hud"><span>💰 '+money(s.balance||0)+'</span><span>⭐ Ур. '+level+'</span></div><div class="map-city-status"><b>'+cityNames[cityStage]+'</b><span>Город ур. '+level+'</span><span>'+owned+'/4 объектов</span><span>'+money(totalIncome)+'/ч</span></div>'+servicePoints+cityLabels+'</div><div id="cityPanel" class="city-panel" hidden></div><div class="map-legend"><span>🏠 База</span><span>🏪 Бизнес</span><span>🚗 Трафик</span><span>👥 Жизнь</span><b>'+owned+' объектов · '+money(totalIncome)+'/ч</b></div></div>'; 
   initCityMapControls();
 }
 
