@@ -1967,3 +1967,20 @@ button{font-family:"Courier New",monospace!important}
 .city-truck:before{content:"";position:absolute;left:5px;top:-6px;width:10px;height:6px;background:#719795;border:2px solid #252823}
 .city-truck:after{content:"";position:absolute;left:2px;bottom:-5px;width:6px;height:5px;background:#171a18;box-shadow:16px 0 #171a18}
 @keyframes pxTruck{0%{transform:translate(-20px,0)}25%{transform:translate(35vw,0)}50%{transform:translate(70vw,8vh)}75%{transform:translate(35vw,15vh)}100%{transform:translate(-20px,0)}}
+
+/* PIXEL WEATHER + DAY/NIGHT */
+.city-map{overflow:hidden!important}
+.pixel-sky-glow{position:absolute;inset:0;pointer-events:none;z-index:30;background:transparent}
+.city-time-night .pixel-sky-glow{background:rgba(15,25,42,.28);mix-blend-mode:multiply}
+.city-time-day .pixel-sky-glow{background:rgba(255,218,120,.035)}
+.city-time-night .city-lamp:before{box-shadow:0 -4px 0 3px #ffe07a,0 0 9px 2px #e7bd4d!important}
+.city-time-night .building-lights{opacity:1!important}
+.city-time-night .building-lights:before{animation:pxLights .9s steps(1,end) infinite}
+.pixel-weather{position:absolute;inset:0;pointer-events:none;z-index:40;overflow:hidden}
+.city-weather-rain .pixel-weather{background-image:repeating-linear-gradient(105deg,transparent 0 13px,rgba(160,190,202,.55) 13px 15px,transparent 15px 28px);background-size:56px 32px;animation:pxRain .65s steps(6,end) infinite}
+.city-weather-snow .pixel-weather{background-image:radial-gradient(circle,#eee7c9 0 2px,transparent 3px);background-size:31px 27px;animation:pxSnow 3s steps(9,end) infinite}
+.city-weather-rain .city-tree:after{box-shadow:0 8px 0 rgba(92,124,78,.7)}
+@keyframes pxRain{from{background-position:0 0}to{background-position:-28px 64px}}
+@keyframes pxSnow{from{background-position:0 -20px}to{background-position:17px 60px}}
+.city-time-night .map-plaza,.city-time-night .city-zone-label{filter:brightness(.82)}
+.city-time-night .city-person,.city-time-night .city-car,.city-time-night .city-bus{filter:brightness(.78)}
