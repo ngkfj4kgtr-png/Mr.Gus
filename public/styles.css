@@ -1999,5 +1999,6 @@ button{font-family:"Courier New",monospace!important}
 .npc-phase-buy:before{background:#d8c17c!important}
 .npc-phase-working:after{background:#6f5134!important}
 .business-marker.building-stage-plot{filter:grayscale(.25) brightness(.78)}
-.business-marker:not(.working) .building-lights{opacity:.2!important}
-.business-marker.working .building-lights{opacity:1!important}
+.business-marker:not(.work) .building-lights{opacity:.2!important}
+.business-marker.work .building-lights{opacity:1!important}
+.business-marker.active-business .building-lights{opacity:1!important}
