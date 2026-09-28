@@ -388,3 +388,42 @@
 
 /* Strong district labels without covering the buildings. */
 .city-zone-label{z-index:15!important;opacity:.72}
+
+/* Hard visibility layer for residential blocks. */
+.city-houses-layer{
+  position:absolute!important;
+  inset:0!important;
+  z-index:40!important;
+  pointer-events:none!important;
+  overflow:visible!important;
+}
+.city-houses-layer .arch-house{
+  position:absolute!important;
+  display:block!important;
+  visibility:visible!important;
+  opacity:1!important;
+  z-index:41!important;
+  min-width:64px!important;
+  min-height:56px!important;
+  overflow:visible!important;
+  background-color:#b48a61!important;
+}
+.city-houses-layer .arch-house .house-body{
+  display:block!important;
+  visibility:visible!important;
+  opacity:1!important;
+  background:#b48a61!important;
+}
+.city-houses-layer .arch-house .house-roof{
+  display:block!important;
+  visibility:visible!important;
+  opacity:1!important;
+  background:#813f38!important;
+}
+.city-houses-layer .arch-house .house-window,
+.city-houses-layer .arch-house .house-door,
+.city-houses-layer .arch-house .house-chimney{
+  display:block!important;
+  visibility:visible!important;
+  opacity:1!important;
+}
