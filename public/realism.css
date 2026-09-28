@@ -343,3 +343,48 @@
   .city-person{transform:scale(.98)}
   .business-marker .building-art{transform:scale(.92)}
 }
+
+/* Composition repair: establish real containing layers so architecture cannot disappear. */
+.city-houses-layer{
+  position:absolute!important;
+  inset:0!important;
+  z-index:13!important;
+  pointer-events:none;
+}
+.city-houses-layer .arch-house{
+  z-index:14;
+  display:block!important;
+  opacity:1!important;
+  visibility:visible!important;
+}
+.city-architecture-layer{z-index:2!important}
+.city-sidewalks{z-index:5!important}
+.city-parking{z-index:6!important}
+.map-road{z-index:4!important}
+.city-traffic{z-index:16!important}
+.city-life{z-index:18!important}
+.city-business-life{z-index:19!important}
+.city-logistics{z-index:17!important}
+.business-marker{z-index:30!important}
+.map-ui-layer{z-index:60!important}
+
+/* Replace the empty-feeling center with a readable street grid. */
+.road-a{left:-8%!important;top:41%!important;width:116%!important;height:13%!important;transform:none!important;border-radius:0!important}
+.road-c{left:-8%!important;top:72%!important;width:116%!important;height:9%!important;transform:none!important;border-radius:0!important}
+.road-b{left:45%!important;top:-8%!important;width:10%!important;height:116%!important;transform:none!important;border-radius:0!important}
+.road-d{left:17%!important;top:55%!important;width:74%!important;height:4%!important;transform:none!important;border-radius:0!important}
+.city-zone.center{left:38%!important;top:55%!important;width:24%!important;height:20%!important;border-radius:28%!important}
+.city-zone.residential{left:2%!important;top:8%!important;width:40%!important;height:34%!important}
+.city-zone.commercial{left:56%!important;top:7%!important;width:40%!important;height:34%!important}
+.city-zone.industrial{left:57%!important;top:58%!important;width:40%!important;height:34%!important}
+.city-zone.outskirts{left:2%!important;top:57%!important;width:34%!important;height:36%!important}
+
+/* Larger readable homes on mobile. */
+.arch-house{width:58px!important;height:52px!important;transform:scale(1)!important}
+.arch-house .house-body{height:30px!important}
+.arch-house .house-roof{width:52px!important;height:28px!important}
+.arch-house .house-window{bottom:14px!important}
+.arch-house .house-door{height:17px!important}
+
+/* Strong district labels without covering the buildings. */
+.city-zone-label{z-index:15!important;opacity:.72}
