@@ -146,13 +146,13 @@ function renderCityMap(s){
   const traffic=Math.min(14,Math.max(1,Math.ceil(liveTraffic/8)+(owned*1.2)+(level/6)));
   const people=Math.min(14,Math.max(2,Math.ceil(liveVisitors/8)+(owned?1:0)));
   const hour=new Date().getHours(),night=hour>=20||hour<7;
-  const houseSlots=[[8,12],[24,12],[40,12],[68,12],[84,12],[8,27],[24,27],[38,27],[68,27],[84,27],[8,38],[24,36],[38,39],[68,31],[84,38],[10,55],[31,54],[67,55]];const houseCount=cityStage==="mega"?18:cityStage==="large"?15:cityStage==="small"?12:cityStage==="town"?9:6;const houses=houseSlots.slice(0,houseCount).map((p,i)=>{const x=p[0],y=p[1],type=i%4;return '<i class="arch-house house-'+type+'" style="position:absolute;left:'+x+'%;top:'+y+'%"><span class="house-lawn"></span><span class="house-body"></span><span class="house-roof"></span><span class="house-window"></span><span class="house-door"></span><span class="house-chimney"></span></i>';}).join("");
+  const houseSlots=[[8,12],[24,12],[40,12],[68,12],[84,12],[8,27],[24,27],[38,27],[68,27],[84,27],[8,36],[24,35],[38,36],[68,31],[84,35],[8,84],[30,84],[67,85]];const houseCount=cityStage==="mega"?18:cityStage==="large"?15:cityStage==="small"?12:cityStage==="town"?9:6;const houses=houseSlots.slice(0,houseCount).map((p,i)=>{const x=p[0],y=p[1],type=i%4;return '<i class="arch-house house-'+type+'" style="position:absolute;left:'+x+'%;top:'+y+'%"><span class="house-lawn"></span><span class="house-body"></span><span class="house-roof"></span><span class="house-window"></span><span class="house-door"></span><span class="house-chimney"></span></i>';}).join("");
   const businessTargets=businesses.map(b=>({id:b.id,m:meta[b.id]})).filter(x=>x.m);
   const cars=Array.from({length:traffic},(_,i)=>{
-    const lane=i%4, y=[53,56,59,62][lane], dur=12+(i%5)*2, delay=-(i*1.7);
+    const lane=i%4, y=[49,53,57,75][lane], dur=12+(i%5)*2, delay=-(i*1.7);
     return '<i class="city-car traffic-car lane-'+lane+'" style="--road-y:'+y+'%;--car-duration:'+dur+'s;--car-delay:'+delay+'s"></i>';
   }).join("");
-  const buses=Array.from({length:Math.min(2,cityProgress)},(_,i)=>'<i class="city-bus" style="left:-12%;top:'+(57+i*4)+'%;--bus-delay:-'+(i*6)+'s"></i>').join("");
+  const buses=Array.from({length:Math.min(2,cityProgress)},(_,i)=>'<i class="city-bus" style="left:-12%;top:'+(49+i*26)+'%;--bus-delay:-'+(i*6)+'s"></i>').join("");
   const trafficLights='<i class="city-traffic-light active" style="left:49%;top:51%"></i><i class="city-traffic-light" style="left:57%;top:73%"></i><i class="city-traffic-light" style="left:70%;top:58%"></i>';
   const npcList=Array.isArray(live.npcs)?live.npcs:[];
   const walkers=npcList.slice(0,16).map((n,i)=>{
@@ -175,7 +175,7 @@ function renderCityMap(s){
   }).join("");
   const routeLines=businesses.map(b=>{const m=meta[b.id];if(!m)return "";const dx=48-m.spot[0],dy=55-m.spot[1],len=Math.sqrt(dx*dx+dy*dy);return '<i class="business-route route-'+b.id+'" style="--sx:'+m.spot[0]+'%;--sy:'+m.spot[1]+'%;--len:'+len+'%;--angle:'+Math.atan2(dy,dx)*180/Math.PI+'deg"></i>';}).join("");
   const businessFlows=businesses.map((b,i)=>{const m=meta[b.id];if(!m)return "";return '<i class="business-flow flow-'+b.id+'" style="--sx:'+m.spot[0]+'%;--sy:'+m.spot[1]+'%;--dx:'+((48-m.spot[0]))+'vw;--dy:'+((55-m.spot[1]))+'vh;--delay:'+(i*.8)+'s"></i>';}).join("");
-  const parkingSpots=[[15,47],[28,47],[74,57],[87,58],[17,78],[28,78],[67,78],[80,78]];const parking=parkingSpots.map(p=>'<i class="city-parking-slot" style="left:'+p[0]+'%;top:'+p[1]+'%"></i>').join("");const homePulse='<div class="home-pulse-ring"></div>';
+  const parkingSpots=[[13,39],[27,39],[72,39],[86,39],[13,83],[28,83],[70,83],[84,83]];const parking=parkingSpots.map(p=>'<i class="city-parking-slot" style="left:'+p[0]+'%;top:'+p[1]+'%"></i>').join("");const homePulse='<div class="home-pulse-ring"></div>';
   const cityLabels='<div class="map-compass">N</div><div class="map-scale-label">МАСШТАБ · ГОРОД</div>';
   const markers=catalog.filter(b=>meta[b.id]).map(cat=>{
     const m=meta[cat.id],biz=businesses.find(x=>x.id===cat.id);
