@@ -158,8 +158,8 @@ function renderCityMap(s){
   const walkers=npcList.slice(0,16).map((n,i)=>{
     const target=n.targetBusiness&&businessTargets.find(x=>x.id===n.targetBusiness);
     const spot=target?.m?.spot||[50,55];
-    const spawnPoints=[[12,52],[25,53],[37,56],[61,53],[76,55],[89,57],[18,75],[35,76],[53,76],[72,76],[86,77],[30,48]];const spawn=spawnPoints[i%spawnPoints.length],sx=spawn[0],sy=spawn[1];
-    return '<i class="city-person customer-person npc-'+n.type+' npc-'+n.phase+'" style="left:'+sx+'%;top:'+sy+'%;--customer-x:'+(spot[0]-sx)+'%;--customer-y:'+(spot[1]-sy)+'%;--customer-duration:'+(5+(i%5))+'s;--customer-delay:-'+(i*.55)+'s" title="'+n.typeName+'"></i>';
+    const spawnPoints=[[12,52],[25,53],[37,56],[61,53],[76,55],[89,57],[18,75],[35,76],[53,76],[72,76],[86,77],[30,48]];const spawn=spawnPoints[i%spawnPoints.length],sx=spawn[0],sy=spawn[1];const routeY=spot[1]>62?75:52;const routeX=spot[0];
+    return '<i class="city-person customer-person npc-'+n.type+' npc-'+n.phase+'" style="left:'+sx+'%;top:'+sy+'%;--customer-x:'+(spot[0]-sx)+'%;--customer-y:'+(spot[1]-sy)+'%;--route-x:'+(routeX-sx)+'%;--route-y:'+(routeY-sy)+'%;--customer-duration:'+(5+(i%5))+'s;--customer-delay:-'+(i*.55)+'s" title="'+n.typeName+'"></i>';
   }).join("");
   const queueBadges=businesses.map(b=>{const m=meta[b.id];if(!m)return "";const q=Number(live.queues?.[b.id]||0),d=Number(live.demand?.[b.id]||0);if(!q&&!d)return "";return '<span class="business-demand-badge" style="left:'+m.spot[0]+'%;top:'+(m.spot[1]-6)+'%">'+(q?'👥 '+q+' в очереди':'📈 спрос '+d)+'</span>';}).join("");
   const streetLife='<i class="city-tree tree-1">🌳</i><i class="city-tree tree-2">🌲</i><i class="city-tree tree-3">🌳</i><i class="city-lamp lamp-1">💡</i><i class="city-lamp lamp-2">💡</i>';
