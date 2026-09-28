@@ -1,0 +1,1 @@
+import test from "node:test";import assert from "node:assert/strict";test("CITYVOICE V1 categories",()=>assert.equal(9,["Дороги","Освещение","Мусор","Снег и лёд","Дворы","Транспорт","Безопасность","Здания","Другое"].length));
