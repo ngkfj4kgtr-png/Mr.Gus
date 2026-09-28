@@ -1859,3 +1859,53 @@ input,select,textarea{border-radius:0!important;background:#101710!important;bor
 button{font-family:"Courier New",monospace!important}
 /* disable smooth modern motion in the retro theme */
 *,*:before,*:after{transition-timing-function:steps(2,end)!important}
+
+/* PIXEL SPRITE PACK — 16/32-bit style */
+:root{--px0:transparent;--px1:#151b16;--px2:#293329;--px3:#4b573f;--px4:#7b3e36;--px5:#b66a4c;--px6:#c59a5d;--px7:#6f9790;--px8:#e2c777}
+/* houses */
+.arch-house{position:relative!important;background:#b98b55!important;border:3px solid #443728!important;box-shadow:4px 4px 0 #25291f!important;border-radius:0!important;overflow:visible!important}
+.arch-house:before{content:"";position:absolute;z-index:2;left:-5px;top:-15px;width:calc(100% + 10px);height:22px;background:#713b36;border:3px solid #402724;clip-path:polygon(50% 0,100% 100%,0 100%);box-shadow:inset 0 -4px #4b302b}
+.arch-house:after{content:"";position:absolute;z-index:3;left:18%;top:36%;width:13px;height:13px;background:#79a8a0;border:3px solid #293533;box-shadow:24px 0 #79a8a0,24px 0 0 3px #293533,0 22px #64462f}
+/* businesses */
+.building-art{position:relative!important;border:3px solid #292e28!important;border-radius:0!important;box-shadow:5px 5px 0 #181c17!important;overflow:visible!important;filter:none!important}
+.building-art:after{content:"";position:absolute;left:18%;right:18%;bottom:10%;height:18%;background:#78a29d;border:2px solid #273532;box-shadow:0 -22px 0 -2px #78a29d,0 -22px 0 0 #273532;}
+.building-kiosk{background:#6d9a4d!important;border-color:#30472b!important}
+.building-cafe{background:#b97850!important;border-color:#52362d!important}
+.building-workshop{background:#8d7959!important;border-color:#504634!important}
+.building-factory{background:#686d70!important;border-color:#34383a!important}
+.building-kiosk:before,.building-cafe:before,.building-workshop:before,.building-factory:before{content:"";position:absolute;left:-3px;right:-3px;top:-9px;height:9px;background:#a9a05d;border:3px solid #45422a}
+.building-factory:before{background:#45494b;border-color:#292d2f}
+.building-art .b-roof,.building-art .b-body,.building-art .b-window,.building-art .b-door,.building-art .building-lights,.building-art .building-smoke{display:none!important}
+/* trees */
+.city-tree:before{content:""!important;position:absolute!important;width:10px!important;height:10px!important;left:0!important;top:0!important;background:#4c863e!important;border:2px solid #29472b!important;box-shadow:-7px 7px 0 #5e9748,7px 7px 0 #5e9748,0 14px 0 #356b34!important}
+.city-tree:after{content:""!important;position:absolute!important;left:3px!important;top:23px!important;width:5px!important;height:9px!important;background:#68482e!important}
+/* street lamps */
+.city-lamp:before{content:""!important;position:absolute!important;left:4px!important;top:0!important;width:4px!important;height:29px!important;background:#363a31!important;box-shadow:0 -4px 0 3px #e0c45c!important}
+/* cars */
+.city-car{position:relative!important;width:24px!important;height:11px!important;background:#b94f43!important;border:2px solid #292522!important;border-radius:0!important;box-shadow:3px 3px 0 #25271f!important}
+.city-car:before{content:""!important;position:absolute!important;left:5px!important;top:-7px!important;width:11px!important;height:7px!important;background:#719795!important;border:2px solid #292522!important}
+.city-car:after{content:""!important;position:absolute!important;left:2px!important;bottom:-5px!important;width:6px!important;height:5px!important;background:#171a18!important;box-shadow:14px 0 #171a18!important}
+/* people */
+.city-person{position:relative!important;width:7px!important;height:10px!important;border-radius:0!important;background:#d7ad86!important;border:2px solid #29251f!important;box-shadow:0 5px 0 #365273!important}
+.city-person:before{content:""!important;position:absolute!important;left:0!important;top:-6px!important;width:5px!important;height:5px!important;background:#d7ad86!important;border:2px solid #29251f!important}
+.city-person:after{content:""!important;position:absolute!important;left:-2px!important;top:9px!important;width:4px!important;height:5px!important;background:#2c405b!important;box-shadow:5px 0 #2c405b!important}
+/* bus */
+.city-bus{position:relative!important;border-radius:0!important;background:#d0aa43!important;border:3px solid #353020!important;box-shadow:4px 4px 0 #20221a!important}
+.city-bus:after{content:""!important;position:absolute!important;left:7px!important;right:7px!important;top:6px!important;height:8px!important;background:#719795!important;border:2px solid #293432!important;box-shadow:0 15px 0 #171a18!important}
+/* traffic light */
+.city-traffic-light{border-radius:0!important;background:#252925!important;border:2px solid #111!important;box-shadow:2px 2px 0 #121411!important}
+.city-traffic-light:before{border-radius:0!important;background:#d5b94f!important}
+/* animated pixel life */
+.city-car,.city-bus{animation:pxVehicle 5s steps(10,end) infinite}
+.city-person{animation:pxWalk .65s steps(2,end) infinite}
+.city-tree{animation:pxTree 2.4s steps(2,end) infinite}
+@keyframes pxVehicle{0%,100%{transform:translateX(0)}50%{transform:translateX(3px)}}
+@keyframes pxWalk{0%,100%{margin-top:0}50%{margin-top:-2px}}
+@keyframes pxTree{0%,100%{filter:none}50%{filter:brightness(1.08)}}
+/* pixel event markers */
+.city-event-marker,.city-service-marker,.territory-marker{border-radius:0!important;border:3px solid #3e452d!important;background:#182018!important;box-shadow:4px 4px 0 #080b08!important}
+.city-event-marker span,.city-service-marker span,.territory-marker span{font-family:"Courier New",monospace!important;font-weight:900!important;text-shadow:2px 2px #10140e!important}
+/* pixel route/demand */
+.business-demand-badge{border-radius:0!important;border:2px solid #927c42!important;background:#1d271c!important;box-shadow:2px 2px 0 #080b08!important}
+.map-route,.business-route,.business-flow{stroke-dasharray:5 5!important;animation:pxRoute 1s steps(2,end) infinite!important}
+@keyframes pxRoute{to{stroke-dashoffset:-10}}
