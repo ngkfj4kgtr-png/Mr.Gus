@@ -92,44 +92,68 @@ function startCityLifeLoop(){
   },12000);
 }
 function initCityMapControls(){
-  const map=document.querySelector(".city-map"),world=document.querySelector(".map-world");
+  const map=document.querySelector(".city-map");
+  const world=map?.querySelector(".city-v2-world,.map-world");
   if(!map||!world||map.dataset.controls==="1")return;
   map.dataset.controls="1";
   let scale=1,tx=0,ty=0,dragId=null,startX=0,startY=0,startTx=0,startTy=0;
   const pointers=new Map();let pinchDistance=0,pinchScale=1;
+  const limits=()=>({min:.9,max:1.65});
   const clamp=()=>{
-    scale=Math.max(.85,Math.min(2.4,scale));
-    const maxX=map.clientWidth*(scale-1)*.55,maxY=map.clientHeight*(scale-1)*.55;
+    const {min,max}=limits();scale=Math.max(min,Math.min(max,scale));
+    const w=map.clientWidth,h=map.clientHeight;
+    const maxX=Math.max(0,(w*scale-w)/2),maxY=Math.max(0,(h*scale-h)/2);
     tx=Math.max(-maxX,Math.min(maxX,tx));ty=Math.max(-maxY,Math.min(maxY,ty));
   };
-  const apply=()=>{clamp();world.style.transform='translate3d('+tx+'px,'+ty+'px,0) scale('+scale+')';};
+  const apply=()=>{
+    clamp();
+    world.style.transformOrigin="50% 50%";
+    world.style.transform="translate3d("+tx+"px,"+ty+"px,0) scale("+scale+")";
+    map.dataset.mapScale=String(Math.round(scale*100));
+  };
   const dist=()=>{const p=[...pointers.values()];return p.length<2?0:Math.hypot(p[0].x-p[1].x,p[0].y-p[1].y)};
   const down=e=>{
-    if(e.target.closest("button,.city-panel,.map-zoom-controls,[data-city-open]"))return;
+    if(e.target.closest("button,.city-panel,[data-city-open]"))return;
     pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
     try{map.setPointerCapture(e.pointerId)}catch{}
     if(pointers.size===2){pinchDistance=dist();pinchScale=scale;dragId=null}
-    else {dragId=e.pointerId;startX=e.clientX;startY=e.clientY;startTx=tx;startTy=ty}
+    else{dragId=e.pointerId;startX=e.clientX;startY=e.clientY;startTx=tx;startTy=ty}
   };
   const move=e=>{
     if(!pointers.has(e.pointerId))return;
     pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
-    if(pointers.size===2&&pinchDistance){scale=pinchScale*dist()/pinchDistance;apply();return}
-    if(pointers.size===1&&dragId===e.pointerId){tx=startTx+e.clientX-startX;ty=startTy+e.clientY-startY;apply()}
+    if(pointers.size===2&&pinchDistance){
+      const next=pinchScale*dist()/pinchDistance;
+      scale=next;apply();return;
+    }
+    if(pointers.size===1&&dragId===e.pointerId){
+      tx=startTx+e.clientX-startX;ty=startTy+e.clientY-startY;apply();
+    }
   };
   const up=e=>{
     pointers.delete(e.pointerId);try{map.releasePointerCapture(e.pointerId)}catch{}
     if(pointers.size<2)pinchDistance=0;
-    if(pointers.size===1){const [id,p]=[...pointers.entries()][0];dragId=id;startX=p.x;startY=p.y;startTx=tx;startTy=ty}else dragId=null;
+    if(pointers.size===1){
+      const [id,p]=[...pointers.entries()][0];dragId=id;
+      startX=p.x;startY=p.y;startTx=tx;startTy=ty;
+    }else dragId=null;
   };
   map.addEventListener("pointerdown",down);map.addEventListener("pointermove",move);
   map.addEventListener("pointerup",up);map.addEventListener("pointercancel",up);
-  map.addEventListener("wheel",e=>{e.preventDefault();const old=scale;scale*=e.deltaY<0?1.12:.89;const r=map.getBoundingClientRect(),cx=e.clientX-r.left-r.width/2,cy=e.clientY-r.top-r.height/2;tx=cx-(cx-tx)*(scale/old);ty=cy-(cy-ty)*(scale/old);apply()},{passive:false});
-  const controls=document.createElement("div");controls.className="map-zoom-controls";controls.innerHTML='<button type="button" data-map-zoom="-1" aria-label="Уменьшить">−</button><button type="button" data-map-zoom="1" aria-label="Увеличить">+</button><button type="button" data-map-reset="1" aria-label="Сбросить карту">⌖</button>';
-  map.appendChild(controls);
-  controls.addEventListener("click",e=>{const z=e.target.closest("[data-map-zoom]");if(z){scale+=Number(z.dataset.mapZoom)*.18;apply();return}if(e.target.closest("[data-map-reset]")){scale=1;tx=0;ty=0;apply()}});
+  map.addEventListener("wheel",e=>{
+    e.preventDefault();
+    scale*=e.deltaY<0?1.08:.925;
+    apply();
+  },{passive:false});
+  const zoomIn=()=>{scale+=.1;apply()};
+  const zoomOut=()=>{scale-=.1;apply()};
+  const reset=()=>{scale=1;tx=0;ty=0;apply()};
+  map.querySelectorAll("[data-map-zoom]").forEach(btn=>btn.addEventListener("click",()=>{
+    Number(btn.dataset.mapZoom)>0?zoomIn():zoomOut();
+  }));
+  map.querySelectorAll("[data-map-reset]").forEach(btn=>btn.addEventListener("click",reset));
+  apply();
 }
-
 function ensureArchitectureStyle(){if(document.querySelector("#mrgus-architecture-style"))return;const style=document.createElement("style");style.id="mrgus-architecture-style";style.textContent=".city-houses-layer{z-index:3}.arch-house{width:48px;height:42px;filter:drop-shadow(0 7px 6px rgba(0,0,0,.32))}.arch-house span{position:absolute;display:block}.arch-house .house-body{left:7px;right:7px;bottom:2px;height:25px;border-radius:4px 4px 3px 3px;background:linear-gradient(90deg,var(--wall-dark),var(--wall),var(--wall-dark));border:1px solid rgba(255,255,255,.18)}.arch-house .house-roof{left:3px;top:3px;width:42px;height:24px;background:linear-gradient(135deg,var(--roof-light),var(--roof),var(--roof-dark));clip-path:polygon(50% 0,100% 72%,100% 88%,0 88%,0 72%)}.arch-house .house-window{left:17px;bottom:12px;width:10px;height:9px;border-radius:2px;background:#bfe6ff;box-shadow:inset 0 0 0 2px rgba(20,35,45,.35),0 0 5px rgba(255,224,130,.22)}.arch-house .house-door{left:28px;bottom:2px;width:7px;height:15px;border-radius:2px 2px 0 0;background:#4d3528}.arch-house .house-chimney{right:10px;top:0;width:6px;height:12px;background:#70483b}.arch-house.house-0{--wall:#d6b184;--wall-dark:#9c704b;--roof:#8d3f35;--roof-light:#b85a4b;--roof-dark:#5d2c2a}.arch-house.house-1{--wall:#b7c9bd;--wall-dark:#71897d;--roof:#4d6674;--roof-light:#708b99;--roof-dark:#344752}.arch-house.house-2{--wall:#d7c08b;--wall-dark:#9b7d4c;--roof:#566d42;--roof-light:#718c58;--roof-dark:#34472d}.arch-house.house-3{--wall:#c7a5c4;--wall-dark:#886681;--roof:#6a405f;--roof-light:#8d587d;--roof-dark:#43283f}.arch-house .house-lawn{left:-5px;right:-5px;bottom:-2px;height:6px;border-radius:50%;background:rgba(84,123,64,.45);z-index:-1}.arch-house.house-2 .house-chimney,.arch-house.house-3 .house-chimney{display:none}.building-art{position:relative;display:block;width:46px;height:48px;filter:drop-shadow(0 7px 7px rgba(0,0,0,.35))}.building-art i{position:absolute;display:block}.building-art .b-body{left:6px;right:6px;bottom:3px;height:34px;border-radius:4px 4px 2px 2px;background:linear-gradient(90deg,var(--b-dark),var(--b-main),var(--b-dark));border:1px solid rgba(255,255,255,.2)}.building-art .b-roof{left:4px;right:4px;top:2px;height:13px;background:var(--b-roof);clip-path:polygon(8% 100%,50% 0,92% 100%)}.building-art .b-window{left:14px;top:19px;width:8px;height:7px;background:#c7edff;box-shadow:13px 0 #c7edff,0 11px rgba(255,221,132,.9),13px 11px rgba(255,221,132,.9);border-radius:1px}.building-art .b-door{left:24px;bottom:3px;width:8px;height:14px;background:#44352e;border-radius:2px 2px 0 0}.building-art .b-sign{left:9px;right:9px;top:11px;height:7px;border-radius:2px;background:rgba(255,235,185,.82)}.building-kiosk{--b-main:#c98b45;--b-dark:#7e512e;--b-roof:#9b342f}.building-cafe{--b-main:#a97a59;--b-dark:#634736;--b-roof:#d2a15e}.building-workshop{--b-main:#73828c;--b-dark:#46535b;--b-roof:#3c4a53}.building-factory{width:56px;height:58px;--b-main:#6d777d;--b-dark:#394349;--b-roof:#59656b}.building-factory .b-body{height:43px}.building-factory .b-roof{height:18px}.building-factory .b-smokestack{right:7px;top:-7px;width:7px;height:25px;background:#4b5558;border-radius:2px}.building-factory .b-smoke{right:3px;top:-16px;width:9px;height:9px;border-radius:50%;background:rgba(220,225,225,.55);box-shadow:8px -8px 0 -1px rgba(220,225,225,.3)}.city-architecture-layer{position:absolute;inset:0;pointer-events:none;z-index:2}.city-zone{position:absolute;pointer-events:none;z-index:1;border:1px solid rgba(255,255,255,.06);box-shadow:inset 0 0 35px rgba(0,0,0,.08)}.city-zone.residential{left:2%;top:10%;width:38%;height:43%;border-radius:18px;background:linear-gradient(145deg,rgba(120,151,105,.13),rgba(190,161,115,.04))}.city-zone.center{left:35%;top:30%;width:31%;height:39%;border-radius:50%;background:radial-gradient(circle,rgba(219,193,139,.16),rgba(92,111,93,.03) 70%,transparent)}.city-zone.commercial{left:39%;top:8%;width:55%;height:32%;border-radius:22px;background:linear-gradient(160deg,rgba(187,143,83,.12),rgba(89,101,111,.03))}.city-zone.industrial{left:60%;top:48%;width:37%;height:43%;border-radius:16px;background:linear-gradient(145deg,rgba(91,102,108,.14),rgba(60,66,69,.04))}.city-zone.outskirts{left:1%;top:54%;width:34%;height:44%;border-radius:25px;background:radial-gradient(circle at 35% 45%,rgba(91,128,74,.12),transparent 70%)}.city-zone-label{position:absolute;z-index:2;pointer-events:none;font-size:8px;letter-spacing:.14em;text-transform:uppercase;color:rgba(238,228,199,.46);font-weight:800;text-shadow:0 2px 4px rgba(0,0,0,.5)}.city-zone-label.res{left:7%;top:13%}.city-zone-label.com{left:65%;top:11%}.city-zone-label.cen{left:44%;top:34%}.city-zone-label.ind{left:69%;top:82%}.city-zone-label.out{left:7%;top:91%}.arch-park{position:absolute;border-radius:50%;background:radial-gradient(circle at 50% 45%,rgba(95,145,76,.65),rgba(54,91,58,.2) 65%,transparent 70%)}.arch-park.p1{left:4%;top:63%;width:17%;height:13%}.arch-park.p2{right:4%;top:15%;width:15%;height:11%}.arch-fountain{position:absolute;left:48%;top:43%;width:28px;height:28px;border-radius:50%;background:radial-gradient(circle,#dff6ff 0 12%,#6da7bd 13% 30%,#405e68 31% 100%);box-shadow:0 0 0 5px rgba(110,155,169,.12)}.arch-road-mark{position:absolute;height:3px;background:rgba(235,210,144,.32);border-radius:3px;transform-origin:left center}.arch-road-mark.r1{left:8%;top:53%;width:37%;transform:rotate(-10deg)}.arch-road-mark.r2{left:53%;top:54%;width:38%;transform:rotate(13deg)}.city-chart{display:flex;flex-direction:column;gap:8px;margin:8px 0 14px}.city-chart-title{font-size:12px;font-weight:900;letter-spacing:.06em;color:rgba(255,255,255,.72);margin-top:10px}.city-chart-row{display:grid;grid-template-columns:78px 1fr auto;gap:7px;align-items:center;font-size:10px}.city-chart-row span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.city-chart-track,.city-level-track{height:8px;border-radius:8px;background:rgba(255,255,255,.08);overflow:hidden}.city-chart-track i,.city-level-track i{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,#d7a84d,#f3d477);box-shadow:0 0 8px rgba(243,212,119,.2)}.city-chart-row b{font-size:9px;white-space:nowrap}.city-level-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:12px}.city-level-card{padding:8px;border-radius:10px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06)}.city-level-card b{display:block;font-size:10px}.city-level-card span{display:block;font-size:9px;opacity:.62;margin:2px 0 6px}.city-zone-label{transition:opacity .2s}.city-time-night .city-zone-label{opacity:.34}.city-stage-village .city-zone{opacity:.72}.city-stage-town .city-zone,.city-stage-small .city-zone{opacity:.86}.city-stage-large .city-zone,.city-stage-mega .city-zone{opacity:1}@media(max-width:600px){.arch-house{width:36px;height:33px}.arch-house .house-body{left:5px;right:5px;height:20px}.arch-house .house-roof{left:2px;width:32px;height:19px}.arch-house .house-window{left:13px;bottom:9px;width:8px;height:7px}.arch-house .house-door{left:22px;height:11px}.building-art{width:34px;height:38px}.building-art .b-body{left:4px;right:4px;height:27px}.building-art .b-roof{left:3px;right:3px;height:10px}.building-art .b-window{left:10px;top:14px;width:6px;height:5px;box-shadow:10px 0 #c7edff,0 8px rgba(255,221,132,.9),10px 8px rgba(255,221,132,.9)}.building-art .b-door{left:18px;height:11px}.building-factory{width:40px;height:44px}.building-factory .b-body{height:32px}.building-factory .b-roof{height:13px}.building-factory .b-smokestack{right:5px;top:-5px;height:19px}.building-factory .b-smoke{right:2px;top:-12px}.arch-fountain{transform:scale(.8)}}";document.head.appendChild(style)}
 
 function renderCityMap(s){
