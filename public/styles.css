@@ -1984,3 +1984,20 @@ button{font-family:"Courier New",monospace!important}
 @keyframes pxSnow{from{background-position:0 -20px}to{background-position:17px 60px}}
 .city-time-night .map-plaza,.city-time-night .city-zone-label{filter:brightness(.82)}
 .city-time-night .city-person,.city-time-night .city-car,.city-time-night .city-bus{filter:brightness(.78)}
+
+/* REACTIVE PIXEL NPC STATES */
+.npc-phase-walk{filter:none}
+.npc-phase-queue{animation:pxQueue .9s steps(2,end) infinite!important}
+.npc-phase-buy{animation:pxBuy .55s steps(2,end) infinite!important}
+.npc-phase-working{animation:pxWork 1.2s steps(2,end) infinite!important}
+.npc-phase-leave{opacity:.72;animation:pxLeave 2.2s steps(5,end) infinite!important}
+@keyframes pxQueue{0%,100%{transform:translateY(0)}50%{transform:translateY(-1px)}}
+@keyframes pxBuy{0%,100%{transform:translateY(0) scaleX(1)}50%{transform:translateY(-2px) scaleX(.88)}}
+@keyframes pxWork{0%,100%{transform:translateY(0)}50%{transform:translateY(-2px)}}
+@keyframes pxLeave{0%{opacity:.8}100%{opacity:.15}}
+.npc-phase-queue:before{background:#e0b45b!important}
+.npc-phase-buy:before{background:#d8c17c!important}
+.npc-phase-working:after{background:#6f5134!important}
+.business-marker.building-stage-plot{filter:grayscale(.25) brightness(.78)}
+.business-marker:not(.working) .building-lights{opacity:.2!important}
+.business-marker.working .building-lights{opacity:1!important}
