@@ -1827,3 +1827,35 @@ body.map-fullscreen{overflow:hidden}
     box-sizing:border-box!important;
   }
 }
+
+/* Mr.Gus — global pixel-art conversion */
+*{image-rendering:pixelated!important}
+html{scroll-behavior:auto!important}
+body{font-family:"Courier New",monospace!important;background:#0b100d!important;color:#e7edcf!important}
+body:before{content:"";position:fixed;inset:0;pointer-events:none;z-index:9999;opacity:.12;background:repeating-linear-gradient(0deg,rgba(255,255,255,.08) 0 1px,transparent 1px 4px)}
+.wrap{max-width:760px!important}
+.hero{position:relative!important;background:#121a13!important;border-bottom:3px solid #384633!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+.hero h1,.section-head h2{font-family:"Courier New",monospace!important;text-transform:uppercase!important;letter-spacing:0!important}
+.hero-badge,.pill,.lang-btn{border-radius:0!important;background:#202b20!important;border:2px solid #56634b!important;color:#d9c66b!important;box-shadow:3px 3px 0 #070a07!important}
+.card,.stat,.mini-card,.event-card,.visual-card,.rank-block,.profile-grid>div,.stats-grid>div,.visual-summary>div{border-radius:0!important;background:#141c15!important;border:2px solid #34412f!important;box-shadow:4px 4px 0 #080b08!important}
+.stat{background:#182119!important}
+.stat small,.visual-summary span,.visual-label span,.profile-grid span,.stats-grid span,.muted{color:#8e9d82!important}
+.v{font-family:"Courier New",monospace!important;font-weight:900!important;color:#e6edcf!important}
+.status{border-radius:0!important;background:#111811!important;border:2px solid #35422f!important;box-shadow:3px 3px 0 #080b08!important}
+.progress,.visual-track{height:12px!important;border-radius:0!important;background:#293228!important;border:2px solid #121812!important}
+.progress-fill,.visual-track i{border-radius:0!important;background:#79a94b!important;box-shadow:inset 0 2px #a6c76c!important}
+.btn{border-radius:0!important;background:#638d3e!important;border:2px solid #91b75b!important;box-shadow:4px 4px 0 #10150e!important;font-family:"Courier New",monospace!important;text-transform:uppercase!important}
+.btn.secondary{background:#343e35!important;border-color:#64705e!important;box-shadow:4px 4px 0 #10130f!important}
+.btn:active{transform:translate(3px,3px)!important;box-shadow:1px 1px 0 #10150e!important}
+.event-card{background:#182119!important}
+.rank-tabs{padding:5px 2px 11px!important}.rank-tab{border-radius:0!important;background:#1a241b!important;border:2px solid #3b4936!important;font-family:"Courier New",monospace!important}.rank-tab.active{background:#6f9547!important;border-color:#a1bf65!important;color:#fff!important}
+.rank-row{border-bottom:2px solid #2b3629!important}.rank-row.me{outline:2px solid #a08b43!important;border-radius:0!important;background:#222a1b!important}
+.avatar{border-radius:0!important;border:3px solid #687652!important}.avatar.placeholder{border-radius:0!important;background:#1b241a!important}
+.quick-bar{border-radius:0!important;background:#0f150f!important;border:3px solid #3f4d38!important;box-shadow:5px 5px 0 #060806!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+.quick-bar button{border-radius:0!important;background:#182119!important;border:2px solid #3a4835!important;color:#b8c5a9!important;font-family:"Courier New",monospace!important;box-shadow:2px 2px 0 #080b08!important}.quick-bar button.active{background:#718f45!important;border-color:#a7c568!important;box-shadow:2px 2px 0 #080b08!important;transform:none!important}.quick-bar button span{font-family:"Courier New",monospace!important}
+.visual-xp{margin-top:14px!important}
+/* pixel separators, panels and inputs */
+input,select,textarea{border-radius:0!important;background:#101710!important;border:2px solid #3b4836!important;color:#e7edcf!important;font-family:"Courier New",monospace!important;box-shadow:3px 3px 0 #080b08!important}
+button{font-family:"Courier New",monospace!important}
+/* disable smooth modern motion in the retro theme */
+*,*:before,*:after{transition-timing-function:steps(2,end)!important}
