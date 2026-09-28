@@ -2002,3 +2002,14 @@ button{font-family:"Courier New",monospace!important}
 .business-marker:not(.work) .building-lights{opacity:.2!important}
 .business-marker.work .building-lights{opacity:1!important}
 .business-marker.active-business .building-lights{opacity:1!important}
+
+/* PIXEL ECONOMY LOAD — demand reacts visually */
+.business-demand-badge{min-width:42px;text-align:center;letter-spacing:.04em;font-weight:900}
+.business-demand-badge.load-low{border-color:#708b49!important;background:#18251a!important;color:#a8c66d!important}
+.business-demand-badge.load-mid{border-color:#b29445!important;background:#292417!important;color:#e0c45c!important;animation:pxLoadMid .8s steps(2,end) infinite}
+.business-demand-badge.load-high{border-color:#a84e42!important;background:#2b1918!important;color:#e46d59!important;animation:pxLoadHigh .35s steps(2,end) infinite}
+.business-marker.work .building-art{animation:pxBuildingWork 1.8s steps(3,end) infinite}
+.business-marker.work .building-lights{opacity:1!important}
+@keyframes pxLoadMid{50%{transform:translateY(-1px)}}
+@keyframes pxLoadHigh{50%{transform:translateY(-1px);filter:brightness(1.25)}}
+@keyframes pxBuildingWork{0%,100%{transform:translateY(0)}50%{transform:translateY(-1px)}}
