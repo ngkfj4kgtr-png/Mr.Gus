@@ -144,3 +144,52 @@
 .city-v2-zoom{pointer-events:auto!important}
 .city-v2-zoom button{pointer-events:auto!important}
 .city-map-v2 [data-city-open]{touch-action:manipulation!important}
+
+/* Urban dirt layer — subtle, localized, readable */
+.city-v2-world:after{
+  content:"";
+  position:absolute;inset:0;z-index:18;pointer-events:none;
+  opacity:.48;
+  background:
+    radial-gradient(ellipse at 8% 55%,rgba(63,51,39,.30) 0 3%,transparent 7%),
+    radial-gradient(ellipse at 18% 65%,rgba(76,62,45,.22) 0 2%,transparent 5%),
+    radial-gradient(ellipse at 30% 55%,rgba(45,42,36,.18) 0 2%,transparent 5%),
+    radial-gradient(ellipse at 56% 63%,rgba(54,48,40,.22) 0 3%,transparent 6%),
+    radial-gradient(ellipse at 72% 54%,rgba(52,49,43,.20) 0 2%,transparent 5%),
+    radial-gradient(ellipse at 92% 64%,rgba(58,48,39,.27) 0 3%,transparent 6%);
+  mix-blend-mode:multiply;
+}
+.city-road-h,.city-road-v{
+  background-color:#353a39!important;
+}
+.city-road-h:before,.city-road-v:before{
+  content:"";position:absolute;inset:0;pointer-events:none;opacity:.42;
+  background:
+    repeating-linear-gradient(90deg,transparent 0 31px,rgba(25,25,23,.18) 31px 39px,transparent 39px 72px),
+    radial-gradient(ellipse at 20% 55%,rgba(16,17,16,.30) 0 4%,transparent 7%);
+}
+.city-sidewalk-new{
+  background:
+    radial-gradient(circle at 12% 35%,rgba(76,70,61,.28) 0 2px,transparent 3px),
+    radial-gradient(circle at 42% 70%,rgba(75,68,58,.22) 0 2px,transparent 3px),
+    radial-gradient(circle at 78% 30%,rgba(255,255,255,.16) 0 1px,transparent 2px),
+    #9c998d!important;
+}
+.city-parking-slot-new:after{
+  content:"";position:absolute;left:3px;right:3px;top:6px;height:3px;
+  background:rgba(44,42,38,.24);filter:blur(1px);
+}
+.city-park-new:before{filter:drop-shadow(5px 9px 2px rgba(35,35,29,.35))}
+.city-house-block:after{
+  content:"";position:absolute;left:8px;right:8px;bottom:-4px;height:5px;
+  border-radius:50%;background:rgba(32,29,25,.22);filter:blur(3px);
+}
+.city-business-new:after{
+  content:"";position:absolute;left:8px;right:8px;bottom:-5px;height:6px;
+  border-radius:50%;background:rgba(15,17,15,.38);filter:blur(4px);pointer-events:none;
+}
+.city-person-new:after{
+  content:"";position:absolute;left:-2px;bottom:-3px;width:10px;height:3px;
+  border-radius:50%;background:rgba(30,28,24,.25);filter:blur(1px);
+}
+.city-time-night .city-v2-world:after{opacity:.34}
