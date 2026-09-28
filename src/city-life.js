@@ -86,7 +86,7 @@ export function getCityLive(player,now=Date.now()){
   const state=ensure(player,now);generateOrders(player,state,now);
   const owned=Object.keys(player.businesses||{});
   simulateNpcs(player,state,now);
-  const income=owned.reduce((n,id)=>n+Number(player.businesses[id]?.profitPerHour||0),0);
+  const income=owned.reduce((n,id)=>n+Math.floor(Number(player.businesses[id]?.profitPerHour||0)*Math.max(60,Math.min(110,Number(state.businessMetrics?.[id]?.efficiency||100)))/100),0);
   const totalLevel=owned.reduce((n,id)=>n+Number(player.businesses[id]?.level||1),0);
   const traffic=Math.round(Math.min(100,18+owned.length*12+totalLevel*2+(hash(Math.floor(now/600000))*18)));
   const visitors=Math.max(0,Math.round(traffic*1.6));
