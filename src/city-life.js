@@ -29,11 +29,39 @@ function ensure(player,now){
   return raw
 }
 
-function businessDemand(player,businessId,state){
+const WEATHER_EFFECTS=Object.freeze({
+  clear:{kiosk:1.08,cafe:1.12,workshop:1.00,factory:1.03},
+  rain:{kiosk:.92,cafe:1.16,workshop:1.10,factory:1.02},
+  snow:{kiosk:.88,cafe:1.20,workshop:1.14,factory:.96},
+  storm:{kiosk:.78,cafe:.96,workshop:.90,factory:.88}
+});
+const TIME_EFFECTS=Object.freeze({
+  kiosk:[[0,6,.55],[6,10,1.18],[10,16,1.05],[16,20,1.25],[20,24,.82]],
+  cafe:[[0,7,.45],[7,11,1.28],[11,15,1.18],[15,18,.92],[18,23,1.30],[23,24,.55]],
+  workshop:[[0,7,.60],[7,12,1.25],[12,17,1.12],[17,21,1.00],[21,24,.68]],
+  factory:[[0,6,.72],[6,14,1.28],[14,22,1.18],[22,24,.70]]
+});
+function timeMultiplier(businessId,hour){
+  const ranges=TIME_EFFECTS[businessId]||[[0,24,1]];
+  return ranges.find(([from,to])=>hour>=from&&hour<to)?.[2]||1;
+}
+function weatherForDay(now){
+  const day=Math.floor(now/86400000),r=hash(day*17+31);
+  return r<.12?'storm':r<.30?'snow':r<.52?'rain':'clear';
+}
+function npcPreference(type,businessId){
+  const def=BUSINESS_DEMAND[businessId];
+  return def?.preferred?.includes(type)?1.30:0.78;
+}
+function businessDemand(player,businessId,state,now){
   const b=player.businesses?.[businessId],spec=BUSINESS_DEMAND[businessId];if(!b||!spec)return 0;
   const level=Math.max(1,Number(b.level)||1),district=BUSINESS_SPECIALIZATIONS[businessId]?.district||'center';
   const districtScore=Number(state.districts?.[district]||0);
-  return Math.max(4,Math.round(spec.base+level*6+districtScore*.35));
+  const hour=new Date(now).getUTCHours(),weather=state.weather||weatherForDay(now);
+  const weatherMultiplier=WEATHER_EFFECTS[weather]?.[businessId]||1;
+  const time=timeMultiplier(businessId,hour);
+  const activity=1+Math.min(.25,districtScore/400);
+  return Math.max(4,Math.min(100,Math.round((spec.base+level*6)*activity*time*weatherMultiplier)));
 }
 function seedNpcState(state,now){
   if(state.npcs.length)return;
@@ -47,13 +75,17 @@ function simulateNpcs(player,state,now){
   const owned=Object.keys(player.businesses||{}), tick=Math.floor(now/15000);
   if(state.npcTick===tick)return;
   state.npcTick=tick;
-  const businessPool=owned.map(id=>({id,demand:businessDemand(player,id,state)})).filter(x=>x.demand>0);
+  const businessPool=owned.map(id=>({id,demand:businessDemand(player,id,state,now)})).filter(x=>x.demand>0);
   const totalDemand=businessPool.reduce((n,x)=>n+x.demand,0);
   const previousQueue={};for(const npc of state.npcs)previousQueue[npc.id]=npc.phase==='queue'||npc.phase==='service';
   state.npcs.forEach((npc,i)=>{
     const phase=(tick+i*3)%12;npc.previousPhase=npc.phase;
     if(phase<4){npc.phase='home';npc.targetDistrict=npc.home;npc.targetBusiness=null}
-    else if(phase<7){npc.phase='travel';const pick=businessPool.length?businessPool[(tick+i)%businessPool.length]:null;npc.targetBusiness=pick?.id||null;npc.targetDistrict=pick?BUSINESS_SPECIALIZATIONS[pick.id]?.district:'center'}
+    else if(phase<7){npc.phase='travel';const weighted=businessPool.map((pick)=>({pick,score:pick.demand*npcPreference(npc.type,pick.id)}));
+      const total=weighted.reduce((n,x)=>n+x.score,0);
+      let cursor=total?hash(tick*97+i*13)*total:0,chosen=weighted[0]?.pick||null;
+      for(const item of weighted){cursor-=item.score;if(cursor<=0){chosen=item.pick;break}}
+      npc.targetBusiness=chosen?.id||null;npc.targetDistrict=chosen?BUSINESS_SPECIALIZATIONS[chosen.id]?.district:'center'}
     else if(phase<9){npc.phase='queue';npc.targetDistrict=npc.targetDistrict||'center'}
     else if(phase<10){npc.phase='service';npc.targetDistrict=npc.targetDistrict||'center'}
     else{npc.phase='return';npc.targetDistrict=npc.home}
@@ -85,6 +117,7 @@ function generateOrders(player,state,now){
 export function getCityLive(player,now=Date.now()){
   const state=ensure(player,now);generateOrders(player,state,now);
   const owned=Object.keys(player.businesses||{});
+  state.weather=state.weather||weatherForDay(now);
   simulateNpcs(player,state,now);
   const income=owned.reduce((n,id)=>n+Math.floor(Number(player.businesses[id]?.profitPerHour||0)*Math.max(60,Math.min(110,Number(state.businessMetrics?.[id]?.efficiency||100)))/100),0);
   const totalLevel=owned.reduce((n,id)=>n+Number(player.businesses[id]?.level||1),0);
@@ -104,7 +137,9 @@ export function getCityLive(player,now=Date.now()){
     queues:Object.fromEntries(Object.entries(state.queue||{})),
     service:Object.fromEntries(Object.entries(state.service||{})),
     visitsCompleted:Number(state.visitsCompleted||0),visitRevenue:Number(state.visitRevenue||0),visitOperations:state.visitOperations.map(v=>({...v})),
-    demand:Object.fromEntries(owned.map(id=>[id,businessDemand(player,id,state)])),
+    weather:state.weather,
+    hour:new Date(now).getUTCHours(),
+    demand:Object.fromEntries(owned.map(id=>[id,businessDemand(player,id,state,now)])),
     businessMetrics:Object.fromEntries(owned.map(id=>{
       const queue=Number(state.queue?.[id]||0),service=Number(state.service?.[id]||0),capacity=businessCapacity(player,id);
       const load=Math.min(100,Math.round(((queue+service)/Math.max(1,capacity))*100));
