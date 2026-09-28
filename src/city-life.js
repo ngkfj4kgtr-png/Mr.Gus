@@ -12,6 +12,33 @@ const DISTRICTS=['residential','center','commercial','industrial','outskirts'];
 const NPC_TYPES={resident:{name:'Житель',speed:1.0,home:'residential'},student:{name:'Студент',speed:1.25,home:'center'},worker:{name:'Рабочий',speed:.9,home:'industrial'},family:{name:'Семья',speed:.75,home:'residential'},courier:{name:'Курьер',speed:1.45,home:'commercial'}};
 const BUSINESS_DEMAND={kiosk:{base:28,preferred:['resident','family','courier'],ticket:45},cafe:{base:34,preferred:['student','resident','family'],ticket:75},workshop:{base:22,preferred:['worker','resident','courier'],ticket:140},factory:{base:18,preferred:['worker','courier'],ticket:220}};
 const DISTRICT_POINTS={residential:[20,72],center:[50,44],commercial:[73,53],industrial:[79,72],outskirts:[12,48]};
+const ROAD_NODES=Object.freeze({
+  R:[18,72],A:[18,55],B:[35,55],C:[50,55],D:[50,44],E:[73,53],F:[73,40],G:[79,55],H:[79,72],I:[60,72],J:[35,72],K:[12,48],L:[35,44],M:[60,55]
+});
+const ROAD_EDGES=Object.freeze({
+  R:['A','J'],A:['R','B','K'],B:['A','C','J','L'],C:['B','D','M'],D:['C','L','E'],E:['D','F','M'],F:['E','G'],G:['F','E','H'],H:['G','I'],I:['H','J','M'],J:['R','B','I'],K:['A','L'],L:['K','B','D'],M:['C','E','I']
+});
+function nearestRoadNode(point){
+  let best='R',dist=Infinity;
+  for(const [id,p] of Object.entries(ROAD_NODES)){const d=(p[0]-point[0])**2+(p[1]-point[1])**2;if(d<dist){dist=d;best=id}}
+  return best;
+}
+function roadPath(from,to){
+  const start=nearestRoadNode(from),goal=nearestRoadNode(to);
+  if(start===goal)return [from,to];
+  const queue=[start],prev={[start]:null};
+  for(let qi=0;qi<queue.length;qi++){const cur=queue[qi];if(cur===goal)break;for(const next of ROAD_EDGES[cur]||[]){if(!(next in prev)){prev[next]=cur;queue.push(next)}}}
+  const ids=[];let cur=goal;
+  while(cur!==null&&cur!==undefined){ids.unshift(cur);cur=prev[cur]}
+  if(ids[0]!==start)return [from,to];
+  return [from,...ids.map(id=>ROAD_NODES[id]),to].filter((p,i,a)=>i===0||p[0]!==a[i-1][0]||p[1]!==a[i-1][1]);
+}
+function npcRoute(npc,businessId){
+  const home=DISTRICT_POINTS[npc.home]||DISTRICT_POINTS.residential;
+  const target=businessId?(DISTRICT_POINTS[BUSINESS_SPECIALIZATIONS[businessId]?.district]||DISTRICT_POINTS.center):DISTRICT_POINTS.center;
+  const route=roadPath(home,target);
+  return {route,routeKey:(npc.home||'residential')+'>'+((BUSINESS_SPECIALIZATIONS[businessId]?.district)||'center')};
+}
 
 function hash(n){let x=Number(n)||0;return Math.abs(Math.sin(x*12.9898)*43758.5453)%1}
 function ownedSpecialties(player){
@@ -85,20 +112,20 @@ function simulateNpcs(player,state,now){
       const total=weighted.reduce((n,x)=>n+x.score,0);
       let cursor=total?hash(tick*97+i*13)*total:0,chosen=weighted[0]?.pick||null;
       for(const item of weighted){cursor-=item.score;if(cursor<=0){chosen=item.pick;break}}
-      npc.targetBusiness=chosen?.id||null;npc.targetDistrict=chosen?BUSINESS_SPECIALIZATIONS[chosen.id]?.district:'center'}
+      npc.targetBusiness=chosen?.id||null;npc.targetDistrict=chosen?BUSINESS_SPECIALIZATIONS[chosen.id]?.district:'center';const route=npcRoute(npc,npc.targetBusiness);npc.route=route.route;npc.routeKey=route.routeKey}
     else if(phase<9){npc.phase='queue';npc.targetDistrict=npc.targetDistrict||'center'}
     else if(phase<10){npc.phase='service';npc.targetDistrict=npc.targetDistrict||'center'}
-    else{npc.phase='return';npc.targetDistrict=npc.home}
+    else{npc.phase='return';npc.targetDistrict=npc.home;if(npc.route?.length)npc.route=[...npc.route].reverse()}
     if(npc.phase==='service'&&npc.targetBusiness){const cap=businessCapacity(player,npc.targetBusiness);const active=state.npcs.filter(x=>x.targetBusiness===npc.targetBusiness&&(x.phase==='service'||x.phase==='queue')).length;if(active>cap)npc.phase='queue'}
     if(previousQueue[npc.id]&&npc.phase==='return')completeNpcVisit(player,state,npc,now);
-    npc.progress=((tick+i*7)%20)/20;
+    npc.progress=((tick+i*7)%20)/20;if(!npc.route?.length){const route=npcRoute(npc,npc.targetBusiness);npc.route=route.route;npc.routeKey=route.routeKey}
   });
   state.queue={};state.service={};
   for(const npc of state.npcs){if(npc.phase==='queue'&&npc.targetBusiness)state.queue[npc.targetBusiness]=(state.queue[npc.targetBusiness]||0)+1;if(npc.phase==='service'&&npc.targetBusiness)state.service[npc.targetBusiness]=(state.service[npc.targetBusiness]||0)+1}
   state.totalDemand=totalDemand;
 }
 function npcSnapshot(player,state){
-  return state.npcs.map(n=>({id:n.id,type:n.type,typeName:NPC_TYPES[n.type]?.name||n.type,phase:n.phase,home:n.home,targetDistrict:n.targetDistrict,targetBusiness:n.targetBusiness,progress:n.progress}));
+  return state.npcs.map(n=>({id:n.id,type:n.type,typeName:NPC_TYPES[n.type]?.name||n.type,phase:n.phase,home:n.home,targetDistrict:n.targetDistrict,targetBusiness:n.targetBusiness,progress:n.progress,route:n.route||[],routeKey:n.routeKey||null}));
 }
 
 function generateOrders(player,state,now){
