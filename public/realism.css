@@ -292,3 +292,54 @@
 .customer-person{animation-timing-function:cubic-bezier(.22,.78,.28,1)}
 .customer-person.npc-queue{animation-play-state:paused;opacity:1}
 .customer-person.npc-service{animation-play-state:paused;opacity:1;transform:scale(1)}
+
+/* Visible city-life upgrade: sidewalks, crossings, street furniture and stronger depth. */
+.city-sidewalks .sidewalk-block{
+  background:repeating-linear-gradient(90deg,#77736a 0 9px,#918b7d 9px 11px);
+  border:1px solid rgba(35,39,40,.55);
+  box-shadow:0 2px 5px rgba(0,0,0,.28),inset 0 1px rgba(255,255,255,.16);
+  border-radius:2px;
+}
+.city-sidewalks .sidewalk-block::after{
+  content:"";
+  position:absolute;inset:2px 0;
+  background:repeating-linear-gradient(90deg,transparent 0 13px,rgba(255,236,177,.18) 13px 14px);
+}
+.city-parking-slot{
+  width:30px!important;height:11px!important;
+  border:1px dashed rgba(238,223,177,.45)!important;
+  border-radius:2px;
+  background:rgba(30,34,34,.24)!important;
+  box-shadow:none!important;
+}
+.arch-crosswalk{filter:drop-shadow(0 1px 2px rgba(0,0,0,.35))}
+.arch-crosswalk::after{
+  content:"";
+  position:absolute;inset:0;
+  background:repeating-linear-gradient(90deg,rgba(244,237,207,.9) 0 5px,transparent 5px 10px);
+  opacity:.78;
+}
+.city-tree{filter:drop-shadow(0 5px 4px rgba(0,0,0,.45))}
+.city-lamp{filter:drop-shadow(0 0 8px rgba(255,213,116,.55));z-index:12}
+.map-road{background-color:#3e4345!important}
+.map-road::after{opacity:.8!important}
+.city-person{filter:drop-shadow(0 2px 2px rgba(0,0,0,.5))}
+.city-person::before{
+  box-shadow:0 0 0 1px rgba(255,224,165,.18),0 0 7px rgba(255,210,120,.18);
+}
+.city-traffic .city-car,.city-traffic .city-bus,.city-logistics .city-truck{
+  filter:drop-shadow(0 3px 3px rgba(0,0,0,.48));
+}
+.business-marker{
+  filter:drop-shadow(0 7px 6px rgba(0,0,0,.5));
+}
+.map-city-status{
+  backdrop-filter:blur(8px);
+  box-shadow:0 5px 18px rgba(0,0,0,.28);
+}
+@media(max-width:600px){
+  .city-sidewalks .sidewalk-block{height:4%!important}
+  .city-parking-slot{width:22px!important;height:8px!important}
+  .city-person{transform:scale(.98)}
+  .business-marker .building-art{transform:scale(.92)}
+}
