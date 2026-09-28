@@ -105,6 +105,12 @@ export function getCityLive(player,now=Date.now()){
     service:Object.fromEntries(Object.entries(state.service||{})),
     visitsCompleted:Number(state.visitsCompleted||0),visitRevenue:Number(state.visitRevenue||0),visitOperations:state.visitOperations.map(v=>({...v})),
     demand:Object.fromEntries(owned.map(id=>[id,businessDemand(player,id,state)])),
+    businessMetrics:Object.fromEntries(owned.map(id=>{
+      const queue=Number(state.queue?.[id]||0),service=Number(state.service?.[id]||0),capacity=businessCapacity(player,id);
+      const load=Math.min(100,Math.round(((queue+service)/Math.max(1,capacity))*100));
+      const efficiency=queue>0?Math.max(60,100-Math.min(40,queue*10)):Math.min(110,100+Math.min(10,service*3));
+      return [id,{queue,service,capacity,load,efficiency}];
+    })),
     totalIncomePerHour:income,
     generatedAt:now
   }
