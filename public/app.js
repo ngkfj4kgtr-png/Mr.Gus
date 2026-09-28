@@ -176,7 +176,7 @@ const walkers=npcList.slice(0,18).map((n,i)=>{
   const stateClass=phase==="queue"?"npc-phase-queue":phase==="service"?"npc-phase-buy":phase==="return"?"npc-phase-leave":"npc-phase-walk";
   const title=(phaseMap[phase]||n.typeName||"Житель")+(q?" · очередь "+q:"")+(demand?" · спрос "+demand:"")+(n.routeKey?" · маршрут "+n.routeKey:"");
   return '<i class="city-person customer-person npc-'+n.type+' npc-'+phase+' '+stateClass+'" style="left:'+x+'%;top:'+y+'%;--customer-x:0%;--customer-y:0%;--route-x:0%;--route-y:0%;--customer-duration:'+(5+(i%5))+'s;--customer-delay:-'+(i*.55)+'s;--npc-progress:'+(p*100)+'%" title="'+title+'"></i>';
-.join("");
+}).join("");
   const queueBadges=businesses.map(b=>{const m=meta[b.id];if(!m)return "";const q=Number(live.queues?.[b.id]||0),d=Number(live.demand?.[b.id]||0),metric=live.businessMetrics?.[b.id]||{},load=Number(metric.load||Math.min(100,Math.round((q+d)/Math.max(1,(Number(b.level)||1)*2)*100))),eff=Number(metric.efficiency||100);if(!q&&!d)return "";const state=load>=100?"OVERLOAD":load>=70?"BUSY":q?"QUEUE":"DEMAND";return '<span class="business-demand-badge load-'+(load>=100?"high":load>=70?"mid":"low")+'" style="left:'+m.spot[0]+'%;top:'+(m.spot[1]-6)+'%" title="Загрузка '+load+'% · эффективность '+eff+'%">'+state+' '+load+'% · EFF '+eff+'%</span>';}).join("");
   const streetLife='<i class="city-tree tree-1"></i><i class="city-tree tree-2"></i><i class="city-tree tree-3"></i><i class="city-lamp lamp-1"></i><i class="city-lamp lamp-2"></i>';
   const activeBusinesses=businesses.filter(b=>Number(b.level||1)>=5);
