@@ -98,7 +98,7 @@ else if(url.pathname==='/api/business/buy'){
   out=buyBusiness(player,String(body.businessId||''),now);
 }
 else if(url.pathname==='/api/business/upgrade'){
-  const before=player.lastIncomeAt; const income=collectOfflineIncome(player,now,currentEvent(now).incomeMultiplier);
+  const before=player.lastIncomeAt; cityAnalytics(player,now); const income=collectOfflineIncome(player,now,currentEvent(now).incomeMultiplier);
   if(income.income>0&&before!==null) await recordOperation(client,{operationId:`income_auto_${before}_${now}`,type:OPERATION_TYPES.INCOME_COLLECTION,userId:a.user.id,reward:income.income,at:now});
   out=upgradeBusiness(player,String(body.businessId||''),now);
 }
