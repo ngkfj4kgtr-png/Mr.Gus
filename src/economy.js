@@ -236,7 +236,7 @@ export function collectOfflineIncome(player,now=Date.now(),incomeMultiplier=1){
   if(now<player.lastIncomeAt)throw new Error('Clock moved backwards');
   const elapsed=Math.min(now-player.lastIncomeAt,CONFIG.maxOfflineSeconds*1000),seconds=Math.floor(elapsed/1000);
   let activeMultiplier=1;const bonus=player.activeBonuses?.income;if(bonus?.until>now&&typeof bonus.multiplier==='number')activeMultiplier=bonus.multiplier;else if(bonus)delete player.activeBonuses.income;
-  let income=0;for(const id of Object.keys(player.businesses))income+=Math.floor(hourlyProfit(player,id)*seconds/3600*incomeMultiplier*activeMultiplier);
+  let income=0;for(const id of Object.keys(player.businesses)){const base=hourlyProfit(player,id);let efficiency=100;const live=player.cityLife?.businessMetrics?.[id];if(live&&Number.isFinite(Number(live.efficiency)))efficiency=Math.max(60,Math.min(110,Number(live.efficiency)));income+=Math.floor(base*seconds/3600*incomeMultiplier*activeMultiplier*efficiency/100);}
   addBalance(player,income);player.lastIncomeAt=now;player.stats.totalIncome=assertMoneyAmount((player.stats.totalIncome||0)+income,'Total income');assertPlayer(player);
   return {seconds,income,balance:player.balance};
 }
