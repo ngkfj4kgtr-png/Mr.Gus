@@ -3,6 +3,7 @@ import { VideoStorage } from "./video.js";
 import { FfmpegService } from "./ffmpeg.js";
 import { WhisperService } from "./whisper.js";
 import { findBestMoments } from "./highlights.js";
+import { createSrt } from "./subtitles.js";
 
 const MAX_TELEGRAM_DOWNLOAD_BYTES = 20 * 1024 * 1024;
 const MAX_VIDEO_SECONDS = 10 * 60;
@@ -73,6 +74,7 @@ export class ShortsBot {
     let filePath: string | undefined;
     let audioPath: string | undefined;
     const renderedPaths: string[] = [];
+    const subtitlePaths: string[] = [];
 
     try {
       filePath = await this.videoStorage.download(fileId);
@@ -109,7 +111,12 @@ export class ShortsBot {
       await this.telegram.sendMessage(chatId, "🎬 Рендерю вертикальные Shorts 9:16...");
       for (let i = 0; i < highlights.length; i++) {
         const h = highlights[i];
-        renderedPaths.push(await this.ffmpeg.renderVertical(filePath, h.start, h.duration, i + 1));
+        const subtitlePath = `./tmp/work/subtitles-${Date.now()}-${i + 1}.srt`;
+        await createSrt(transcript.segments, h.start, h.end, subtitlePath);
+        subtitlePaths.push(subtitlePath);
+        renderedPaths.push(
+          await this.ffmpeg.renderVertical(filePath, h.start, h.duration, i + 1, subtitlePath),
+        );
       }
 
       await this.telegram.sendMessage(chatId, `📤 Отправляю ${renderedPaths.length} готовых Shorts...`);
@@ -122,6 +129,7 @@ export class ShortsBot {
       await this.telegram.sendMessage(chatId, "Не удалось обработать видео. Попробуй отправить его ещё раз.");
     } finally {
       for (const renderedPath of renderedPaths) await this.ffmpeg.cleanup(renderedPath).catch((error) => console.error("Rendered video cleanup failed:", error));
+      for (const subtitlePath of subtitlePaths) await this.ffmpeg.cleanup(subtitlePath).catch((error) => console.error("Subtitle cleanup failed:", error));
       if (audioPath) await this.ffmpeg.cleanup(audioPath).catch((error) => console.error("Temporary audio cleanup failed:", error));
       if (filePath) await this.videoStorage.remove(filePath).catch((error) => console.error("Temporary video cleanup failed:", error));
     }
