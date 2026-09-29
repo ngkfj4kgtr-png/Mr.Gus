@@ -1,6 +1,7 @@
 import { TelegramClient, type TelegramUpdate } from "./telegram.js";
 import { VideoStorage } from "./video.js";
 import { FfmpegService } from "./ffmpeg.js";
+import { WhisperService } from "./whisper.js";
 
 const MAX_TELEGRAM_DOWNLOAD_BYTES = 20 * 1024 * 1024;
 const MAX_VIDEO_SECONDS = 10 * 60;
@@ -13,6 +14,7 @@ export class ShortsBot {
     private readonly telegram: TelegramClient,
     private readonly videoStorage: VideoStorage,
     private readonly ffmpeg: FfmpegService,
+    private readonly whisper: WhisperService,
   ) {}
 
   stop() { this.running = false; }
@@ -90,8 +92,13 @@ export class ShortsBot {
 
       audioPath = await this.ffmpeg.extractAudio(filePath);
       console.log(`Audio extracted: ${audioPath}`);
+      await this.telegram.sendMessage(chatId, "🧠 Распознаю речь и получаю таймкоды...");
+      const transcript = await this.whisper.transcribe(audioPath);
+      console.log("Whisper transcript:", transcript);
       await this.telegram.sendMessage(chatId,
-        "✅ FFmpeg готов: видео проверено, аудио подготовлено. Следующий этап — Whisper с таймкодами.");
+        `📝 Распознавание готово: ${transcript.segments.length} сегментов речи.`);
+      await this.telegram.sendMessage(chatId,
+        "✅ Whisper готов: речь распознана с таймкодами. Следующий этап — поиск лучших моментов.");
     } catch (error) {
       console.error("Video processing error:", error);
       await this.telegram.sendMessage(chatId, "Не удалось обработать видео. Попробуй отправить его ещё раз.");
