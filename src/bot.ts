@@ -2,6 +2,7 @@ import { TelegramClient, type TelegramUpdate } from "./telegram.js";
 import { VideoStorage } from "./video.js";
 import { FfmpegService } from "./ffmpeg.js";
 import { WhisperService } from "./whisper.js";
+import { findBestMoments } from "./highlights.js";
 
 const MAX_TELEGRAM_DOWNLOAD_BYTES = 20 * 1024 * 1024;
 const MAX_VIDEO_SECONDS = 10 * 60;
@@ -97,6 +98,13 @@ export class ShortsBot {
       console.log("Whisper transcript:", transcript);
       await this.telegram.sendMessage(chatId,
         `📝 Распознавание готово: ${transcript.segments.length} сегментов речи.`);
+      const highlights = findBestMoments(transcript.segments, info.durationSeconds);
+      if (!highlights.length) {
+        await this.telegram.sendMessage(chatId, "⚠️ Не удалось найти подходящие фрагменты для Shorts.");
+        return;
+      }
+      await this.telegram.sendMessage(chatId,
+        `🎯 Нашёл ${highlights.length} лучших момента(ов):\n\n${highlights.map((h, i) => `${i + 1}. ${Math.round(h.start)}–${Math.round(h.end)} сек.\n${h.text.slice(0, 180)}`).join("\n\n")}`);
       await this.telegram.sendMessage(chatId,
         "✅ Whisper готов: речь распознана с таймкодами. Следующий этап — поиск лучших моментов.");
     } catch (error) {
