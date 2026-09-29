@@ -111,9 +111,12 @@ export class ShortsBot {
         const h = highlights[i];
         renderedPaths.push(await this.ffmpeg.renderVertical(filePath, h.start, h.duration, i + 1));
       }
-      await this.telegram.sendMessage(chatId, `✅ Готово: ${renderedPaths.length} вертикальных Shorts созданы.`);
-      await this.telegram.sendMessage(chatId,
-        "✅ Whisper готов: речь распознана с таймкодами. Следующий этап — поиск лучших моментов.");
+
+      await this.telegram.sendMessage(chatId, `📤 Отправляю ${renderedPaths.length} готовых Shorts...`);
+      for (let i = 0; i < renderedPaths.length; i++) {
+        await this.telegram.sendVideo(chatId, renderedPaths[i], `🎬 Short ${i + 1}/${renderedPaths.length}`);
+      }
+      await this.telegram.sendMessage(chatId, `✅ Готово: ${renderedPaths.length} Shorts отправлены.`);
     } catch (error) {
       console.error("Video processing error:", error);
       await this.telegram.sendMessage(chatId, "Не удалось обработать видео. Попробуй отправить его ещё раз.");
