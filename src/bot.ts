@@ -1,7 +1,8 @@
 import { TelegramClient, type TelegramUpdate } from "./telegram.js";
 import { VideoStorage } from "./video.js";
+import { FfmpegService } from "./ffmpeg.js";
 
-const MAX_VIDEO_BYTES = 100 * 1024 * 1024;
+const MAX_TELEGRAM_DOWNLOAD_BYTES = 20 * 1024 * 1024;
 const MAX_VIDEO_SECONDS = 10 * 60;
 
 export class ShortsBot {
@@ -11,11 +12,10 @@ export class ShortsBot {
   constructor(
     private readonly telegram: TelegramClient,
     private readonly videoStorage: VideoStorage,
+    private readonly ffmpeg: FfmpegService,
   ) {}
 
-  stop() {
-    this.running = false;
-  }
+  stop() { this.running = false; }
 
   async start() {
     const me = await this.telegram.getMe();
@@ -24,7 +24,6 @@ export class ShortsBot {
     while (this.running) {
       try {
         const updates = await this.telegram.getUpdates(this.offset, 50);
-
         for (const update of updates) {
           this.offset = update.update_id + 1;
           await this.handleUpdate(update);
@@ -41,79 +40,64 @@ export class ShortsBot {
     if (!message) return;
 
     if (message.text?.trim() === "/start") {
-      await this.telegram.sendMessage(
-        message.chat.id,
-        "🎬 Привет! Я AI Shorts.\n\nОтправь мне видео — я найду лучшие моменты и подготовлю Shorts с субтитрами.",
-      );
+      await this.telegram.sendMessage(message.chat.id,
+        "🎬 Привет! Я AI Shorts.\n\nОтправь мне видео — я найду лучшие моменты и подготовлю Shorts с субтитрами.");
       return;
     }
 
     const video = message.video;
-    const document = message.document?.mime_type?.startsWith("video/")
-      ? message.document
-      : undefined;
+    const document = message.document?.mime_type?.startsWith("video/") ? message.document : undefined;
 
     if (video || document) {
       const fileId = video?.file_id ?? document!.file_id;
-      const duration = video?.duration ?? 0;
       const size = video?.file_size ?? document?.file_size;
-
-      await this.handleVideo(message.chat.id, fileId, duration, size);
+      await this.handleVideo(message.chat.id, fileId, size);
       return;
     }
 
-    await this.telegram.sendMessage(
-      message.chat.id,
-      "🎥 Пришли видеофайл. Я пока работаю только с видео.",
-    );
+    await this.telegram.sendMessage(message.chat.id, "🎥 Пришли видеофайл. Я пока работаю только с видео.");
   }
 
-  private async handleVideo(
-    chatId: number,
-    fileId: string,
-    durationSeconds: number,
-    sizeBytes?: number,
-  ) {
-    if (sizeBytes && sizeBytes > MAX_VIDEO_BYTES) {
-      await this.telegram.sendMessage(
-        chatId,
-        "Видео слишком большое. Максимальный размер — 100 МБ.",
-      );
-      return;
-    }
-
-    if (durationSeconds > MAX_VIDEO_SECONDS) {
-      await this.telegram.sendMessage(
-        chatId,
-        "Видео слишком длинное. Максимальная длительность — 10 минут.",
-      );
+  private async handleVideo(chatId: number, fileId: string, sizeBytes?: number) {
+    if (sizeBytes && sizeBytes > MAX_TELEGRAM_DOWNLOAD_BYTES) {
+      await this.telegram.sendMessage(chatId,
+        "Видео слишком большое для стандартного Telegram Bot API. Максимум сейчас — 20 МБ.");
       return;
     }
 
     await this.telegram.sendMessage(chatId, "📥 Видео получено. Скачиваю файл...");
 
     let filePath: string | undefined;
+    let audioPath: string | undefined;
 
     try {
       filePath = await this.videoStorage.download(fileId);
-      console.log(`Video downloaded: ${filePath}`);
+      const info = await this.ffmpeg.probe(filePath);
+      console.log("Video probe:", info);
 
-      await this.telegram.sendMessage(
-        chatId,
-        "✅ Видео скачано. Следующий этап — FFmpeg и распознавание речи.",
-      );
+      if (info.durationSeconds > MAX_VIDEO_SECONDS) {
+        await this.telegram.sendMessage(chatId, "Видео слишком длинное. Максимальная длительность — 10 минут.");
+        return;
+      }
+
+      await this.telegram.sendMessage(chatId,
+        `🔎 Видео проверено: ${Math.round(info.durationSeconds)} сек, ${info.width}×${info.height}, аудио: ${info.hasAudio ? "есть" : "нет"}.`);
+
+      if (!info.hasAudio) {
+        await this.telegram.sendMessage(chatId, "⚠️ В видео нет аудиодорожки. Для распознавания речи нужен звук.");
+        return;
+      }
+
+      audioPath = await this.ffmpeg.extractAudio(filePath);
+      console.log(`Audio extracted: ${audioPath}`);
+      await this.telegram.sendMessage(chatId,
+        "✅ FFmpeg готов: видео проверено, аудио подготовлено. Следующий этап — Whisper с таймкодами.");
     } catch (error) {
       console.error("Video processing error:", error);
-      await this.telegram.sendMessage(
-        chatId,
-        "Не удалось получить видео. Попробуй отправить его ещё раз.",
-      );
+      await this.telegram.sendMessage(chatId, "Не удалось обработать видео. Попробуй отправить его ещё раз.");
     } finally {
-      if (filePath) {
-        await this.videoStorage.remove(filePath).catch((error) => {
-          console.error("Temporary video cleanup failed:", error);
-        });
-      }
+      if (audioPath) await this.ffmpeg.cleanup(audioPath).catch((error) => console.error("Temporary audio cleanup failed:", error));
+      if (filePath) await this.videoStorage.remove(filePath).catch((error) => console.error("Temporary video cleanup failed:", error));
     }
   }
 }
