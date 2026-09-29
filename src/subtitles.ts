@@ -3,18 +3,17 @@ import { dirname } from "node:path";
 import type { TranscriptSegment } from "./whisper.js";
 
 function formatTime(seconds: number): string {
-  const safe = Math.max(0, seconds);
-  const hours = Math.floor(safe / 3600);
-  const minutes = Math.floor((safe % 3600) / 60);
-  const whole = Math.floor(safe % 60);
-  const millis = Math.round((safe - Math.floor(safe)) * 1000);
-  const normalizedMillis = millis === 1000 ? 0 : millis;
-  const normalizedWhole = millis === 1000 ? whole + 1 : whole;
-  return `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}:${normalizedWhole.toString().padStart(2, "0")},${normalizedMillis.toString().padStart(3, "0")}`;
+  const totalMillis = Math.max(0, Math.round(seconds * 1000));
+  const hours = Math.floor(totalMillis / 3_600_000);
+  const minutes = Math.floor((totalMillis % 3_600_000) / 60_000);
+  const whole = Math.floor((totalMillis % 60_000) / 1000);
+  const millis = totalMillis % 1000;
+
+  return `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}:${whole.toString().padStart(2, "0")},${millis.toString().padStart(3, "0")}`;
 }
 
 function cleanText(text: string): string {
-  return text.replace(/\\s+/g, " ").trim();
+  return text.replace(/\s+/g, " ").trim();
 }
 
 export async function createSrt(
