@@ -10,8 +10,8 @@ RUN python3 -m venv /opt/whisper-venv \
   && ln -s /opt/whisper-venv/bin/whisper /usr/local/bin/whisper
 
 WORKDIR /app
-COPY package.json package-lock.json tsconfig.json ./
-RUN npm ci
+COPY package.json tsconfig.json ./
+RUN npm install
 COPY src ./src
 COPY .env.example ./.env.example
 RUN npm run build
