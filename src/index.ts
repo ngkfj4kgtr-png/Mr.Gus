@@ -2,6 +2,7 @@ import http from "node:http";
 import { config } from "./config.js";
 import { ShortsBot } from "./bot.js";
 import { TelegramClient } from "./telegram.js";
+import { VideoStorage } from "./video.js";
 
 const server = http.createServer((request, response) => {
   if (request.url === "/health" && request.method === "GET") {
@@ -19,7 +20,8 @@ server.listen(config.port, "0.0.0.0", () => {
 });
 
 const telegram = new TelegramClient(config.telegramBotToken);
-const bot = new ShortsBot(telegram);
+const videoStorage = new VideoStorage(config.telegramBotToken);
+const bot = new ShortsBot(telegram, videoStorage);
 
 const shutdown = () => {
   bot.stop();
