@@ -1,6 +1,6 @@
 import { createWriteStream } from "node:fs";
 import { mkdir, rm } from "node:fs/promises";
-import { dirname } from "node:path";
+import { dirname, extname } from "node:path";
 import { pipeline } from "node:stream/promises";
 
 type TelegramFileResponse = {
@@ -23,7 +23,11 @@ export class VideoStorage {
       throw new Error("Telegram did not return file_path");
     }
 
-    const target = `${this.rootDir}/${file.file_unique_id}.mp4`;
+    const extension = extname(file.file_path).toLowerCase();
+    const safeExtension = /^\.(mp4|mov|m4v|webm|mkv|avi|mpeg|mpg|3gp)$/.test(extension)
+      ? extension
+      : ".mp4";
+    const target = `${this.rootDir}/${file.file_unique_id}${safeExtension}`;
     await mkdir(dirname(target), { recursive: true });
 
     const response = await fetch(
