@@ -72,6 +72,7 @@ export class ShortsBot {
 
     let filePath: string | undefined;
     let audioPath: string | undefined;
+    const renderedPaths: string[] = [];
 
     try {
       filePath = await this.videoStorage.download(fileId);
@@ -105,12 +106,19 @@ export class ShortsBot {
       }
       await this.telegram.sendMessage(chatId,
         `🎯 Нашёл ${highlights.length} лучших момента(ов):\n\n${highlights.map((h, i) => `${i + 1}. ${Math.round(h.start)}–${Math.round(h.end)} сек.\n${h.text.slice(0, 180)}`).join("\n\n")}`);
+      await this.telegram.sendMessage(chatId, "🎬 Рендерю вертикальные Shorts 9:16...");
+      for (let i = 0; i < highlights.length; i++) {
+        const h = highlights[i];
+        renderedPaths.push(await this.ffmpeg.renderVertical(filePath, h.start, h.duration, i + 1));
+      }
+      await this.telegram.sendMessage(chatId, `✅ Готово: ${renderedPaths.length} вертикальных Shorts созданы.`);
       await this.telegram.sendMessage(chatId,
         "✅ Whisper готов: речь распознана с таймкодами. Следующий этап — поиск лучших моментов.");
     } catch (error) {
       console.error("Video processing error:", error);
       await this.telegram.sendMessage(chatId, "Не удалось обработать видео. Попробуй отправить его ещё раз.");
     } finally {
+      for (const renderedPath of renderedPaths) await this.ffmpeg.cleanup(renderedPath).catch((error) => console.error("Rendered video cleanup failed:", error));
       if (audioPath) await this.ffmpeg.cleanup(audioPath).catch((error) => console.error("Temporary audio cleanup failed:", error));
       if (filePath) await this.videoStorage.remove(filePath).catch((error) => console.error("Temporary video cleanup failed:", error));
     }
