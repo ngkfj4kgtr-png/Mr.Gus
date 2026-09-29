@@ -42,15 +42,20 @@ export class FfmpegService {
     return outputPath;
   }
 
-  async renderVertical(inputPath: string, start: number, duration: number, index: number): Promise<string> {
+  async renderVertical(inputPath: string, start: number, duration: number, index: number, subtitlePath?: string): Promise<string> {
     const safeStart = Math.max(0, start);
     const safeDuration = Math.min(60, Math.max(1, duration));
     const outputPath = join(this.workDir, `short-${index}-${Date.now()}.mp4`);
     await mkdir(dirname(outputPath), { recursive: true });
+    const scaleFilter = "scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920";
+    const videoFilter = subtitlePath
+      ? `${scaleFilter},subtitles=${this.escapeFilterPath(subtitlePath)}`
+      : scaleFilter;
+
     await this.run("ffmpeg", [
       "-y", "-ss", safeStart.toFixed(3), "-i", inputPath,
       "-t", safeDuration.toFixed(3),
-      "-vf", "scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920",
+      "-vf", videoFilter,
       "-c:v", "libx264", "-preset", "veryfast", "-crf", "23",
       "-c:a", "aac", "-b:a", "128k", "-movflags", "+faststart", outputPath,
     ]);
@@ -58,6 +63,10 @@ export class FfmpegService {
   }
 
   async cleanup(filePath: string) { await rm(filePath, { force: true }); }
+
+  private escapeFilterPath(filePath: string): string {
+    return filePath.replace(/\\/g, "/").replace(/([\\'\[\],;])/g, "\\$1").replace(/:/g, "\\:");
+  }
 
   private run(command: string, args: string[]): Promise<string> {
     return new Promise((resolve, reject) => {
