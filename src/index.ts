@@ -4,6 +4,7 @@ import { ShortsBot } from "./bot.js";
 import { TelegramClient } from "./telegram.js";
 import { VideoStorage } from "./video.js";
 import { FfmpegService } from "./ffmpeg.js";
+import { WhisperService } from "./whisper.js";
 
 const server = http.createServer((request, response) => {
   if (request.url === "/health" && request.method === "GET") {
@@ -20,7 +21,8 @@ server.listen(config.port, "0.0.0.0", () => console.log(`HTTP server listening o
 const telegram = new TelegramClient(config.telegramBotToken);
 const videoStorage = new VideoStorage(config.telegramBotToken);
 const ffmpeg = new FfmpegService();
-const bot = new ShortsBot(telegram, videoStorage, ffmpeg);
+const whisper = new WhisperService();
+const bot = new ShortsBot(telegram, videoStorage, ffmpeg, whisper);
 
 const shutdown = () => {
   bot.stop();
