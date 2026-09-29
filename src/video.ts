@@ -16,7 +16,7 @@ export class VideoStorage {
     private readonly rootDir = "./tmp/videos",
   ) {}
 
-  async download(fileId: string): Promise<string> {
+  async download(fileId: string, maxBytes = 20 * 1024 * 1024): Promise<string> {
     const file = await this.getFile(fileId);
 
     if (!file.file_path) {
@@ -34,11 +34,33 @@ export class VideoStorage {
       `https://api.telegram.org/file/bot${this.token}/${file.file_path}`,
     );
 
+    const contentLength = Number(response.headers.get("content-length") ?? 0);
+    if (contentLength > maxBytes) {
+      throw new Error(`Video exceeds ${maxBytes} byte download limit`);
+    }
+
     if (!response.ok || !response.body) {
       throw new Error(`Video download failed: ${response.status} ${response.statusText}`);
     }
 
-    await pipeline(response.body, createWriteStream(target));
+    let downloaded = 0;
+    const limitedBody = response.body.pipeThrough(new TransformStream<Uint8Array, Uint8Array>({
+      transform(chunk, controller) {
+        downloaded += chunk.byteLength;
+        if (downloaded > maxBytes) {
+          controller.error(new Error(`Video exceeds ${maxBytes} byte download limit`));
+          return;
+        }
+        controller.enqueue(chunk);
+      },
+    }));
+
+    try {
+      await pipeline(limitedBody, createWriteStream(target));
+    } catch (error) {
+      await rm(target, { force: true });
+      throw error;
+    }
     return target;
   }
 
