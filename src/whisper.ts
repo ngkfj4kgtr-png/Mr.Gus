@@ -27,7 +27,7 @@ export class WhisperService {
       await new Promise<void>((resolve, reject) => {
         const child = spawn(this.command, [
           audioPath,
-          "--model", "base",
+          "--model", process.env.WHISPER_MODEL ?? "tiny",
           "--output_format", "json",
           "--output_dir", runDir,
           "--fp16", "False",
@@ -38,6 +38,12 @@ export class WhisperService {
         child.once("error", (error) => {
           reject(new Error("Whisper unavailable: " + error.message));
         });
+
+        const timeout = setTimeout(() => {
+          child.kill("SIGTERM");
+          reject(new Error("Whisper timeout after 120 seconds"));
+        }, 120_000);
+        child.once("close", () => clearTimeout(timeout));
         child.once("close", (code) => {
           if (code === 0) resolve();
           else reject(new Error("Whisper failed (" + code + "): " + stderr.slice(-2000)));
