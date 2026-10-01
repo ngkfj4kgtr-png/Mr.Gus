@@ -9,7 +9,6 @@ const MAX_TELEGRAM_DOWNLOAD_BYTES = 20 * 1024 * 1024;
 const MAX_VIDEO_SECONDS = 10 * 60;
 
 export class ShortsBot {
-  private offset = 0;
   private running = true;
 
   constructor(
@@ -21,25 +20,15 @@ export class ShortsBot {
 
   stop() { this.running = false; }
 
-  async start() {
+  async start(webhookUrl: string) {
     const me = await this.telegram.getMe();
     console.log(`Telegram bot connected: @${me.username ?? me.first_name}`);
-
-    while (this.running) {
-      try {
-        const updates = await this.telegram.getUpdates(this.offset, 50);
-        for (const update of updates) {
-          this.offset = update.update_id + 1;
-          await this.handleUpdate(update);
-        }
-      } catch (error) {
-        console.error("Telegram polling error:", error);
-        await new Promise((resolve) => setTimeout(resolve, 3000));
-      }
-    }
+    await this.telegram.setWebhook(webhookUrl);
+    console.log(`Telegram webhook configured: ${webhookUrl}`);
   }
 
-  private async handleUpdate(update: TelegramUpdate) {
+  async handleUpdate(update: TelegramUpdate) {
+    if (!this.running) return;
     const message = update.message;
     if (!message) return;
 
