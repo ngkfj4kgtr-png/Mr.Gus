@@ -29,8 +29,12 @@ export class TelegramClient {
     return this.call<{ id: number; is_bot: boolean; first_name: string; username?: string }>("getMe");
   }
 
-  getUpdates(offset: number, timeoutSeconds: number) {
-    return this.call<TelegramUpdate[]>("getUpdates", { offset, timeout: timeoutSeconds, allowed_updates: ["message"] });
+  setWebhook(url: string) {
+    return this.call<boolean>("setWebhook", {
+      url,
+      allowed_updates: ["message"],
+      drop_pending_updates: false,
+    });
   }
 
   async sendVideo(chatId: number, filePath: string, caption?: string) {
