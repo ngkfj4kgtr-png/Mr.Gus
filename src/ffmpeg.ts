@@ -37,7 +37,7 @@ export class FfmpegService {
     const outputPath = join(this.workDir, `${parse(inputPath).name}.wav`);
     await mkdir(dirname(outputPath), { recursive: true });
     await this.run("ffmpeg", [
-      "-y", "-i", inputPath, "-vn", "-ac", "1", "-ar", "16000", "-c:a", "pcm_s16le", outputPath,
+      "-y", "-threads", "2", "-i", inputPath, "-vn", "-ac", "1", "-ar", "16000", "-c:a", "pcm_s16le", outputPath,
     ]);
     return outputPath;
   }
@@ -47,16 +47,18 @@ export class FfmpegService {
     const safeDuration = Math.min(60, Math.max(1, duration));
     const outputPath = join(this.workDir, `short-${index}-${Date.now()}.mp4`);
     await mkdir(dirname(outputPath), { recursive: true });
-    const scaleFilter = "scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920";
+
+    // Keep output at a phone-friendly 720x1280 to avoid memory spikes on Railway.
+    const scaleFilter = "scale=720:1280:force_original_aspect_ratio=increase,crop=720:1280";
     const videoFilter = subtitlePath
       ? `${scaleFilter},subtitles=${this.escapeFilterPath(subtitlePath)}`
       : scaleFilter;
 
     await this.run("ffmpeg", [
-      "-y", "-ss", safeStart.toFixed(3), "-i", inputPath,
+      "-y", "-threads", "2", "-ss", safeStart.toFixed(3), "-i", inputPath,
       "-t", safeDuration.toFixed(3),
       "-vf", videoFilter,
-      "-c:v", "libx264", "-preset", "veryfast", "-crf", "23",
+      "-c:v", "libx264", "-threads", "2", "-preset", "veryfast", "-crf", "23",
       "-c:a", "aac", "-b:a", "128k", "-movflags", "+faststart", outputPath,
     ]);
     return outputPath;
