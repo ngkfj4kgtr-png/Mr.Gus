@@ -6,6 +6,7 @@ RUN apt-get update \
 
 RUN python3 -m venv /opt/whisper-venv \
   && /opt/whisper-venv/bin/pip install --no-cache-dir --upgrade pip \
+  && /opt/whisper-venv/bin/pip install --no-cache-dir --index-url https://download.pytorch.org/whl/cpu torch \
   && /opt/whisper-venv/bin/pip install --no-cache-dir openai-whisper \
   && /opt/whisper-venv/bin/python -c "import whisper; whisper.load_model(\"tiny\")" \
   && ln -s /opt/whisper-venv/bin/whisper /usr/local/bin/whisper
