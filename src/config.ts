@@ -14,5 +14,6 @@ if (!Number.isInteger(port) || port < 1 || port > 65535) {
 
 export const config = {
   telegramBotToken: token,
+  telegramWebhookUrl: process.env.TELEGRAM_WEBHOOK_URL?.trim() ?? "",
   port,
 } as const;
