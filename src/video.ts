@@ -14,9 +14,10 @@ export class VideoStorage {
   constructor(
     private readonly token: string,
     private readonly rootDir = "./tmp/videos",
+    private readonly apiBaseUrl = "https://api.telegram.org",
   ) {}
 
-  async download(fileId: string, maxBytes = 20 * 1024 * 1024): Promise<string> {
+  async download(fileId: string, maxBytes = 50 * 1024 * 1024): Promise<string> {
     const file = await this.getFile(fileId);
 
     if (!file.file_path) {
@@ -31,7 +32,7 @@ export class VideoStorage {
     await mkdir(dirname(target), { recursive: true });
 
     const response = await fetch(
-      `https://api.telegram.org/file/bot${this.token}/${file.file_path}`,
+      `${this.apiBaseUrl}/file/bot${this.token}/${file.file_path}`,
     );
 
     const contentLength = Number(response.headers.get("content-length") ?? 0);
@@ -70,7 +71,7 @@ export class VideoStorage {
 
   private async getFile(fileId: string): Promise<TelegramFileResponse> {
     const response = await fetch(
-      `https://api.telegram.org/bot${this.token}/getFile?file_id=${encodeURIComponent(fileId)}`,
+      `${this.apiBaseUrl}/bot${this.token}/getFile?file_id=${encodeURIComponent(fileId)}`,
     );
 
     const data = (await response.json()) as {
