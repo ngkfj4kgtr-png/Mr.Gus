@@ -20,8 +20,11 @@ if (!webhookUrl) {
   throw new Error("Telegram webhook URL is required");
 }
 
+const telegramApiBaseUrl = (process.env.TELEGRAM_API_BASE_URL?.trim() || "https://api.telegram.org").replace(/\/+$/, "");
+
 export const config = {
   telegramBotToken: token,
   telegramWebhookUrl: webhookUrl,
+  telegramApiBaseUrl,
   port,
 } as const;
