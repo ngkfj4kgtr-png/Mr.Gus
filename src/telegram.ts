@@ -14,10 +14,21 @@ export type TelegramUpdate = {
 type TelegramResponse<T> = { ok: boolean; result: T; description?: string };
 
 export class TelegramClient {
-  constructor(private readonly token: string) {}
+  constructor(
+    private readonly token: string,
+    private readonly apiBaseUrl = "https://api.telegram.org",
+  ) {}
+
+  private botUrl(method: string) {
+    return `${this.apiBaseUrl}/bot${this.token}/${method}`;
+  }
+
+  private fileUrl(filePath: string) {
+    return `${this.apiBaseUrl}/file/bot${this.token}/${filePath}`;
+  }
 
   private async call<T>(method: string, body?: Record<string, unknown>): Promise<T> {
-    const response = await fetch(`https://api.telegram.org/bot${this.token}/${method}`, {
+    const response = await fetch(this.botUrl(method), {
       method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body ?? {}),
     });
     const data = await response.json() as TelegramResponse<T>;
@@ -42,7 +53,7 @@ export class TelegramClient {
     form.append("chat_id", String(chatId));
     form.append("video", new Blob([await readFile(filePath)]), "short.mp4");
     if (caption) form.append("caption", caption);
-    const response = await fetch(`https://api.telegram.org/bot${this.token}/sendVideo`, { method: "POST", body: form });
+    const response = await fetch(this.botUrl("sendVideo"), { method: "POST", body: form });
     const data = await response.json() as TelegramResponse<unknown>;
     if (!response.ok || !data.ok) throw new Error(`Telegram API sendVideo failed: ${data.description ?? response.statusText}`);
     return data.result;
