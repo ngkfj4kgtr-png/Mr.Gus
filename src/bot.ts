@@ -5,7 +5,7 @@ import { WhisperService } from "./whisper.js";
 import { findBestMoments } from "./highlights.js";
 import { createSrt } from "./subtitles.js";
 
-const MAX_TELEGRAM_DOWNLOAD_BYTES = 20 * 1024 * 1024;
+const MAX_TELEGRAM_DOWNLOAD_BYTES = 50 * 1024 * 1024;
 const MAX_VIDEO_SECONDS = 10 * 60;
 
 export class ShortsBot {
@@ -54,7 +54,7 @@ export class ShortsBot {
   private async handleVideo(chatId: number, fileId: string, sizeBytes?: number) {
     if (sizeBytes && sizeBytes > MAX_TELEGRAM_DOWNLOAD_BYTES) {
       await this.telegram.sendMessage(chatId,
-        "Видео слишком большое для стандартного Telegram Bot API. Максимум сейчас — 20 МБ.");
+        "Видео слишком большое для стандартного Telegram Bot API. Максимум сейчас — 50 МБ.");
       return;
     }
 
