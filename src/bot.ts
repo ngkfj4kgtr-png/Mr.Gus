@@ -10,6 +10,8 @@ const MAX_VIDEO_SECONDS = 10 * 60;
 
 export class ShortsBot {
   private running = true;
+  private readonly seenUpdateIds = new Set<number>();
+  private readonly activeFileIds = new Set<string>();
 
   constructor(
     private readonly telegram: TelegramClient,
@@ -29,6 +31,13 @@ export class ShortsBot {
 
   async handleUpdate(update: TelegramUpdate) {
     if (!this.running) return;
+    if (this.seenUpdateIds.has(update.update_id)) return;
+    this.seenUpdateIds.add(update.update_id);
+    if (this.seenUpdateIds.size > 2000) {
+      const oldest = this.seenUpdateIds.values().next().value as number | undefined;
+      if (oldest !== undefined) this.seenUpdateIds.delete(oldest);
+    }
+
     const message = update.message;
     if (!message) return;
 
@@ -44,7 +53,16 @@ export class ShortsBot {
     if (video || document) {
       const fileId = video?.file_id ?? document!.file_id;
       const size = video?.file_size ?? document?.file_size;
-      await this.handleVideo(message.chat.id, fileId, size);
+      if (this.activeFileIds.has(fileId)) {
+        console.log("Duplicate video processing ignored:", fileId);
+        return;
+      }
+      this.activeFileIds.add(fileId);
+      try {
+        await this.handleVideo(message.chat.id, fileId, size);
+      } finally {
+        this.activeFileIds.delete(fileId);
+      }
       return;
     }
 
