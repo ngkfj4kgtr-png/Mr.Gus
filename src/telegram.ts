@@ -36,7 +36,7 @@ export class TelegramClient {
     return this.call<{ id: number; is_bot: boolean; first_name: string; username?: string }>("getMe");
   }
 
-  setWebhook(url: string) {
+  async logOutFromCloud() {\n    const response = await fetch(`https://api.telegram.org/bot${this.token}/logOut`, { method: "POST" });\n    const data = await response.json() as TelegramResponse<boolean>;\n    if (!response.ok || !data.ok) throw new Error(`Telegram cloud logOut failed: ${data.description ?? response.statusText}`);\n    return data.result;\n  }\n\n  setWebhook(url: string) {
     return this.call<boolean>("setWebhook", {
       url,
       allowed_updates: ["message"],
