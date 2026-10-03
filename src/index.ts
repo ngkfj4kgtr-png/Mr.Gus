@@ -6,10 +6,10 @@ import { VideoStorage } from "./video.js";
 import { FfmpegService } from "./ffmpeg.js";
 import { WhisperService } from "./whisper.js";
 
-const telegram = new TelegramClient(config.telegramBotToken);
+const telegram = new TelegramClient(config.telegramBotToken, config.telegramApiBaseUrl);
 const bot = new ShortsBot(
   telegram,
-  new VideoStorage(config.telegramBotToken),
+  new VideoStorage(config.telegramBotToken, "./tmp/videos", config.telegramApiBaseUrl),
   new FfmpegService(),
   new WhisperService(),
 );
