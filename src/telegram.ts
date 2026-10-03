@@ -25,10 +25,14 @@ export class TelegramClient {
 
   private async call<T>(method: string, body?: Record<string, unknown>): Promise<T> {
     const response = await fetch(this.botUrl(method), {
-      method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body ?? {}),
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(body ?? {}),
     });
     const data = await response.json() as TelegramResponse<T>;
-    if (!response.ok || !data.ok) throw new Error(`Telegram API ${method} failed: ${data.description ?? response.statusText}`);
+    if (!response.ok || !data.ok) {
+      throw new Error(`Telegram API ${method} failed: ${data.description ?? response.statusText}`);
+    }
     return data.result;
   }
 
@@ -36,7 +40,16 @@ export class TelegramClient {
     return this.call<{ id: number; is_bot: boolean; first_name: string; username?: string }>("getMe");
   }
 
-  async logOutFromCloud() {\n    const response = await fetch(`https://api.telegram.org/bot${this.token}/logOut`, { method: "POST" });\n    const data = await response.json() as TelegramResponse<boolean>;\n    if (!response.ok || !data.ok) throw new Error(`Telegram cloud logOut failed: ${data.description ?? response.statusText}`);\n    return data.result;\n  }\n\n  setWebhook(url: string) {
+  async logOutFromCloud() {
+    const response = await fetch(`https://api.telegram.org/bot${this.token}/logOut`, { method: "POST" });
+    const data = await response.json() as TelegramResponse<boolean>;
+    if (!response.ok || !data.ok) {
+      throw new Error(`Telegram cloud logOut failed: ${data.description ?? response.statusText}`);
+    }
+    return data.result;
+  }
+
+  setWebhook(url: string) {
     return this.call<boolean>("setWebhook", {
       url,
       allowed_updates: ["message"],
@@ -51,7 +64,9 @@ export class TelegramClient {
     if (caption) form.append("caption", caption);
     const response = await fetch(this.botUrl("sendVideo"), { method: "POST", body: form });
     const data = await response.json() as TelegramResponse<unknown>;
-    if (!response.ok || !data.ok) throw new Error(`Telegram API sendVideo failed: ${data.description ?? response.statusText}`);
+    if (!response.ok || !data.ok) {
+      throw new Error(`Telegram API sendVideo failed: ${data.description ?? response.statusText}`);
+    }
     return data.result;
   }
 
