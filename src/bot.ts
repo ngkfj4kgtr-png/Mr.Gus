@@ -156,6 +156,8 @@ export class ShortsBot {
       if (audioPath) await this.ffmpeg.cleanup(audioPath).catch((error) => console.error("Temporary audio cleanup failed:", error));
       if (filePath) await this.videoStorage.remove(filePath).catch((error) => console.error("Temporary video cleanup failed:", error));
     }
-    await rm(lockDir, { recursive: true, force: true });
+    } finally {
+      await rm(lockDir, { recursive: true, force: true });
+    }
   }
 }
