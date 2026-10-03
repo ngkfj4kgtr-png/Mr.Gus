@@ -1,6 +1,6 @@
-import { createWriteStream } from "node:fs";
+import { createReadStream, createWriteStream } from "node:fs";
 import { mkdir, rm } from "node:fs/promises";
-import { dirname, extname } from "node:path";
+import { dirname, extname, isAbsolute } from "node:path";
 import { pipeline } from "node:stream/promises";
 
 type TelegramFileResponse = {
@@ -31,37 +31,17 @@ export class VideoStorage {
     const target = `${this.rootDir}/${file.file_unique_id}${safeExtension}`;
     await mkdir(dirname(target), { recursive: true });
 
-    const response = await fetch(
-      `${this.apiBaseUrl}/file/bot${this.token}/${file.file_path}`,
-    );
-
-    const contentLength = Number(response.headers.get("content-length") ?? 0);
-    if (contentLength > maxBytes) {
-      throw new Error(`Video exceeds ${maxBytes} byte download limit`);
-    }
-
-    if (!response.ok || !response.body) {
-      throw new Error(`Video download failed: ${response.status} ${response.statusText}`);
-    }
-
-    let downloaded = 0;
-    const limitedBody = response.body.pipeThrough(new TransformStream<Uint8Array, Uint8Array>({
-      transform(chunk, controller) {
-        downloaded += chunk.byteLength;
-        if (downloaded > maxBytes) {
-          controller.error(new Error(`Video exceeds ${maxBytes} byte download limit`));
-          return;
-        }
-        controller.enqueue(chunk);
-      },
-    }));
-
     try {
-      await pipeline(limitedBody, createWriteStream(target));
+      if (isAbsolute(file.file_path)) {
+        await this.copyLocalFile(file.file_path, target, maxBytes);
+      } else {
+        await this.downloadHttpFile(file.file_path, target, maxBytes);
+      }
     } catch (error) {
       await rm(target, { force: true });
       throw error;
     }
+
     return target;
   }
 
@@ -87,5 +67,55 @@ export class VideoStorage {
     }
 
     return data.result;
+  }
+
+  private async downloadHttpFile(filePath: string, target: string, maxBytes: number) {
+    const response = await fetch(
+      `${this.apiBaseUrl}/file/bot${this.token}/${filePath}`,
+    );
+
+    if (!response.ok || !response.body) {
+      throw new Error(`Video download failed: ${response.status} ${response.statusText}`);
+    }
+
+    const contentLength = Number(response.headers.get("content-length") ?? 0);
+    if (contentLength > maxBytes) {
+      throw new Error(`Video exceeds ${maxBytes} byte download limit`);
+    }
+
+    let downloaded = 0;
+    const limitedBody = response.body.pipeThrough(new TransformStream<Uint8Array, Uint8Array>({
+      transform(chunk, controller) {
+        downloaded += chunk.byteLength;
+        if (downloaded > maxBytes) {
+          controller.error(new Error(`Video exceeds ${maxBytes} byte download limit`));
+          return;
+        }
+        controller.enqueue(chunk);
+      },
+    }));
+
+    await pipeline(limitedBody, createWriteStream(target));
+  }
+
+  private async copyLocalFile(source: string, target: string, maxBytes: number) {
+    const stat = await import("node:fs/promises").then(({ stat }) => stat(source));
+    if (stat.size > maxBytes) {
+      throw new Error(`Video exceeds ${maxBytes} byte download limit`);
+    }
+
+    let copied = 0;
+    const limitedBody = createReadStream(source).pipeThrough(new TransformStream<Uint8Array, Uint8Array>({
+      transform(chunk, controller) {
+        copied += chunk.byteLength;
+        if (copied > maxBytes) {
+          controller.error(new Error(`Video exceeds ${maxBytes} byte download limit`));
+          return;
+        }
+        controller.enqueue(chunk);
+      },
+    }));
+
+    await pipeline(limitedBody, createWriteStream(target));
   }
 }
