@@ -23,10 +23,6 @@ export class TelegramClient {
     return `${this.apiBaseUrl}/bot${this.token}/${method}`;
   }
 
-  private fileUrl(filePath: string) {
-    return `${this.apiBaseUrl}/file/bot${this.token}/${filePath}`;
-  }
-
   private async call<T>(method: string, body?: Record<string, unknown>): Promise<T> {
     const response = await fetch(this.botUrl(method), {
       method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body ?? {}),
