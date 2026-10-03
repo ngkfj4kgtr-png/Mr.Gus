@@ -1,4 +1,12 @@
-FROM aiogram/telegram-bot-api:latest AS telegram-api
+FROM debian:bookworm-slim AS telegram-api-build
+
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends build-essential cmake git gperf libssl-dev zlib1g-dev ca-certificates \
+  && rm -rf /var/lib/apt/lists/*
+
+RUN git clone --recursive --depth 1 https://github.com/tdlib/telegram-bot-api.git /src/telegram-bot-api \
+  && cmake -S /src/telegram-bot-api -B /src/telegram-bot-api/build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/local \
+  && cmake --build /src/telegram-bot-api/build --target install -j2
 
 FROM node:20-bookworm-slim
 
@@ -6,7 +14,7 @@ RUN apt-get update \
   && apt-get install -y --no-install-recommends ffmpeg python3 python3-venv \
   && rm -rf /var/lib/apt/lists/*
 
-COPY --from=telegram-api /usr/local/bin/telegram-bot-api /usr/local/bin/telegram-bot-api
+COPY --from=telegram-api-build /usr/local/bin/telegram-bot-api /usr/local/bin/telegram-bot-api
 
 RUN python3 -m venv /opt/whisper-venv \
   && /opt/whisper-venv/bin/pip install --no-cache-dir --upgrade pip \
