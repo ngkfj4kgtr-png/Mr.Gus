@@ -74,6 +74,7 @@ export class ShortsBot {
   private async handleVideo(chatId: number, fileId: string, sizeBytes?: number) {
     const lockRoot = "./tmp/locks";
     const lockDir = join(lockRoot, encodeURIComponent(fileId));
+
     await mkdir(lockRoot, { recursive: true });
     try {
       await mkdir(lockDir);
@@ -86,76 +87,87 @@ export class ShortsBot {
     }
 
     try {
-    if (sizeBytes && sizeBytes > MAX_TELEGRAM_DOWNLOAD_BYTES) {
-      await this.telegram.sendMessage(chatId,
-        "Видео слишком большое для стандартного Telegram Bot API. Максимум сейчас — 50 МБ.");
-      return;
-    }
-
-    await this.telegram.sendMessage(chatId, "📥 Видео получено. Скачиваю файл...");
-
-    let filePath: string | undefined;
-    let audioPath: string | undefined;
-    const renderedPaths: string[] = [];
-    const subtitlePaths: string[] = [];
-
-    try {
-      filePath = await this.videoStorage.download(fileId);
-      const info = await this.ffmpeg.probe(filePath);
-      console.log("Video probe:", info);
-
-      if (info.durationSeconds > MAX_VIDEO_SECONDS) {
-        await this.telegram.sendMessage(chatId, "Видео слишком длинное. Максимальная длительность — 10 минут.");
+      if (sizeBytes && sizeBytes > MAX_TELEGRAM_DOWNLOAD_BYTES) {
+        await this.telegram.sendMessage(chatId,
+          "Видео слишком большое для стандартного Telegram Bot API. Максимум сейчас — 50 МБ.");
         return;
       }
 
-      await this.telegram.sendMessage(chatId,
-        `🔎 Видео проверено: ${Math.round(info.durationSeconds)} сек, ${info.width}×${info.height}, аудио: ${info.hasAudio ? "есть" : "нет"}.`);
+      await this.telegram.sendMessage(chatId, "📥 Видео получено. Скачиваю файл...");
 
-      if (!info.hasAudio) {
-        await this.telegram.sendMessage(chatId, "⚠️ В видео нет аудиодорожки. Для распознавания речи нужен звук.");
-        return;
-      }
+      let filePath: string | undefined;
+      let audioPath: string | undefined;
+      const renderedPaths: string[] = [];
+      const subtitlePaths: string[] = [];
 
-      audioPath = await this.ffmpeg.extractAudio(filePath);
-      console.log(`Audio extracted: ${audioPath}`);
-      await this.telegram.sendMessage(chatId, "🧠 Распознаю речь и получаю таймкоды...");
-      const transcript = await this.whisper.transcribe(audioPath);
-      console.log("Whisper transcript:", transcript);
-      await this.telegram.sendMessage(chatId,
-        `📝 Распознавание готово: ${transcript.segments.length} сегментов речи.`);
-      const highlights = findBestMoments(transcript.segments, info.durationSeconds);
-      if (!highlights.length) {
-        await this.telegram.sendMessage(chatId, "⚠️ Не удалось найти подходящие фрагменты для Shorts.");
-        return;
-      }
-      await this.telegram.sendMessage(chatId,
-        `🎯 Нашёл ${highlights.length} лучших момента(ов):\n\n${highlights.map((h, i) => `${i + 1}. ${Math.round(h.start)}–${Math.round(h.end)} сек.\n${h.text.slice(0, 180)}`).join("\n\n")}`);
-      await this.telegram.sendMessage(chatId, "🎬 Рендерю вертикальные Shorts 9:16...");
-      for (let i = 0; i < highlights.length; i++) {
-        const h = highlights[i];
-        const subtitlePath = `./tmp/work/subtitles-${Date.now()}-${i + 1}.srt`;
-        await createSrt(transcript.segments, h.start, h.end, subtitlePath);
-        subtitlePaths.push(subtitlePath);
-        renderedPaths.push(
-          await this.ffmpeg.renderVertical(filePath, h.start, h.duration, i + 1, subtitlePath),
-        );
-      }
+      try {
+        filePath = await this.videoStorage.download(fileId);
+        const info = await this.ffmpeg.probe(filePath);
+        console.log("Video probe:", info);
 
-      await this.telegram.sendMessage(chatId, `📤 Отправляю ${renderedPaths.length} готовых Shorts...`);
-      for (let i = 0; i < renderedPaths.length; i++) {
-        await this.telegram.sendVideo(chatId, renderedPaths[i], `🎬 Short ${i + 1}/${renderedPaths.length}`);
+        if (info.durationSeconds > MAX_VIDEO_SECONDS) {
+          await this.telegram.sendMessage(chatId, "Видео слишком длинное. Максимальная длительность — 10 минут.");
+          return;
+        }
+
+        await this.telegram.sendMessage(chatId,
+          `🔎 Видео проверено: ${Math.round(info.durationSeconds)} сек, ${info.width}×${info.height}, аудио: ${info.hasAudio ? "есть" : "нет"}.`);
+
+        if (!info.hasAudio) {
+          await this.telegram.sendMessage(chatId, "⚠️ В видео нет аудиодорожки. Для распознавания речи нужен звук.");
+          return;
+        }
+
+        audioPath = await this.ffmpeg.extractAudio(filePath);
+        console.log(`Audio extracted: ${audioPath}`);
+        await this.telegram.sendMessage(chatId, "🧠 Распознаю речь и получаю таймкоды...");
+        const transcript = await this.whisper.transcribe(audioPath);
+        console.log("Whisper transcript:", transcript);
+        await this.telegram.sendMessage(chatId,
+          `📝 Распознавание готово: ${transcript.segments.length} сегментов речи.`);
+
+        const highlights = findBestMoments(transcript.segments, info.durationSeconds);
+        if (!highlights.length) {
+          await this.telegram.sendMessage(chatId, "⚠️ Не удалось найти подходящие фрагменты для Shorts.");
+          return;
+        }
+
+        await this.telegram.sendMessage(chatId,
+          `🎯 Нашёл ${highlights.length} лучших момента(ов):\\n\\n${highlights.map((h, i) => `${i + 1}. ${Math.round(h.start)}–${Math.round(h.end)} сек.\\n${h.text.slice(0, 180)}`).join("\\n\\n")}`);
+        await this.telegram.sendMessage(chatId, "🎬 Рендерю вертикальные Shorts 9:16...");
+
+        for (let i = 0; i < highlights.length; i++) {
+          const h = highlights[i];
+          const subtitlePath = `./tmp/work/subtitles-${Date.now()}-${i + 1}.srt`;
+          await createSrt(transcript.segments, h.start, h.end, subtitlePath);
+          subtitlePaths.push(subtitlePath);
+          renderedPaths.push(
+            await this.ffmpeg.renderVertical(filePath, h.start, h.duration, i + 1, subtitlePath),
+          );
+        }
+
+        await this.telegram.sendMessage(chatId, `📤 Отправляю ${renderedPaths.length} готовых Shorts...`);
+        for (let i = 0; i < renderedPaths.length; i++) {
+          await this.telegram.sendVideo(chatId, renderedPaths[i], `🎬 Short ${i + 1}/${renderedPaths.length}`);
+        }
+        await this.telegram.sendMessage(chatId, `✅ Готово: ${renderedPaths.length} Shorts отправлены.`);
+      } catch (error) {
+        console.error("Video processing error:", error);
+        await this.telegram.sendMessage(chatId, "Не удалось обработать видео. Попробуй отправить его ещё раз.");
+      } finally {
+        for (const renderedPath of renderedPaths) {
+          await this.ffmpeg.cleanup(renderedPath).catch((error) => console.error("Rendered video cleanup failed:", error));
+        }
+        for (const subtitlePath of subtitlePaths) {
+          await this.ffmpeg.cleanup(subtitlePath).catch((error) => console.error("Subtitle cleanup failed:", error));
+        }
+        if (audioPath) {
+          await this.ffmpeg.cleanup(audioPath).catch((error) => console.error("Temporary audio cleanup failed:", error));
+        }
+        if (filePath) {
+          await this.videoStorage.remove(filePath).catch((error) => console.error("Temporary video cleanup failed:", error));
+        }
       }
-      await this.telegram.sendMessage(chatId, `✅ Готово: ${renderedPaths.length} Shorts отправлены.`);
-    } catch (error) {
-      console.error("Video processing error:", error);
-      await this.telegram.sendMessage(chatId, "Не удалось обработать видео. Попробуй отправить его ещё раз.");
-    } finally {
-      for (const renderedPath of renderedPaths) await this.ffmpeg.cleanup(renderedPath).catch((error) => console.error("Rendered video cleanup failed:", error));
-      for (const subtitlePath of subtitlePaths) await this.ffmpeg.cleanup(subtitlePath).catch((error) => console.error("Subtitle cleanup failed:", error));
-      if (audioPath) await this.ffmpeg.cleanup(audioPath).catch((error) => console.error("Temporary audio cleanup failed:", error));
-      if (filePath) await this.videoStorage.remove(filePath).catch((error) => console.error("Temporary video cleanup failed:", error));
-    }
     } finally {
       await rm(lockDir, { recursive: true, force: true });
     }
