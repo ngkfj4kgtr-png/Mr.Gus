@@ -1,3 +1,5 @@
+import { mkdir, rm } from "node:fs/promises";
+import { join } from "node:path";
 import { TelegramClient, type TelegramUpdate } from "./telegram.js";
 import { VideoStorage } from "./video.js";
 import { FfmpegService } from "./ffmpeg.js";
@@ -70,6 +72,20 @@ export class ShortsBot {
   }
 
   private async handleVideo(chatId: number, fileId: string, sizeBytes?: number) {
+    const lockRoot = "./tmp/locks";
+    const lockDir = join(lockRoot, encodeURIComponent(fileId));
+    await mkdir(lockRoot, { recursive: true });
+    try {
+      await mkdir(lockDir);
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === "EEXIST") {
+        console.log("Duplicate video processing ignored by filesystem lock:", fileId);
+        return;
+      }
+      throw error;
+    }
+
+    try {
     if (sizeBytes && sizeBytes > MAX_TELEGRAM_DOWNLOAD_BYTES) {
       await this.telegram.sendMessage(chatId,
         "Видео слишком большое для стандартного Telegram Bot API. Максимум сейчас — 50 МБ.");
@@ -140,5 +156,6 @@ export class ShortsBot {
       if (audioPath) await this.ffmpeg.cleanup(audioPath).catch((error) => console.error("Temporary audio cleanup failed:", error));
       if (filePath) await this.videoStorage.remove(filePath).catch((error) => console.error("Temporary video cleanup failed:", error));
     }
+    await rm(lockDir, { recursive: true, force: true });
   }
 }
