@@ -122,7 +122,7 @@ export class ShortsBot {
         console.log(`Audio extracted: ${audioPath}`);
         await this.telegram.sendMessage(chatId, "🧠 Распознаю речь и получаю таймкоды...");
         const transcript = await this.whisper.transcribe(audioPath);
-        console.log("Whisper transcript:", transcript);
+        console.log("Whisper transcript ready:", { segments: transcript.segments.length, textLength: transcript.text.length });
         await this.telegram.sendMessage(chatId,
           `📝 Распознавание готово: ${transcript.segments.length} сегментов речи.`);
 
@@ -141,9 +141,10 @@ export class ShortsBot {
           const subtitlePath = `./tmp/work/subtitles-${Date.now()}-${i + 1}.srt`;
           await createSrt(transcript.segments, h.start, h.end, subtitlePath);
           subtitlePaths.push(subtitlePath);
-          renderedPaths.push(
-            await this.ffmpeg.renderVertical(filePath, h.start, h.duration, i + 1, subtitlePath),
-          );
+          console.log("Rendering Short:", { index: i + 1, start: h.start, duration: h.duration, subtitlePath });
+          const renderedPath = await this.ffmpeg.renderVertical(filePath, h.start, h.duration, i + 1, subtitlePath);
+          console.log("Rendered Short:", { index: i + 1, renderedPath });
+          renderedPaths.push(renderedPath);
         }
 
         await this.telegram.sendMessage(chatId, `📤 Отправляю ${renderedPaths.length} готовых Shorts...`);
