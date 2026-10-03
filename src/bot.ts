@@ -33,42 +33,60 @@ export class ShortsBot {
 
   async handleUpdate(update: TelegramUpdate) {
     if (!this.running) return;
-    if (this.seenUpdateIds.has(update.update_id)) return;
-    this.seenUpdateIds.add(update.update_id);
-    if (this.seenUpdateIds.size > 2000) {
-      const oldest = this.seenUpdateIds.values().next().value as number | undefined;
-      if (oldest !== undefined) this.seenUpdateIds.delete(oldest);
-    }
 
-    const message = update.message;
-    if (!message) return;
-
-    if (message.text?.trim() === "/start") {
-      await this.telegram.sendMessage(message.chat.id,
-        "🎬 Привет! Я AI Shorts.\n\nОтправь мне видео — я найду лучшие моменты и подготовлю Shorts с субтитрами.");
-      return;
-    }
-
-    const video = message.video;
-    const document = message.document?.mime_type?.startsWith("video/") ? message.document : undefined;
-
-    if (video || document) {
-      const fileId = video?.file_id ?? document!.file_id;
-      const size = video?.file_size ?? document?.file_size;
-      if (this.activeFileIds.has(fileId)) {
-        console.log("Duplicate video processing ignored:", fileId);
+    const updateLockRoot = "./tmp/update-locks";
+    const updateLockDir = join(updateLockRoot, String(update.update_id));
+    await mkdir(updateLockRoot, { recursive: true });
+    try {
+      await mkdir(updateLockDir);
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === "EEXIST") {
+        console.log("Duplicate webhook update ignored:", update.update_id);
         return;
       }
-      this.activeFileIds.add(fileId);
-      try {
-        await this.handleVideo(message.chat.id, fileId, size);
-      } finally {
-        this.activeFileIds.delete(fileId);
-      }
-      return;
+      throw error;
     }
 
-    await this.telegram.sendMessage(message.chat.id, "🎥 Пришли видеофайл. Я пока работаю только с видео.");
+    try {
+      if (this.seenUpdateIds.has(update.update_id)) return;
+      this.seenUpdateIds.add(update.update_id);
+      if (this.seenUpdateIds.size > 2000) {
+        const oldest = this.seenUpdateIds.values().next().value as number | undefined;
+        if (oldest !== undefined) this.seenUpdateIds.delete(oldest);
+      }
+
+      const message = update.message;
+      if (!message) return;
+
+      if (message.text?.trim() === "/start") {
+        await this.telegram.sendMessage(message.chat.id,
+          "🎬 Привет! Я AI Shorts.\n\nОтправь мне видео — я найду лучшие моменты и подготовлю Shorts с субтитрами.");
+        return;
+      }
+
+      const video = message.video;
+      const document = message.document?.mime_type?.startsWith("video/") ? message.document : undefined;
+
+      if (video || document) {
+        const fileId = video?.file_id ?? document!.file_id;
+        const size = video?.file_size ?? document?.file_size;
+        if (this.activeFileIds.has(fileId)) {
+          console.log("Duplicate video processing ignored:", fileId);
+          return;
+        }
+        this.activeFileIds.add(fileId);
+        try {
+          await this.handleVideo(message.chat.id, fileId, size);
+        } finally {
+          this.activeFileIds.delete(fileId);
+        }
+        return;
+      }
+
+      await this.telegram.sendMessage(message.chat.id, "🎥 Пришли видеофайл. Я пока работаю только с видео.");
+    } finally {
+      await rm(updateLockDir, { recursive: true, force: true });
+    }
   }
 
   private async handleVideo(chatId: number, fileId: string, sizeBytes?: number) {
