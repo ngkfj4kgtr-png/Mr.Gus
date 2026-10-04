@@ -25,13 +25,19 @@ export class WhisperService {
 
     try {
       await new Promise<void>((resolve, reject) => {
-        const child = spawn(this.command, [
+        const args = [
           audioPath,
-          "--model", process.env.WHISPER_MODEL ?? "tiny",
+          "--model", process.env.WHISPER_MODEL ?? "small",
           "--output_format", "json",
           "--output_dir", runDir,
           "--fp16", "False",
-        ], { stdio: ["ignore", "ignore", "pipe"] });
+          "--task", "transcribe",
+        ];
+
+        const language = process.env.WHISPER_LANGUAGE?.trim();
+        if (language) args.push("--language", language);
+
+        const child = spawn(this.command, args, { stdio: ["ignore", "ignore", "pipe"] });
 
         let stderr = "";
         child.stderr.on("data", (chunk: Buffer) => { stderr += chunk.toString(); });
@@ -41,8 +47,8 @@ export class WhisperService {
 
         const timeout = setTimeout(() => {
           child.kill("SIGTERM");
-          reject(new Error("Whisper timeout after 120 seconds"));
-        }, 120_000);
+          reject(new Error("Whisper timeout after 180 seconds"));
+        }, 180_000);
         child.once("close", () => clearTimeout(timeout));
         child.once("close", (code) => {
           if (code === 0) resolve();
