@@ -13,6 +13,7 @@ const MAX_VIDEO_SECONDS = 10 * 60;
 export class ShortsBot {
   private running = true;
   private readonly seenUpdateIds = new Set<number>();
+  private readonly seenMessageKeys = new Set<string>();
   private readonly activeFileIds = new Set<string>();
 
   constructor(
@@ -65,6 +66,17 @@ export class ShortsBot {
 
       const message = update.message;
       if (!message) return;
+
+      const messageKey = message.chat.id + ":" + message.message_id;
+      if (this.seenMessageKeys.has(messageKey)) {
+        console.log("Duplicate Telegram message ignored:", messageKey);
+        return;
+      }
+      this.seenMessageKeys.add(messageKey);
+      if (this.seenMessageKeys.size > 2000) {
+        const oldest = this.seenMessageKeys.values().next().value as string | undefined;
+        if (oldest !== undefined) this.seenMessageKeys.delete(oldest);
+      }
 
       if (message.text?.trim() === "/start") {
         await this.telegram.sendMessage(message.chat.id,
