@@ -40,6 +40,17 @@ export class TelegramClient {
     return this.call<{ id: number; is_bot: boolean; first_name: string; username?: string }>("getMe");
   }
 
+  getWebhookInfo() {
+    return this.call<{
+      url: string;
+      has_custom_certificate: boolean;
+      pending_update_count: number;
+      allowed_updates?: string[];
+      last_error_date?: number;
+      last_error_message?: string;
+    }>("getWebhookInfo");
+  }
+
   async logOutFromCloud() {
     const response = await fetch(`https://api.telegram.org/bot${this.token}/logOut`, { method: "POST" });
     const data = await response.json() as TelegramResponse<boolean>;
