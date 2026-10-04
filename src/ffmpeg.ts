@@ -48,8 +48,10 @@ export class FfmpegService {
     const outputPath = join(this.workDir, `short-${index}-${Date.now()}.mp4`);
     await mkdir(dirname(outputPath), { recursive: true });
 
-    // Keep output at a phone-friendly 720x1280 to avoid memory spikes on Railway.
-    const scaleFilter = "scale=720:1280:force_original_aspect_ratio=increase,crop=720:1280";
+    // Always produce a true 9:16 frame without stretching. The input is scaled
+    // to cover the portrait canvas and then center-cropped; landscape videos
+    // therefore lose only the excess left/right area.
+    const scaleFilter = "scale=720:1280:force_original_aspect_ratio=increase,crop=720:1280:exact=1";
     const videoFilter = subtitlePath
       ? `${scaleFilter},subtitles=${this.escapeFilterPath(subtitlePath)}`
       : scaleFilter;
@@ -58,6 +60,8 @@ export class FfmpegService {
       "-y", "-threads", "2", "-ss", safeStart.toFixed(3), "-i", inputPath,
       "-t", safeDuration.toFixed(3),
       "-vf", videoFilter,
+      "-s", "720x1280",
+      "-aspect", "9:16",
       "-c:v", "libx264", "-threads", "2", "-preset", "veryfast", "-crf", "23",
       "-c:a", "aac", "-b:a", "128k", "-movflags", "+faststart", outputPath,
     ]);
