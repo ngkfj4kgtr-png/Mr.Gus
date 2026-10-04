@@ -29,6 +29,14 @@ export class ShortsBot {
     console.log(`Telegram bot connected: @${me.username ?? me.first_name}`);
     await this.telegram.setWebhook(webhookUrl);
     console.log(`Telegram webhook configured: ${webhookUrl}`);
+    const webhook = await this.telegram.getWebhookInfo();
+    console.log("Telegram webhook status:", {
+      url: webhook.url,
+      pendingUpdateCount: webhook.pending_update_count,
+      allowedUpdates: webhook.allowed_updates ?? [],
+      hasCustomCertificate: webhook.has_custom_certificate,
+      lastErrorMessage: webhook.last_error_message ?? null,
+    });
   }
 
   async handleUpdate(update: TelegramUpdate) {
