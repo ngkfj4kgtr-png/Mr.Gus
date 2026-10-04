@@ -27,6 +27,13 @@ const server = http.createServer((request, response) => {
     request.on("end", () => {
       try {
         const update = JSON.parse(Buffer.concat(chunks).toString("utf8")) as TelegramUpdate;
+        console.log("Telegram webhook update received:", {
+          updateId: update.update_id,
+          messageId: update.message?.message_id ?? null,
+          hasText: Boolean(update.message?.text),
+          hasVideo: Boolean(update.message?.video),
+          hasDocument: Boolean(update.message?.document),
+        });
         void bot.handleUpdate(update).catch((error) => console.error("Telegram webhook update failed:", error));
         response.writeHead(200, { "content-type": "application/json; charset=utf-8" });
         response.end(JSON.stringify({ ok: true }));
