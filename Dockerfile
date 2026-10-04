@@ -20,7 +20,7 @@ RUN python3 -m venv /opt/whisper-venv \
   && /opt/whisper-venv/bin/pip install --no-cache-dir --upgrade pip \
   && /opt/whisper-venv/bin/pip install --no-cache-dir --index-url https://download.pytorch.org/whl/cpu torch \
   && /opt/whisper-venv/bin/pip install --no-cache-dir openai-whisper \
-  && /opt/whisper-venv/bin/python -c "import whisper; whisper.load_model(\"tiny\")" \
+  && /opt/whisper-venv/bin/python -c "import whisper; whisper.load_model(\"small\")" \
   && ln -s /opt/whisper-venv/bin/whisper /usr/local/bin/whisper
 
 WORKDIR /app
@@ -33,7 +33,8 @@ RUN chmod +x ./start.sh
 RUN npm run build
 
 ENV NODE_ENV=production \
-    WHISPER_MODEL=tiny \
+    WHISPER_MODEL=small \
+    WHISPER_LANGUAGE=ru \
     OMP_NUM_THREADS=2 \
     MKL_NUM_THREADS=2 \
     TELEGRAM_API_BASE_URL=http://127.0.0.1:8081
