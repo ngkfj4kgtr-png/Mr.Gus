@@ -32,10 +32,10 @@ export function findBestMoments(segments:TranscriptSegment[],videoDuration:numbe
   const parts=[first.parts[0]],texts=[first.text];let total=first.duration;
   for(const next of c){if(parts.length>=MAX_PARTS||total>=TARGET_SHORT)break;
    if(used.some(p=>Math.max(p.start,next.start)<Math.min(p.end,next.end))||parts.some(p=>Math.max(p.start,next.start)<Math.min(p.end,next.end)))continue;
-   if(next.start<=first.end+1||total+next.duration>MAX_SHORT||next.score-Math.min(8,Math.max(0,(next.start-first.end)/10))<25)continue;
+   if(next.start<=first.end+1||total+next.duration>MAX_SHORT||next.score-Math.min(8,Math.max(0,(next.start-first.end)/10))<12)continue;
    parts.push(next.parts[0]);total+=next.duration;texts.push(next.text);
   }
-  if(total<16){ continue; }parts.sort((a,b)=>a.start-b.start);
+  if(total<16){ parts.splice(1); total=parts[0].end-parts[0].start; }parts.sort((a,b)=>a.start-b.start);
   const avg=parts.reduce((sum,p)=>{const x=c.find(y=>y.start===p.start&&y.end===p.end);return sum+(x?.score??0);},0)/parts.length;
   selected.push({start:parts[0].start,end:parts[parts.length-1].end,duration:total,text:texts.join(" … "),score:Math.min(100,Math.round(avg+parts.length*4)),parts});
   used.push(...parts);if(selected.length===MAX_RESULTS)break;
