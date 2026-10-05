@@ -4,7 +4,6 @@ import { TelegramClient, type TelegramUpdate } from "./telegram.js";
 import { VideoStorage } from "./video.js";
 import { FfmpegService } from "./ffmpeg.js";
 import { WhisperService } from "./whisper.js";
-import { findBestMoments } from "./highlights.js";
 import { createMontageSrt } from "./subtitles.js";
 import { VisualAnalyzer } from "./visual.js";
 
@@ -170,14 +169,15 @@ export class ShortsBot {
           await this.telegram.sendMessage(chatId, "🔇 Речи нет — это нормально. Выбираю моменты только по изображению.");
         }
 
-        const highlights = visualHighlights.map((h) => ({
-          start: h.start,
-          end: h.end,
-          duration: h.end - h.start,
+        const visualParts = visualHighlights.map((h) => ({ start: h.start, end: h.end }));
+        const highlights = [{
+          start: visualParts[0].start,
+          end: visualParts[visualParts.length - 1].end,
+          duration: visualParts.reduce((sum, p) => sum + (p.end - p.start), 0),
           text: "",
-          score: Math.round(h.score * 100),
-          parts: [{ start: h.start, end: h.end }],
-        }));
+          score: Math.round(visualHighlights.reduce((sum, h) => sum + h.score, 0) * 100 / visualHighlights.length),
+          parts: visualParts,
+        }];
         if (!highlights.length) {
           await this.telegram.sendMessage(chatId, "⚠️ Не удалось найти подходящие фрагменты для Shorts.");
           return;
