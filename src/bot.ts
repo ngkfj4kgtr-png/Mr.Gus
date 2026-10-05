@@ -6,6 +6,7 @@ import { FfmpegService } from "./ffmpeg.js";
 import { WhisperService } from "./whisper.js";
 import { findBestMoments } from "./highlights.js";
 import { createMontageSrt } from "./subtitles.js";
+import { VisualAnalyzer } from "./visual.js";
 
 const MAX_TELEGRAM_DOWNLOAD_BYTES = 50 * 1024 * 1024;
 const MAX_VIDEO_SECONDS = 10 * 60;
@@ -21,6 +22,7 @@ export class ShortsBot {
     private readonly videoStorage: VideoStorage,
     private readonly ffmpeg: FfmpegService,
     private readonly whisper: WhisperService,
+    private readonly visual: VisualAnalyzer,
   ) {}
 
   stop() { this.running = false; }
@@ -151,20 +153,31 @@ export class ShortsBot {
         await this.telegram.sendMessage(chatId,
           `🔎 Видео проверено: ${Math.round(info.durationSeconds)} сек, ${info.width}×${info.height}, аудио: ${info.hasAudio ? "есть" : "нет"}.`);
 
-        if (!info.hasAudio) {
-          await this.telegram.sendMessage(chatId, "⚠️ В видео нет аудиодорожки. Для распознавания речи нужен звук.");
-          return;
+        await this.telegram.sendMessage(chatId, "👀 Анализирую само видео: движение, смены сцен и визуальные события...");
+        const visualHighlights = await this.visual.findBestMoments(filePath, info.durationSeconds);
+        console.log("Visual analysis ready:", { candidates: visualHighlights.length, highlights: visualHighlights });
+
+        let transcript = { text: "", segments: [] as import("./whisper.js").TranscriptSegment[] };
+        if (info.hasAudio) {
+          audioPath = await this.ffmpeg.extractAudio(filePath);
+          console.log(`Audio extracted: ${audioPath}`);
+          await this.telegram.sendMessage(chatId, "🧠 Дополнительно распознаю речь для субтитров...");
+          transcript = await this.whisper.transcribe(audioPath);
+          console.log("Whisper transcript ready:", { segments: transcript.segments.length, textLength: transcript.text.length });
+          await this.telegram.sendMessage(chatId,
+            `📝 Распознавание готово: ${transcript.segments.length} сегментов речи.`);
+        } else {
+          await this.telegram.sendMessage(chatId, "🔇 Речи нет — это нормально. Выбираю моменты только по изображению.");
         }
 
-        audioPath = await this.ffmpeg.extractAudio(filePath);
-        console.log(`Audio extracted: ${audioPath}`);
-        await this.telegram.sendMessage(chatId, "🧠 Распознаю речь и получаю таймкоды...");
-        const transcript = await this.whisper.transcribe(audioPath);
-        console.log("Whisper transcript ready:", { segments: transcript.segments.length, textLength: transcript.text.length });
-        await this.telegram.sendMessage(chatId,
-          `📝 Распознавание готово: ${transcript.segments.length} сегментов речи.`);
-
-        const highlights = findBestMoments(transcript.segments, info.durationSeconds);
+        const highlights = visualHighlights.map((h) => ({
+          start: h.start,
+          end: h.end,
+          duration: h.end - h.start,
+          text: "",
+          score: Math.round(h.score * 100),
+          parts: [{ start: h.start, end: h.end }],
+        }));
         if (!highlights.length) {
           await this.telegram.sendMessage(chatId, "⚠️ Не удалось найти подходящие фрагменты для Shorts.");
           return;
