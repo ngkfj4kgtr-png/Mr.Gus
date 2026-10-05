@@ -5,7 +5,7 @@ import { VideoStorage } from "./video.js";
 import { FfmpegService } from "./ffmpeg.js";
 import { WhisperService } from "./whisper.js";
 import { findBestMoments } from "./highlights.js";
-import { createSrt } from "./subtitles.js";
+import { createMontageSrt } from "./subtitles.js";
 
 const MAX_TELEGRAM_DOWNLOAD_BYTES = 50 * 1024 * 1024;
 const MAX_VIDEO_SECONDS = 10 * 60;
@@ -171,16 +171,16 @@ export class ShortsBot {
         }
 
         await this.telegram.sendMessage(chatId,
-          `🎯 Нашёл ${highlights.length} лучших момента(ов):\\n\\n${highlights.map((h, i) => `${i + 1}. ${Math.round(h.start)}–${Math.round(h.end)} сек.\\n${h.text.slice(0, 180)}`).join("\\n\\n")}`);
+          `🎯 Нашёл ${highlights.length} лучших момента(ов):\\n\\n${highlights.map((h, i) => `${i + 1}. склейка: ${h.parts.map((p) => Math.round(p.start) + "–" + Math.round(p.end) + " сек.").join(" + ")}\\n${h.text.slice(0, 180)}`).join("\\n\\n")}`);
         await this.telegram.sendMessage(chatId, "🎬 Рендерю вертикальные Shorts 9:16...");
 
         for (let i = 0; i < highlights.length; i++) {
           const h = highlights[i];
           const subtitlePath = `./tmp/work/subtitles-${Date.now()}-${i + 1}.srt`;
-          await createSrt(transcript.segments, h.start, h.end, subtitlePath);
+          await createMontageSrt(transcript.segments, h.parts, subtitlePath);
           subtitlePaths.push(subtitlePath);
           console.log("Rendering Short:", { index: i + 1, start: h.start, duration: h.duration, subtitlePath });
-          const renderedPath = await this.ffmpeg.renderVertical(filePath, h.start, h.duration, i + 1, subtitlePath);
+          const renderedPath = await this.ffmpeg.renderMontage(filePath, h.parts, i + 1, subtitlePath);
           console.log("Rendered Short:", { index: i + 1, renderedPath });
           renderedPaths.push(renderedPath);
         }
