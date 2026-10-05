@@ -1,7 +1,7 @@
 FROM node:20-bookworm-slim
 
 RUN apt-get update \
-  && apt-get install -y --no-install-recommends ffmpeg python3 python3-venv \
+  && apt-get install -y --no-install-recommends ffmpeg \
   && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
@@ -14,16 +14,6 @@ COPY .env.example ./.env.example
 
 RUN npm run build
 
-RUN python3 -m venv /opt/whisper-venv \
-  && /opt/whisper-venv/bin/pip install --no-cache-dir --upgrade pip \
-  && /opt/whisper-venv/bin/pip install --no-cache-dir --index-url https://download.pytorch.org/whl/cpu torch \
-  && /opt/whisper-venv/bin/pip install --no-cache-dir openai-whisper \
-  && ln -s /opt/whisper-venv/bin/whisper /usr/local/bin/whisper
-
-ENV NODE_ENV=production \
-    WHISPER_MODEL=base \
-    WHISPER_LANGUAGE=ru \
-    OMP_NUM_THREADS=2 \
-    MKL_NUM_THREADS=2
+ENV NODE_ENV=production
 
 CMD ["node", "dist/index.js"]
