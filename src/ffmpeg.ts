@@ -51,7 +51,7 @@ export class FfmpegService {
     // Always produce a true 9:16 frame without stretching. The input is scaled
     // to cover the portrait canvas and then center-cropped; landscape videos
     // therefore lose only the excess left/right area.
-    const scaleFilter = "scale=720:1280:force_original_aspect_ratio=increase,crop=720:1280:exact=1";
+    const scaleFilter = "scale=720:1280:force_original_aspect_ratio=increase,crop=720:1280:exact=1,setsar=1";
     const videoFilter = subtitlePath
       ? `${scaleFilter},subtitles=${this.escapeFilterPath(subtitlePath)}`
       : scaleFilter;
@@ -60,14 +60,19 @@ export class FfmpegService {
       "-y", "-threads", "2", "-ss", safeStart.toFixed(3), "-i", inputPath,
       "-t", safeDuration.toFixed(3),
       "-vf", videoFilter,
-      "-s", "720x1280",
-      "-aspect", "9:16",
       "-c:v", "libx264", "-threads", "2", "-preset", "veryfast", "-crf", "23",
       "-c:a", "aac", "-b:a", "128k", "-movflags", "+faststart", outputPath,
     ]);
     return outputPath;
   }
 
+  async renderMontage(inputPath:string,parts:Array<{start:number;end:number}>,index:number,subtitlePath?:string):Promise<string>{
+    if(!parts.length)throw new Error("Montage has no parts");const outputPath=join(this.workDir,"short-"+index+"-"+Date.now()+".mp4");await mkdir(dirname(outputPath),{recursive:true});
+    const scale="scale=720:1280:force_original_aspect_ratio=increase,crop=720:1280:exact=1,setsar=1";const filters:string[]=[];
+    for(let i=0;i<parts.length;i++){const a=Math.max(0,parts[i].start),b=Math.max(a+0.1,parts[i].end);filters.push("[0:v]trim=start="+a.toFixed(3)+":end="+b.toFixed(3)+",setpts=PTS-STARTPTS,"+scale+"[v"+i+"]");filters.push("[0:a]atrim=start="+a.toFixed(3)+":end="+b.toFixed(3)+",asetpts=PTS-STARTPTS[a"+i+"]");}
+    filters.push(parts.map((_,i)=>"[v"+i+"][a"+i+"]").join("")+"concat=n="+parts.length+":v=1:a=1[vc][ac]");filters.push(subtitlePath?"[vc]subtitles="+this.escapeFilterPath(subtitlePath)+"[vout]":"[vc]null[vout]");
+    await this.run("ffmpeg",["-y","-threads","2","-i",inputPath,"-filter_complex",filters.join(";"),"-map","[vout]","-map","[ac]","-c:v","libx264","-threads","2","-preset","veryfast","-crf","23","-c:a","aac","-b:a","128k","-movflags","+faststart",outputPath]);return outputPath;
+  }
   async cleanup(filePath: string) { await rm(filePath, { force: true }); }
 
   private escapeFilterPath(filePath: string): string {
