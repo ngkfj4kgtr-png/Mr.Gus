@@ -5,6 +5,7 @@ import { TelegramClient, type TelegramUpdate } from "./telegram.js";
 import { VideoStorage } from "./video.js";
 import { FfmpegService } from "./ffmpeg.js";
 import { WhisperService } from "./whisper.js";
+import { VisualAnalyzer } from "./visual.js";
 
 const telegram = new TelegramClient(config.telegramBotToken, config.telegramApiBaseUrl);
 const bot = new ShortsBot(
@@ -12,6 +13,7 @@ const bot = new ShortsBot(
   new VideoStorage(config.telegramBotToken, "./tmp/videos", config.telegramApiBaseUrl),
   new FfmpegService(),
   new WhisperService(),
+  new VisualAnalyzer(),
 );
 
 const server = http.createServer((request, response) => {
