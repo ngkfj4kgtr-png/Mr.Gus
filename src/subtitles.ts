@@ -1,6 +1,7 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
 import type { TranscriptSegment } from "./whisper.js";
+import type { HighlightPart } from "./highlights.js";
 
 function formatTime(seconds: number): string {
   const totalMillis = Math.max(0, Math.round(seconds * 1000));
@@ -16,32 +17,9 @@ function cleanText(text: string): string {
   return text.replace(/\s+/g, " ").trim();
 }
 
-export async function createSrt(
-  segments: TranscriptSegment[],
-  start: number,
-  end: number,
-  outputPath: string,
-): Promise<string> {
-  const entries: string[] = [];
-  let number = 1;
-
-  for (const segment of segments) {
-    const segmentStart = Math.max(segment.start, start);
-    const segmentEnd = Math.min(segment.end, end);
-    const text = cleanText(segment.text);
-
-    if (!text || segmentEnd <= segmentStart) continue;
-
-    entries.push(
-      `${number++}\n${formatTime(segmentStart - start)} --> ${formatTime(segmentEnd - start)}\n${text}\n`,
-    );
-  }
-
-  if (!entries.length) {
-    throw new Error("No subtitle segments overlap the selected highlight");
-  }
-
-  await mkdir(dirname(outputPath), { recursive: true });
-  await writeFile(outputPath, entries.join("\n"), "utf8");
-  return outputPath;
+export async function createMontageSrt(segments:TranscriptSegment[],parts:HighlightPart[],outputPath:string):Promise<string>{
+ const entries:string[]=[];let number=1,offset=0;
+ for(const part of parts){for(const segment of segments){const a=Math.max(segment.start,part.start),b=Math.min(segment.end,part.end),text=cleanText(segment.text);if(!text||b<=a)continue;
+  entries.push(number+++"\n"+formatTime(offset+a-part.start)+" --> "+formatTime(offset+b-part.start)+"\n"+text+"\n");}offset+=Math.max(0,part.end-part.start);}
+ if(!entries.length)throw new Error("No subtitle segments overlap selected montage parts");await mkdir(dirname(outputPath),{recursive:true});await writeFile(outputPath,entries.join("\n"),"utf8");return outputPath;
 }
