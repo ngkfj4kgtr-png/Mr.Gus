@@ -33,7 +33,7 @@ RUN chmod +x ./start.sh
 RUN npm run build
 
 ENV NODE_ENV=production \
-    WHISPER_MODEL=small \
+    WHISPER_MODEL=base \
     WHISPER_LANGUAGE=ru \
     OMP_NUM_THREADS=2 \
     MKL_NUM_THREADS=2 \
